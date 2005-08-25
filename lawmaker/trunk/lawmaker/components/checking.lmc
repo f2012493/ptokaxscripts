@@ -415,7 +415,7 @@ Checks.SlotHubLimit.CheckHubsAndSlots=function(user)
   end
   if not conn or not Checks.SlotHubLimit.Rules[conn] then
     user:SendData("ConnectionCheck","Your connection type could not be determined or is unknown.")
-    Checks.Punish(user,"c",Checks.Client.BadClientToDo)
+    return Checks.Punish(user,"c",Checks.Client.BadClientToDo)
   else
     if Checks.SlotHubLimit.SlotHubLevel >= userlevels[user.iProfile] then
       if Immune and not Immune.List[user.sName] or not Immune then
@@ -840,7 +840,7 @@ function Checks.MyINFOArrival(user,data)
       }
     for a=1,table.getn(torun) do
       if torun[a](user)=="shit" then
-	break
+	return "shit"
       end
     end
   end
