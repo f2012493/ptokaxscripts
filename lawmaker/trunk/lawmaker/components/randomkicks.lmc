@@ -1,0 +1,129 @@
+RandomKicks={Levels={},List={}}
+--[[
+Random Kicks module for LawMaker
+Random Kick messages in Main.
+bastya_elvtars
+]]--
+
+
+----------------------------
+-- SETTINGS
+
+-- This sets whether you want random kick messages or not *by default*.
+-- 1 for enabled
+-- note that you can change this, but when you restart the scripts, this value will count. ]]--
+
+RandomKicks.OnOff=1
+
+-- add a random kick message
+RandomKicks.Levels.Add=4
+
+-- delete some messages
+RandomKicks.Levels.Delete=4
+
+-- enable/disable random kick messages
+RandomKicks.Levels.OnOff=5
+
+
+-- show random kick msgs
+RandomKicks.Levels.Show=4
+
+-- END OF SETTINGS
+
+function RandomKicks.Delete(user,data,env)
+  local _,_,args=string.find(data,"%b<>%s+%S+%s+(.+)")
+  if args then
+    local tmp={}
+    for n in string.gfind(args,"(%d+)") do
+      table.insert(tmp,tonumber(n))
+    end
+    table.sort(tmp,n)
+    for k=table.getn(tmp),1,-1 do
+      if RandomKicks.List[tmp[k]] then
+	if RandomKicks.Table[RandomKicks.List[tmp[k]]] then
+	  SendTxt(user,env,Bot.name,"The random kick message #"..tmp[k].." has been deleted successfully.")
+	  RandomKicks.Table[RandomKicks.List[tmp[k]]]=nil
+	else
+	  SendTxt(user,env,Bot.name,"The random kick message #"..tmp[k].." does not exist! Add it first! :P")
+	end
+      else
+	SendTxt(user,env,Bot.name,"The random kick message #"..tmp[k].." does not exist! Add it first! :P")
+      end
+    end
+    savefile(RandomKicks.Table,"lawmaker/components/metafiles/randomkicks.dat")
+  else
+    SendTxt(user,env,Bot.name,"Please specify a kickmessage!")
+  end
+end
+
+function RandomKicks.Add(user,data,env)
+  local _,_,kickmsg=string.find(data,"%b<>%s+%S+%s+(.+)")
+  if kickmsg then
+    if not RandomKicks.Table[kickmsg] then
+      RandomKicks.Table[kickmsg]=1
+      table.insert(RandomKicks.List,kickmsg)
+      table.sort(RandomKicks.List)
+      SendTxt(user,env,Bot.name,"Message \""..kickmsg.."\" has been successfully added! :)")
+      savefile(RandomKicks.Table,"lawmaker/components/metafiles/randomkicks.dat")
+    else 
+      SendTxt(user,env,Bot.name,"Message \""..kickmsg.."\" is already on he list. ;-)") 
+    end
+  else
+    SendTxt(user,env,Bot.name,"Please specify a kickmessage!")
+  end
+end
+
+function RandomKicks.OnOff(user,data,env) -- ugly, but not important to optimize.
+  local _,_,switch=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  if switch=="on" then
+    if RandomKicks.OnOff== 1 then 
+      SendTxt(user,env,Bot.name,"Random kick msgs are already enabled.")
+    else
+      SendTxt(user,env,Bot.name,"Random kick msgs are now enabled.")
+      RandomKicks.OnOff= 1
+    end
+  elseif switch=="off" then
+    if RandomKicks.OnOff== 1 then
+      SendTxt(user,env,Bot.name,"Random kick msgs are now disabled.")
+      RandomKicks.OnOff=0
+    else
+      SendTxt(user,env,Bot.name,"Random kick msgs are already disabled.")
+    end
+  elseif switch=="status" then
+    if RandomKicks.OnOff==1 then
+      SendTxt(user,env,Bot.name,"Random kick msgs are enabled.")
+    else
+      SendTxt(user,env,Bot.name,"Random kick msgs are disabled.")
+    end
+  else
+      SendTxt(user,env,Bot.name,"Bad syntax! Usage: !randomkick <on/off/status>")
+  end
+end
+
+function RandomKicks.Show(user,data,env)
+  local msg="\r\nRandom kick messages:\r\n=============================\r\n\r\n"
+  for u=1,table.getn(RandomKicks.List) do
+    msg=msg..u.." ---> ["..user.sName.."] "..RandomKicks.List[u].." [---===Victim===--- because: this is a test message]\r\n"
+  end
+  msg=msg.."\r\n============================="
+  user:SendPM(Bot.name,msg)
+end
+
+function RandomKicks.Main()
+  RandomKicks.Table=maketable("lawmaker/components/metafiles/randomkicks.dat")
+  for a,b in RandomKicks.Table do
+    table.insert(RandomKicks.List,a)
+  end
+  table.sort(RandomKicks.List)
+end
+
+RegCmd("addkick",RandomKicks.Add,{},RandomKicks.Levels.Add,"<message>\t\t\t\tAdds a random kick message to the list, which shows after op name, and before kicked user's name.")
+RegCmd("delkick",RandomKicks.Delete,{},RandomKicks.Levels.Delete,"delkick <message>\t\t\t\t\tDeletes a random kick message.") -- TODO: rewrite for ID.
+RegCmd("randomkick",RandomKicks.OnOff,{},RandomKicks.Levels.OnOff,"<on/off/status>\t\t\t\tEnables/disables random kick messages, or shows the current status.")
+RegCmd("showrandomkicks",RandomKicks.Show,{},RandomKicks.Levels.Show,"\t\t\t\t\tShows the random kick messages' list.")
+RegFunc("main","loading random kicks",RandomKicks.Main,{})
+RegRC(RandomKicks.Levels.Add,"1 3","RandomKicks\\Add a message...","!addkick %[line:Message:]")
+RegRC(RandomKicks.Levels.Delete,"1 3","RandomKicks\\Delete a message...","!delkick %[line:ID(s) to delete:]")
+RegRC(RandomKicks.Levels.OnOff,"1 3","RandomKicks\\Enable","!randomkick on")
+RegRC(RandomKicks.Levels.OnOff,"1 3","RandomKicks\\Disable","!randomkick off")
+RegRC(RandomKicks.Levels.Show,"1 3","RandomKicks\\Show messages","!showrandomkicks")

@@ -1,0 +1,96 @@
+Warning={Levels={}}
+--[[
+Warning LMCA module
+Originally by pur, freed, gg3k, klownietklowniet
+]]
+
+--- Warn Stuff
+
+-- in minutes, the time which the user reached the max warns will be banned for
+Warning.BanTime=30 
+
+-- number of warnings before kick
+Warning.Max=3
+
+-- warn
+Warning.Levels.Warn=4
+
+-- reset warnings of a user
+Warning.Levels.ResetWarn=4
+
+-- Set this to 1 to make warns persistent. (They wil be reset if they reach the maximum.)
+Warning.SaveWarns=1
+--*************************************************************************************--
+--*************************************************************************************--
+function Warning.Warn(user,data,env)
+  local _,_,arg=string.find(data, "%b<>%s+%S+%s+(%S+)")
+  local _,_,arg2=string.find(data, "%b<>%s+%S+%s+%S+%s+(.+)")
+  if arg then 
+    if arg==Bot.name	then
+      SendTxt(user,env,Bot.name,"You cannot warn me! Everything I do is right, agree? This was your warning #"..Warning.Max)
+      user:Disconnect()
+    end
+    local victim=GetItemByName(arg)	
+    if victim then
+      if victim.bOperator then
+	SendTxt(user,env,Bot.name,user.sName..", do not warn an operator please.This was your warning #"..Warning.Max)
+	user:Disconnect()
+      end
+      if Warning.Warns[arg]==nil then 
+	Warning.Warns[arg]=1
+      end
+      if Warning.Warns[arg]==(Warning.Max) then 
+	SendPmToNick(Bot.name, "This was your last warning. Now have a rest for "..Warning.BanTime.." mins. ;) // "..user.sName)
+	SendToAll(Bot.name, arg.." could not change his mind ---> we have to go on with 1 user less for "..Warning.BanTime.." minutes. :P // "..user.sName)	
+	if Logging then Logging.Write("lawmaker/logs/"..os.date("%Y-%m-%d_").."botbanlog.log",victim.sName.." (with IP "..victim.sIP.." - "..os.date("%H:%M").." - banned for "..Warning.BanTime.." minutes	because	got warned "..Warning.Max.." times.") end
+	victim:TimeBan(Warning.BanTime)
+	Warning.Warns[arg]=nil
+	if Warning.SaveWarns==1 then savefile(Warning.Warns,"lawmaker/components/metafiles/warnings.dat","|") end
+      else 
+	if arg2 then 
+	  victim:SendPM(Bot.name,"You have been warned because: "..arg2) 
+	  SendToAll(Bot.name, arg.." got his warning #"..Warning.Warns[arg]..". Reason: "..arg2.." // "..user.sName) 
+	  victim:SendPM(Bot.name, "This is warning #"..Warning.Warns[arg]..". Get "..Warning.Max.." and you will be banned for "..Warning.BanTime.." mins...")
+	  if Warning.SaveWarns==1 then savefile(Warning.Warns,"lawmaker/components/metafiles/warnings.dat","|") end
+	  Warning.Warns[arg]=Warning.Warns[arg]+1
+	else
+	  SendTxt(user,env,Bot.name,"No reason specified...")
+	end 
+      end
+    else
+      SendTxt(user,env,Bot.name,arg.." not online.") 
+    end
+  else
+    SendTxt(user,env,Bot.name,"Hmm, who to warn and why? I'm so busy that I couldn't pay attention. ;)") 
+  end
+end
+
+function Warning.Resetwarn(user,data,env)
+  local _,_,arg = string.find(data, "%b<>%s+%S+%s+(%S+)")
+  if arg then 
+    if Warning.Warns[arg] then
+      Warning.Warns[arg]=nil 
+      SendTxt(user,env,Bot.name,arg.." - warning(s) deleted.") 
+      if Warning.SaveWarns==1 then savefile(Warning.Warns,"lawmaker/components/metafiles/warnings.dat","|") end
+    else
+      SendTxt(user,env,Bot.name,arg.." - not found in the list.")	
+    end
+  else
+    SendTxt(user,env,Bot.name,"No username specified, please try again.")
+  end
+end
+
+function Warning.Main()
+  if Warning.SaveWarns==1 then
+    Warning.Warns=maketable("lawmaker/components/metafiles/warnings.dat","|")
+  else
+    Warning.Warns={}
+  end
+end
+
+RegCmd("warn",Warning.Warn,{},Warning.Levels.Warn,"<nick> <reason>\t\t\t\tWarns a user, after "..Warning.Max.." warnings, he/she will be banned for "..Warning.BanTime.." minutes.")
+RegCmd("resetwarn",Warning.Resetwarn,{},Warning.Levels.ResetWarn,"<nick>\t\t\t\t\tDeletes all warnings of a	nick.")
+RegFunc("main","warn bootup",Warning.Main,{})
+RegRC(Warning.Levels.Warn,"1 2","Warn\\Warn USER","!warn %[nick] %[line:Reason:]")
+RegRC(Warning.Levels.ResetWarn,"1 2","Warn\\Reset warns of USER","!resetwarn %[nick]")
+RegRC(Warning.Levels.ResetWarn,"1 3","Warn\\Reset warns of a user","!resetwarn %[line:Nick:]")

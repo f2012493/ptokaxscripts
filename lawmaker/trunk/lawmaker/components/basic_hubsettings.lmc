@@ -1,0 +1,135 @@
+HubSettings={Levels={}}
+--[[
+Basic hubsettings module for LawMaker by bastya_elvtars
+Hub desc,hub name, max users can be set.
+Originally from ChannelBot by Nathanos.
+Added restarting of scripts and hub by bastya_elvtars
+]]--
+
+                                -- HUB SETTINGS
+				-- =============
+-- set hub desc
+HubSettings.Levels.SetHubDesc=5
+
+-- set hubname
+HubSettings.Levels.SetHubName=5
+
+-- set max. users
+HubSettings.Levels.SetMaxUsers=5
+
+HubSettings.Levels.Restart=5
+
+HubSettings.Levels.ReStartScripts=5
+
+HubSettings.Levels.SetRegServers=5
+
+HubSettings.Levels.GetRegServers=5
+
+HubSettings.Levels.GetHubDesc=1
+---------------
+--------------
+
+function HubSettings.SetHubDesc(user,data,env)
+  local _,_,newdesc=string.find(data,"%b<>%s+%S+%s+(.+)")
+  if newdesc then
+    if not string.find(newdesc," %- powered by LawMaker") then
+      frmHub:SetHubDescr(newdesc.." - powered by LawMaker")
+    else
+      frmHub:SetHubDescr(newdesc)
+    end
+    SendToOps(Bot.name,user.sName.." has set the hub description to: \""..newdesc.."\".")
+  else
+    SendToOps(Bot.name,user.sName.." has deleted the hub description!")
+    frmHub:SetHubDescr("Powered by LawMaker")
+  end
+end
+
+function HubSettings.GetHubDesc(user,data,env)
+  SendTxt(user,env,Bot.name,"Hub description is: "..frmHub:GetHubDescr())
+end
+
+function HubSettings.SetHubName(user,data,env)
+  local _,_,newname=string.find(data,"%b<>%s+%S+%s+(.+)")
+  if newname then
+    frmHub:SetHubName(newname)
+    SendToOps(Bot.name,user.sName.." has set the hub name to:  \""..newname.."\".")
+  else
+    SendTxt(user,env,Bot.name,"Please add a hub name as well! ;)")
+  end
+end
+
+function HubSettings.SetMaxUsers(user, data,env)
+  local _,_,newmax=string.find(data,"%b<>%s+%S+%s+(%d+)")
+  if newmax then
+    frmHub:SetMaxUsers(newmax) 
+    SendToOps(Bot.name, user.sName.." changed the maximum number of user connections to: "..newmax..".")
+    SendTxt(user,env,Bot.name,"You changed the maximum number of user connections to: "..newmax..".")
+  else
+    SendTxt(user,env,Bot.name, "OMFG! There are 2 numeric key-sets on your keyboard, please use them to type the value.")
+  end
+end
+
+function HubSettings.ReStart(user,data,env)
+  for _,obj in frmHub:GetOnlineUsers() do
+    obj:SendData("$To: "..obj.sName.." From: "..Bot.name.." $<"..user.sName.."> Hub will restart. Back after the commercials. :)")
+  end
+  frmHub:Restart()
+end
+
+function HubSettings.SetRegServers(user,data,env,add)
+  local _,_,regsvr=string.find(data,"%b<>%s+%S+%s+(.+)")
+  if regsvr then
+    local srvtbl={}
+    for w in string.gfind(regsvr,"([^;]+)") do
+      table.insert(srvtbl,w)
+    end
+    if add then
+      for w in string.gfind(frmHub:GetRegServer(),"([^;]+)") do
+	table.insert(srvtbl,w)
+      end
+    end
+    table.sort(srvtbl)
+    frmHub:SetRegServer(table.concat(srvtbl,";"))
+    user:SendPM(Bot.name,HubSettings.GetRegServers())
+  else
+    SendTxt(user,env,Bot.name,"Regservers are flushed now.")
+    frmHub:SetRegServer("")
+  end
+end
+
+function HubSettings.GetRegServers(user,data,env)
+  local srvtbl={}
+  for w in string.gfind(frmHub:GetRegServer(),"([^;]+)") do
+    table.insert(srvtbl,w)
+  end
+  local msg="The following reg servers are set now:\r\n\r\n"..table.concat(srvtbl,"\r\n")
+  if user then
+    user:SendPM(Bot.name,msg)
+  else
+    return msg
+  end
+end
+
+function HubSettings.ReStartScripts(user,data,env)
+  SendToOps(Bot.name,"Scripts are being restarted by "..user.sName.."...")
+  frmHub:RestartScripts()
+end
+
+RegCmd("sethubdesc",HubSettings.SetHubDesc,{},HubSettings.Levels.SetHubDesc,"<new_desc>\t\t\t\tSets/changes the hub description.")
+RegCmd("sethubname",HubSettings.SetHubName,{},HubSettings.Levels.SetHubName,"sethubname <new_name>\t\t\t\tSets a new hub name.")
+RegCmd("setmaxusers",HubSettings.SetMaxUsers,{},HubSettings.Levels.SetMaxUsers,"setmaxusers <number>\t\t\t\tSets the maximum number of users that can be connected to the hub.")
+RegCmd("restart",HubSettings.ReStart,{},HubSettings.Levels.Restart,"setmaxusers <number>\t\t\t\tRestarts the hub.")
+RegCmd("restartscripts",HubSettings.ReStartScripts,{},HubSettings.Levels.ReStartScripts,"setmaxusers <number>\t\t\t\tRestarts the hub's running.")
+RegCmd("setregservers",HubSettings.SetRegServers,{false},HubSettings.Levels.SetRegServers,"<regservers>\t\t\t\tSets reg servers, add many separated by semicolons!")
+RegCmd("addregservers",HubSettings.SetRegServers,{true},HubSettings.Levels.SetRegServers,"<regservers>\t\t\t\tAdds reg servers to the existing ones, add many separated by semicolons!")
+RegCmd("showregservers",HubSettings.GetRegServers,{},HubSettings.Levels.GetRegServers,"\t\t\t\t\tShows the currently set reg servers.")
+RegCmd("gethubdesc",HubSettings.GetHubDesc,{},HubSettings.Levels.GetHubDesc,"\t\t\t\t\tShows the hub description.")
+RegRC(HubSettings.Levels.SetHubName,"1 3","Set the\\Hub  name","!sethubname %[line:New hub name:]")
+RegRC(HubSettings.Levels.SetHubDesc,"1 3","Set the\\Hub description...","!sethubdesc %[line:New hub description:]")
+RegRC(HubSettings.Levels.SetMaxUsers,"1 3","Set the\\Max. number of users...","!setmaxusers %[line:New value of max. users:]")
+RegRC(HubSettings.Levels.Restart,"1 3","Restart\\Hub","!restart")
+RegRC(HubSettings.Levels.ReStartScripts,"1 3","Restart\\Scripts","!restartscripts")
+RegRC(HubSettings.Levels.SetRegServers,"1 3","Set the\\Reg servers\\Set..","!setregservers %[line:Enter reg servers (separate with semicolon)]")
+RegRC(HubSettings.Levels.SetRegServers,"1 3","Set the\\Reg servers\\Add more..","!addregservers %[line:Enter reg servers (separate with semicolon)]")
+RegRC(HubSettings.Levels.GetRegServers,"1 3","Info\\Hub info\\Show the reg servers","!showregservers")
+RegRC(HubSettings.Levels.GetHubDesc,"1 3","Info\\Hub info\\Show the hub description","!gethubdesc")

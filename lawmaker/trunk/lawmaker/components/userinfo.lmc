@@ -1,0 +1,774 @@
+UserInfo={Levels={},Data={},IPTable={}}
+--[[
+Userinfo and regcleaner plugin for LawMaker by bastya_elvtarsú
+Features: IP logging, uptime logging, last seen time and MyINFO logging.
+Does all IP-related things that a hubowner should ever need.
+This seems very big, and indeed it is, but I want to avoid module dependencies.
+For helping thx to plop, also thx for his cleaner.
+For other credits, see checking.lmc
+]]
+
+-- info on a user
+UserInfo.Levels.UserInfo=1
+
+-- last seen
+UserInfo.Levels.Seen=1
+
+-- add/remove noclean users
+UserInfo.Levels.NoClean=5
+
+-- show noclean users
+UserInfo.Levels.ShowNoClean=4
+
+-- call cleaner
+UserInfo.Levels.CleanRegisteredUsers=5
+
+-- !myip command
+UserInfo.Levels.MyIP=1
+
+-- shows size of userinfo
+UserInfo.Levels.Size=5
+
+UserInfo.Levels.IPInfo=4
+
+UserInfo.Levels.IPRangeInfo=4
+
+--[[                               USERINFO DATABASE STUFF
+                                  ========================
+                              ]]
+
+ -- if set to 1, it triggers the registered users cleaner every day
+UserInfo.AutoClean=1
+
+--[[
+which regstered users should get cleaned???
+note: superoperators never get cleaned
+]]
+UserInfo.Levels.Clean=5
+
+--[[
+If the user has not been in the hub for his amount of weeks, it will be unregistered.
+Also this value is used by userinfo DB cleaning.
+]]
+UserInfo.Weeks=3
+
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+
+function UserInfo.UserInfo(user,data,env)
+  local _,_,nick=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  if nick then
+    local usr=GetItemByName(nick)
+    local proftable={[0]="Superoperator",[1]="Operator",[2]="VIP",[3]="Registered User"}
+    if usr then
+      local msg="\r\n\r\nInformation on "..nick.."\r\n=====================================\r\n\r\n"..UserInfo.GetUserUpTime(nick)
+      local pr=proftable[usr.iProfile] or "Guest"
+      msg=msg.."Profile: "..pr.."\r\n" 
+      if user.bOperator then
+        msg=msg.."IP address: "..usr.sIP.."\r\n"
+	if GetBannedItemIp(nick) then
+	  msg=msg.."This nick is banned\r\n"
+	else
+	  if GetTempBannedItemIp(nick) then
+	    msg=msg.."Nick is timebanned\r\n"
+	  end
+	end
+	if GetBannedItemName(usr.sIP) then
+	    msg=msg.."User's IP is banned, with nick: "..GetBannedItemName(usr.sIP).."\r\n"
+	else
+	  if GetTempBannedItemName(usr.sIP) then
+	    msg=msg.."User's IP is timebanned, with nick: "..GetTempBannedItemName(usr.sIP).." and remaining time is "..minutestoh(GetTempBannedItemTime(usr.sIP))..".\r\n"
+	  end
+	end
+      end
+      msg=msg..UserInfo.ScanMyINFO(usr.sMyInfoString).."\r\n====================================="
+      user:SendPM(Bot.name,msg)
+    else
+      if UserInfo.Data[nick] then
+	local myinfo=UserInfo.Data[nick].myinfo
+	local ip=UserInfo.Data[nick].ip
+	local msg="\r\n\r\nInformation on "..nick.." (offline)\r\n=====================================\r\n\r\n"..UserInfo.GetUserUpTime(nick).."User was last seen: "..UserInfo.Data[nick].seen.."\r\n"
+	local function GetOfflineProfile()
+	  for _,obj in frmHub:GetRegisteredUsers() do
+	    if obj.sName==nick then
+	      return proftable[obj.iProfile].."\r\n"
+	    else
+	      return "Guest".."\r\n"
+	    end
+	  end
+	end
+	msg=msg.."Profile: "..GetOfflineProfile()
+	if user.bOperator then
+	  msg=msg.."IP address: "..ip.."\r\n"
+	  if GetBannedItemIp(nick) then
+	    msg=msg.."This nick is banned.\r\n"
+	  else
+	    if GetTempBannedItemIp(nick) then
+	      msg=msg.."Nick is timebanned.\r\n"
+	    end
+	  end
+	  if GetBannedItemName(ip) then
+	      msg=msg.."User's IP is banned, with nick: "..GetBannedItemName(ip).."\r\n"
+	  else
+	    if GetTempBannedItemName(ip) then
+	      msg=msg.."User's IP is timebanned, with nick: "..GetTempBannedItemName(ip).." and remaining time is "..minutestoh(GetTempBannedItemTime(ip))..".\r\n"
+	    end
+	  end
+	end
+	msg=msg..UserInfo.ScanMyINFO(myinfo).."\r\n====================================="
+	user:SendPM(Bot.name,msg)
+      else
+	SendTxt(user,env,Bot.name,nick.." is an unknown user!")
+      end
+    end
+  else
+    SendTxt(user,env,Bot.name,"Please specify a nick to get info on!")
+  end
+end
+
+function UserInfo.GetUserUpTime(nick)
+  local msg="Total time spent in the hub: "
+  if UserInfo.Data[nick] and UserInfo.Data[nick].uptime then
+    msg=msg..minutestoh(UserInfo.Data[nick].uptime)..".\r\n"
+    else
+    msg=msg.."Undeterminable for some reason.\r\n"
+  end
+  return msg
+end
+
+----------------------------
+-- Getting info from myinfo.
+----------------------------
+function UserInfo.ScanMyINFO(myinfo)
+  -- Some variables are unused here. They are locals, so I will postpone this cleanup. :)
+  local msg=""
+ -- The dcpp table needed to be copied here as I do not wanna introduce module dependencies.
+  local det=function(myinfo)
+    local dcpp=
+    {
+      ["<oDC"]={"oDC","V:(%d+.%d+)"},
+      ["<o%d+.%d+"]={"oDC","<o(%d+%.%d+)"},
+      ["reverseconnect.sf.net"]={"ReverseConnect","V:(0.%d+)"},
+      ["www.RevConnect.com"]={"ReverseConnect","V:(0.%d+)"},
+      ["<DCDM"]={"DCDM++","<DCDM%s+(0.%d+)"},
+      ["<RMDC++"]={"rmDC++","V:(0.%d+)"},
+      ["<DC@fe++"]={"DC@fe++","V:(0.%d+)"},
+      ["MS++V"]={"MS++V","V:(0.%d+)"},
+      ["<DC:PRO"]={"DC:PRO","V:([^,]+)."},
+      ["zDC++"]={"zDC++","V:(0.%d+)"},
+      ["<StrgDC++"]={"StrongDC++","V:([^,]+)."},
+      ["<.P>"]={".PhantomDC++","V:(0.%d+)"},
+      ["<CDM"]={"DC++k CDM","<CDM%s+(%d+.%d+)"},
+      ["<iDC"]={"iDC++","V:(0.%d+)"},
+      ["v%["]={"neXtDC++","V:(0.%d+)"},
+      ["[BL]:"]={"BCDC++","V:(0.%d+)"},
+      ["%[%d+%s*sl%]"]={"BCDC++","V:(0.%d+)"},
+      ["%[%d+[kM]%]"]={"BCDC++","V:(0.%d+)"},
+      ["V:%[Sasser.+"]={"Sasser","Sasser%s+(0.%d+)"},
+      ["<So.eR++"]={"SoßeR++","%[(0.%d+)"},
+      ["<LDC++"]={"LDC++","V:(0.%d+)"},
+      ["<PWDC++"]={"PeerWebDC","V:(0.%d+)"},
+      ["%<%<%<sababadcpp%.6x%.to%>%>%>"]={"SababaDC++","V:(0.%d+)"},
+      ["<Z++"]={"Zion++","V:(%d+.%d+)"},
+    }
+    local _,_,clienttype,version
+    if string.find(myinfo,"<DCGUI") then 
+      clienttype="DCGUI"
+      _,_, version = string.find(myinfo,"V:0.(%d+.%d+)")
+      return clienttype, version
+    elseif string.find(myinfo,"<%S+%s+V:%d+.%d+,M:") then
+      for a,b in dcpp do
+        if string.find(myinfo,a) then
+          clienttype=b[1]
+          _,_,version=string.find(myinfo,b[2])
+          break
+        else
+          clienttype = "DC++" 
+          _,_,version=string.find(myinfo,"V:(0.%d+)")
+        end
+      end
+    end; return clienttype, version
+  end 
+  local scanmyinfo=function(myinfo)
+    local _,_,Hubs,Slots,speed = string.find(myinfo, "H:([^,]+),S:(%d+).*>$ $([^$]+)[^$]%$")
+    local Guest,Reg,OP,slots,hubs,ratio
+    local _,_,limit1=string.find(myinfo,"[BLU]:(%d+)")
+    local _,_,limit2 = string.find(myinfo,"F:%d+/(%d+)")
+    local _,_,temp = string.find(myinfo, "$(%d+)%$")
+    if tonumber (Hubs) then
+      if Hubs=="0" then
+        Guest,Reg,OP= "0", "1" , "0"
+      else
+        Guest,Reg,OP=  Hubs, "0", "0"
+      end
+    else
+      _,_, Guest,Reg,OP = string.find(Hubs,"(%d+)/(%d+)/(%d+)")
+    end
+    if ophubscount==1 then
+      hubs = tonumber(Guest)+tonumber(Reg)+tonumber(OP)
+      slots= tonumber(Slots)
+      ratio = slots/hubs
+    else
+      hubs = tonumber(Guest)+tonumber(Reg)
+      slots=tonumber(Slots)
+      if hubs==0 then
+        ratio=slots
+      else
+        ratio=slots/hubs
+      end
+    end
+    return hubs,slots,Guest,Reg,OP,speed,limit1 or limit2 or nil,Maxslotsforconn,Ratioforconn,Maxhubsforconn,minlimitforconn,ratio,tonumber(temp)
+  end
+  local gm=function(myinfo)
+    local tofind={["M:A"]="Active",["M:P"]="Passive",["M:[S5]"]="Socks5"}
+    local val
+    for a,b in tofind do
+      if string.find(myinfo,a) then
+        val=b
+        break
+      end
+    end
+    val=val or "unknown"
+    return val
+  end
+  local client,version=det(myinfo)
+  if client then
+    local _,slots,Guest,Reg,OP,speed,limit,_,_,_,_,_,Share=scanmyinfo(myinfo)
+    local hubs=tonumber(Guest)+tonumber(Reg)+tonumber(OP)
+    local ratio=slots/hubs
+    msg=msg.."Connection type: "..speed.."\r\n"..
+    "Mode: "..gm(myinfo).."\r\n"
+    local v,u=bytestoh(Share)
+    msg=msg.."Shared: "..v.." "..u.."\r\n"..
+    "Total hubs: "..hubs.."\r\n"..
+    "Hubs as guest: "..Guest.."\r\n"..
+    "Hubs as registered user: "..Reg.."\r\n"..
+    "Hubs as operator: "..OP.."\r\n"..
+    "Number of slots: "..slots.."\r\n"..
+    "Slot/hub ratio: "..ratio.."\r\n"
+    if limit then
+      msg=msg.."Bandwidth limiting: "..limit.." kB/s.\r\n"
+    else
+      msg=msg.."Bandwidth limiting: N/A.\r\n"
+    end
+    local _,_,tag=string.find(myinfo,"(%b<>)%$ %$")
+    msg=msg.."Client type: "..client.."\r\n"..
+    "Client version: "..version.."\r\n"..
+    "Tag: "..tag.."\r\n"
+  else
+    msg=msg.."Missing/invalid tag. I cannot give proper info on it.\r\n"
+  end
+  return msg
+end
+
+function UserInfo.Save()
+  UserInfo.Elements=0
+  local files=
+    {
+      ["lastseen.dat"]={},
+      ["ips.dat"]={},
+      ["myinfo.dat"]={},
+      ["uptime.dat"]={},
+    }
+  local cors=
+    {
+      ["lastseen.dat"]=coroutine.create(function(f,b) f:write(table.concat(b)) f:close() end),
+      ["ips.dat"]=coroutine.create(function(f,b) f:write(table.concat(b)) f:close() end),
+      ["myinfo.dat"]=coroutine.create(function(f,b) f:write(table.concat(b)) f:close() end),
+      ["uptime.dat"]=coroutine.create(function(f,b) f:write(table.concat(b)) f:close() end),
+    }
+  for a,b in pairs(UserInfo.Data) do
+    if b.ip and b.myinfo and b.seen and b.uptime then
+      UserInfo.Elements=UserInfo.Elements+1
+      table.insert(files["ips.dat"],a.."|"..b.ip.."\n")
+      table.insert(files["myinfo.dat"],a.."|"..b.myinfo.."\n")
+      table.insert(files["lastseen.dat"],a.."|"..b.seen.."\n")
+      table.insert(files["uptime.dat"],a.."|"..b.uptime.."\n")
+    else
+--       local tbl={[1]={"ip",b.ip}, [2]={"myi",b.myinfo}, [3]={"seen",b.seen}, [4]={"upt",b.uptime}}
+--       for a,b in tbl do
+-- 	if not b[2] then
+-- 	  SendToAll("err","invalid: "..b[1])
+-- 	end
+--       end
+    end
+  end
+  for a,b in pairs(files) do
+    local f=io.open("lawmaker/userinfo/"..a,"w+")
+    coroutine.resume(cors[a],f,b)
+  end
+end
+
+function UserInfo.Load()
+    local cont=
+    {
+      "lastseen.dat",
+      "myinfo.dat",
+      "uptime.dat",
+      "ips.dat", -- may fail so last
+      }
+    local cnt=
+      {
+	["lastseen.dat"]=coroutine.create(function(f)
+                            for line in f:lines() do
+                              local _,_,nick,info=string.find(line,"(%S+)%|(.+)")
+                              if nick then
+                                UserInfo.Data[nick]=UserInfo.Data[nick] or {}
+                                UserInfo.Data[nick].seen=info
+                              end
+                            end
+                            f:close()
+                          end),
+	["ips.dat"]=coroutine.create(function(f)
+                      for line in f:lines() do
+                        local _,_,nick,info=string.find(line,"(%S+)%|(.+)")
+                        if nick then
+                          UserInfo.Data[nick].ip=info
+                          local decip=UserInfo.CalcIP(info)
+                          if decip then
+                            UserInfo.IPTable[decip]=UserInfo.IPTable[decip] or {}
+                            if not UserInfo.IPTable[decip][nick] then
+                              UserInfo.IPTable[decip][nick]=1
+                            end
+                          end
+                        end
+                      end
+                      f:close()
+                    end),
+	["myinfo.dat"]=	coroutine.create(function(f)
+                          for line in f:lines() do
+                            local _,_,nick,info=string.find(line,"(%S+)%|(.+)")
+                            if nick then
+                              UserInfo.Data[nick].myinfo=info
+                            end
+                          end
+                          f:close()
+                        end),
+	["uptime.dat"]=	coroutine.create(function(f)
+                          for line in f:lines() do
+                            local _,_,nick,info=string.find(line,"(%S+)%|(.+)")
+                            if nick then
+                              UserInfo.Data[nick].uptime=tonumber(info)
+                            end
+                          end
+                          f:close()
+			end),
+      }
+  local nick
+  for k=1,table.getn(cont) do
+    local f=io.open("lawmaker/userinfo/"..cont[k],"r")
+    if f then
+      nick=coroutine.resume(cnt[cont[k]],f)--(nick,info)
+    end
+  end
+  for a,b in UserInfo.Data do 
+    -- remove users with incomplete data, need a better method for this.
+    -- probably getting rid of coroutines or constant checking
+    if not (b.ip or b.myinfo or b.seen or b.uptime) then
+      UserInfo.Data[a]=nil
+      if a.ip then UserInfo.IPTable[UserInfo.CalcIP(info)][a]=nil end
+    end
+  end
+end
+
+
+function UserInfo.Clean()
+  local x=os.clock()
+  SendToAll(Bot.name, "Userinfo database prune process started. This might take long, so please be patient!")
+  local juliannow = JulianDate(SplitTimeString(os.date("%Y. %m. %d. %X")))
+  local oldest = UserInfo.Weeks*7*1440
+  local Count2,Count = 0,0
+  for a,b in UserInfo.Data do
+    Count = Count+1
+    local julianu=JulianDate(SplitTimeString(b.seen))
+    local diff=juliannow-julianu
+    local hours, mins= math.floor(diff) * 24 + math.floor(frac(diff) * 24), math.floor(frac(frac(diff)*24)*60)
+    local usrtime=hours*60+mins
+    if (usrtime) > oldest then
+      Count2 = Count2 +1
+    UserInfo.Data[a]=nil
+    else
+      UserInfo.Data[a].seen = os.date("%Y. %m. %d. %X")
+    end
+  end
+  if Count2 > 0 then
+    UserInfo.Save()
+    UserInfo.Data=nil
+    Clear()
+    UserInfo.Data={}
+    UserInfo.Load()
+  end
+  SendToAll(Bot.name,"This cleanup took "..os.clock()-x.." seconds, during that "..Count.." items were processed, and "..Count2.." were deleted.")
+end
+
+function UserInfo.SeenUser(user, data,env)
+  local _,_,args = string.find(data, "%b<>%s%S+%s(.+)")
+  if not args then
+    SendTxt(user,env,Bot.name, "Syntax error, can't read your mind, please tell me wich user you wanna check! :-D")
+  else
+    string.gsub(args,"(%S+)",function(who)
+      if UserInfo.Data[who] then
+        SendTxt(user,env,Bot.name,who.." was last seen on: "..UserInfo.Data[who].seen)
+      else
+        SendTxt(user,env,Bot.name,who.." is an unknown user.")
+      end
+    end)
+  end
+end
+
+function UserInfo.CleanRegisteredUsers()
+  SendToAll(Bot.name, "Account prune has started. Every registered user' who hasn't been in the hub for "..UserInfo.Weeks.." weeks will be unregistered.")
+  SendToAll(Bot.name, "Contact the operators if you're gonna be offline for a period longer than that!")
+  local UsersTable=UserInfo.LoadRegisteredUsers()
+  local juliannow = JulianDate(SplitTimeString(os.date("%Y. %m. %d. %X")))
+  local oldest = UserInfo.Weeks*7*1440
+  local Count3,Count2,Count = 0,0,0
+  for a,b in UsersTable do
+    Count = Count+1
+    if UserInfo.Data[a] then
+      if not NoClean[a] then
+        local julianu=JulianDate(SplitTimeString(UserInfo.Data[a].seen))
+        local diff=juliannow-julianu
+        local hours, mins= math.floor(diff) * 24 + math.floor(frac(diff) * 24), math.floor(frac(frac(diff)*24)*60)
+        local usrtime=hours*60+mins
+        if (usrtime) > oldest then
+          Count2 = Count2 +1
+          UserInfo.Data[a]=nil
+          DelRegUser(a)
+        end
+      else
+        Count3=Count3+1
+      end
+    else
+      UserInfo.Data[a]={ip="0.0.0.0.0",seen=os.date("%Y. %m. %d. %X"),myinfo="$MyINFO $ALL "..a.." <++ V:0.674,M:A,H:0/1/0,S:10>$ $DSL$ $0$|",uptime=0}
+    end
+  end
+  if Count ~= 0 then
+    SendToAll(Bot.name,Count.." users have been checked, "..Count2.." of them have just been unregistered, "..Count3.." were included in the anti-clean list.")
+  end
+  UserInfo.Save()
+  UserInfo.Data=nil
+  Clear()
+  UserInfo.Data={}
+  UserInfo.Load()
+end
+
+function UserInfo.NoCleanUser(user,data,env)
+  local UsersTable=UserInfo.LoadRegisteredUsers()
+  local s,e,addrem, who = string.find(data, "%b<>%s+%S+%s+(%S+)%s+(%S+)")
+  if (who or addrem) == nil then
+    SendTxt(user,env,Bot.name,"RTFM ;). it's !noclean <add/remove> <nick>")
+  elseif UsersTable[who] then
+    if addrem == "add" then
+      if NoClean[who] then
+        SendTxt(user,env,Bot.name,who.." is already on the noclean list.")
+      else
+        NoClean[who] = 1
+        SendTxt(user,env,Bot.name,who.." is added to the noclean list and won't be cleaned.")
+        savefile(NoClean,"lawmaker/components/hubstats_info/noclean.lst")
+      end
+    elseif addrem == "remove" then
+      if NoClean[who] then
+        NoClean[who] = nil
+	SendTxt(user,env,Bot.name,who.." is removed from the noclean list.")
+	savefile(NoClean,"lawmaker/components/metafiles/noclean.lst")
+      else
+	SendTxt(user,env,Bot.name,who.." was not on the noclean list.")
+      end
+    else
+      SendTxt(user,env,Bot.name,"RTFM ;). Ut's !noclean <add/remove> <nick>")
+    end
+  else
+    SendTxt(user,env,Bot.name,who.." isn't a registered user, or his/her class is not cleaned by default.")
+  end
+end
+
+
+function UserInfo.ShowNoClean(user,data,env)
+  local lines =  {}
+  local info = "\r\n\r\n"
+  info = info.." Here are the users who won't be cleaned\r\n"
+  info = info.."=====================================\r\n"
+  for a,b in NoClean do
+    table.insert(lines, a)
+  end
+  table.sort(lines)
+  if table.getn(lines)==0 then
+    info=info.."No users.\r\n"
+  else
+    for i=1,table.getn(lines) do
+      info = info.."  "..lines[i].."\r\n"
+    end
+  end
+  info = info.."=====================================\r\n"
+  user:SendPM(Bot.name, info)
+  Clear()
+end
+
+function UserInfo.LoadRegisteredUsers()
+  local UsersTable = {}
+    for _,obj in frmHub:GetRegisteredUsers() do
+      if userlevels[obj.iProfile]<=UserInfo.Levels.Clean and obj.iProfile ~=0 then
+        UsersTable[obj.sNick]=1 -- adds the folks to the table who will get cleaned
+      end
+    end
+  return UsersTable
+end
+
+function UserInfo.Append(user)
+  local cnt={"uptime.dat","lastseen.dat","ips.dat","myinfo.dat",} -- This order is important.
+  local cont=
+    {
+      ["lastseen.dat"]=coroutine.create(function(user,file,now)
+			  UserInfo.Data[user.sName].seen=now
+			  local f=io.open("lawmaker/userinfo/"..file,"a+")
+			  f:write(user.sName.."|"..UserInfo.Data[user.sName].seen.."\n")
+			  f:close()
+			end),
+      ["ips.dat"]=coroutine.create(function(user,file)
+		    UserInfo.Data[user.sName].ip=user.sIP
+		    local decip=UserInfo.CalcIP(user.sIP)
+		    UserInfo.IPTable[decip]=UserInfo.IPTable[decip] or {}
+		    if not UserInfo.IPTable[decip][user.sName] then
+		      UserInfo.IPTable[decip][user.sName]=1
+		    end
+		    local f=io.open("lawmaker/userinfo/"..file,"a+")
+		    f:write(user.sName.."|"..UserInfo.Data[user.sName].ip.."\n")
+		    f:close()
+		  end),
+      ["myinfo.dat"]=coroutine.create(function(user,file)
+			UserInfo.Data[user.sName].myinfo=user.sMyInfoString
+			local f=io.open("lawmaker/userinfo/"..file,"a+")
+			f:write(user.sName.."|"..UserInfo.Data[user.sName].myinfo.."\n")
+			f:close()
+		      end),
+      ["uptime.dat"]=coroutine.create(function(user,file,now)
+			UserInfo.Data[user.sName].seen=UserInfo.Data[user.sName].seen or now
+			UserInfo.Data[user.sName].uptime=UserInfo.Data[user.sName].uptime or 0
+			local diff = JulianDate(SplitTimeString(now))-JulianDate(SplitTimeString(UserInfo.Data[user.sName].seen))
+			local hours, mins= math.floor(diff) * 24 + math.floor(frac(diff) * 24), math.floor(frac(frac(diff)*24)*60)
+			local usrtime=hours*60+mins
+			UserInfo.Data[user.sName].uptime=UserInfo.Data[user.sName].uptime+usrtime
+			local f=io.open("lawmaker/userinfo/"..file,"a+")
+			f:write(user.sName.."|"..UserInfo.Data[user.sName].uptime.."\n")
+			f:close()
+		      end),
+    }
+  UserInfo.Data[user.sName]=UserInfo.Data[user.sName] or {}
+  local now=os.date("%Y. %m. %d. %X") -- to avoid sync errors, I made only 1 call
+  for file,cor in cont do
+    coroutine.resume(cor,user,file,now)
+  end
+end
+
+function UserInfo.MyIP(user,data,env)
+  SendTxt(user,env,Bot.name,"Your IP is "..user.sIP)
+end
+
+function UserInfo.Size(user,data)
+  local tmp=
+  {
+    ["lawmaker/userinfo/ips.dat"]={"IP database: ",0},
+    ["lawmaker/userinfo/myinfo.dat"]={"MyINFO database: ",0},
+    ["lawmaker/userinfo/lastseen.dat"]={"Last seen database: ",0},
+    ["lawmaker/userinfo/uptime.dat"]={"Uptime database: ",0},
+  }
+  local msg="\r\nUserinfo database consists of "..UserInfo.Elements.." items."..
+  "\r\n=============================================================\r\nFile sizes are:\r\n"..string.rep("-",80).."\r\n"
+   for a,b in tmp do
+    local f=io.open(a,"r")
+    if f then
+      b[2]=f:seek("end")
+    end
+  end
+  local totalsize=0
+  for a,b in tmp do
+    local v,u=bytestoh(b[2])
+    msg=msg..b[1]..v.." "..u.."\r\n"
+    totalsize=totalsize+b[2]
+  end
+  local v,u=bytestoh(totalsize)
+  msg=msg..string.rep("-",80).."\r\nTotal size: "..v.." "..u.."."
+  user:SendPM(Bot.name,msg)
+end
+
+function UserInfo.CalcIP(ip)
+  local err
+  local c,decip=1,0
+  for bit in string.gfind(ip,"(%d+)") do
+    if not tonumber(bit) or tonumber(bit) > 255 then
+      err=true
+      break
+    else
+      decip=decip+(tonumber(bit)*c)
+      c=c*256
+    end
+  end
+  if not err then
+    return decip
+  end
+end
+
+function UserInfo.ReCalcIP(ip)
+  local tmp
+  pt1=math.floor((ip)/16777216)
+  tmp=math.mod((ip),16777216)
+  pt2=math.floor((tmp)/65536)
+  tmp=math.mod(tmp,65536)
+  pt3=math.floor((tmp)/256)
+  pt4=math.mod(tmp,256)
+  return (pt4.."."..pt3.."."..pt2.."."..pt1)
+end
+
+function UserInfo.IPInfo(user,data,env,bool)
+  local ip1,ip2
+  if bool then
+    _,_,ip1=string.find(data,"%b<>%s+%S+%s+(%d+%.%d+%.%d+%.%d+)")
+  else
+    _,_,ip1,ip2=string.find(data,"%b<>%s+%S+%s+(%d+%.%d+%.%d+%.%d+)%-(%d+%.%d+%.%d+%.%d+)")
+  end
+  if ip1 then
+    if ip2 then
+      local decip1,decip2=UserInfo.CalcIP(ip1),UserInfo.CalcIP(ip2)
+      if decip1 and decip2 and decip1 < decip2 then
+        local threads={}
+	local msg="\r\nUsername(s) belonging to range "..ip1.."-"..ip2.." are:\r\n\r\n"
+	for i=decip1,decip2 do
+	  if UserInfo.IPTable[i] then
+            table.insert(threads,{coroutine.create(function(i)
+              msg=UserInfo.ReCalcIP(i).."\r\n"
+              for a,b in UserInfo.IPTable[i] do
+                msg=msg.."\t"..a.."\r\n"
+              end
+              msg=msg.."\t"..string.rep("-",45).."\r\n"
+              if GetBannedItemName(UserInfo.ReCalcIP(i)) then
+                msg=msg..string.rep("=",45).."\r\n\tIP is banned, with nick: "..GetBannedItemName(UserInfo.ReCalcIP(i)).."\r\n"
+              else
+                if GetTempBannedItemName(UserInfo.ReCalcIP(i)) then
+                  msg=msg..string.rep("=",45).."\r\n\tIP is timebanned, with nick: "..GetTempBannedItemName(UserInfo.ReCalcIP(i)).." and remaining time is "..GetTempBannedItemTime(UserInfo.ReCalcIP(i)).." minutes.\r\n"
+                end
+              end
+              return msg
+            end),i})
+          end
+	end
+        local function go()
+          local status,m,msg=nil,nil,""
+          while true do
+            if table.getn(threads)==0 then return msg end
+            for a=1,table.getn(threads) do
+              local b=threads[a]
+              status,m = coroutine.resume(b[1],b[2])
+              if not status then    -- thread finished its task?
+                table.remove(threads,a)
+                break
+              else
+                msg=msg..m
+              end
+            end
+          end
+        end
+        msg=msg..go ()..string.rep("=",45).."\r\n\r\n"
+	user:SendPM(Bot.name,(msg))
+      else
+	SendTxt(user,env,Bot.name,"Some or both IPs, or the range are invalid, please check!")
+      end
+    else
+      local msg="\r\nUsername(s) belonging to IP "..ip1.." are:\r\n\r\n"
+      local decip=UserInfo.CalcIP(ip1)
+      if decip then
+	if UserInfo.IPTable[decip] then
+	  for a,b in UserInfo.IPTable[decip] do
+	    msg=msg..a.."\r\n"
+	  end
+	  if GetBannedItemName(ip1) then
+	    msg=msg.."\r\nIP is banned, with nick: "..GetBannedItemName(ip1)
+	  else
+	    if GetTempBannedItemName(ip1) then
+	      msg=msg.."\r\nIP is timebanned, with nick: "..GetTempBannedItemName(ip1).." and remaining time is "..GetTempBannedItemTime(ip1).." minutes."
+	    end
+	  end
+	  user:SendPM(Bot.name,(msg))
+	else
+	  SendTxt(user,env,Bot.name,"Unknown IP: "..ip1)
+	end
+      else
+	SendTxt(user,env,Bot.name,"Invalid IP!")
+      end
+    end
+  else
+    SendTxt(user,env,Bot.name,"Incorrect usage, see !help for more info!")
+  end
+end
+
+UserInfo.Main=function()
+  NoClean=maketable("lawmaker/components/metafiles/noclean.lst")
+  CleanDay = os.date("%Y. %m. %d.")
+  UserInfo.Data=nil
+  Clear()
+  UserInfo.Data={}
+  UserInfo.Load()
+  UserInfo.Save()
+--   UserInfo.Clean()
+end
+
+UserInfo.MyINFOArrival=function(user,data)
+  if CleanDay ~= os.date("%Y. %m. %d.") then -- user cleaning trigger, works as a timer without a timer
+    CleanDay = os.date("%Y. %m. %d.")
+    UserInfo.Clean()
+    if UserInfo.AutoClean == 1 then
+      UserInfo.CleanRegisteredUsers()
+    end
+  end
+  if user.bConnected then
+    UserInfo.Append(user)
+  end
+end
+
+UserInfo.ChatArrival=function(user,data)
+  if CleanDay ~= os.date("%Y. %m. %d.") then -- user cleaning trigger, works as a timer without a timer (plop)
+    CleanDay = os.date("%Y. %m. %d.")
+    UserInfo.Clean()
+    if UserInfo.AutoClean == 1 then
+      UserInfo.CleanRegisteredUsers()
+    end
+  end
+end
+
+UserInfo.UserDisconnected=function(user,data)
+  if CleanDay ~= os.date("%Y. %m. %d.") then
+    CleanDay = os.date("%Y. %m. %d.")
+    UserInfo.Clean()
+    if UserInfo.AutoClean == 1 then
+      UserInfo.CleanRegisteredUsers()
+    end
+  end
+  if UserInfo.Data[user.sName] then
+    UserInfo.Append(user)
+  end
+end
+
+RegCmd("getinfo",UserInfo.UserInfo,{},UserInfo.Levels.UserInfo,"<nick>\t\t\t\t\tShows information on the given nick.")
+RegCmd("myip",UserInfo.MyIP,{},UserInfo.Levels.MyIP,"\t\t\t\t\t\tShows your IP address.")
+RegCmd("seen",UserInfo.SeenUser,{},UserInfo.Levels.Seen,"<nick>\t\t\t\t\tShows the time user was last seen in the hub.")
+RegCmd("cleanusers",UserInfo.CleanRegisteredUsers,{},UserInfo.Levels.CleanRegisteredUsers,"\t\t\t\t\tCalls the cleaner, every registered user who hasn't been in the hub for "..UserInfo.Weeks.." weeks will be unregistered.")
+RegCmd("shownoclean",UserInfo.ShowNoClean,{},UserInfo.Levels.ShowNoClean,"\t\t\t\t\tShows the list of the users who won't be cleaned.")
+RegCmd("noclean",UserInfo.NoCleanUser,{},UserInfo.Levels.NoClean,"<nick> <add/remove>\t\t\tAdds a user to/removes a user from the no clean list. User must be registered.")
+RegCmd("userinfosize",UserInfo.Size,{},UserInfo.Levels.Size,"\t\t\t\t\t\tShows size of userinfo database.")
+RegCmd("ipinfo",UserInfo.IPInfo,{true},UserInfo.Levels.IPInfo,"\t\t\t\t\t\tShows nick(s) belonging to a given IP.")
+RegCmd("iprangeinfo",UserInfo.IPInfo,{},UserInfo.Levels.IPRangeInfo,"\t\t\t\t\t\tShows nick(s) belonging to a given IP range.")
+RegFunc("main","load userinfo",UserInfo.Main,{})
+RegFunc("nuc","add/refresh user in database",UserInfo.Append,{})
+RegFunc("userdisc","append userinfo on disconnect",UserInfo.UserDisconnected,{})
+RegFunc("myinfo","append userinfo on myinfo",UserInfo.MyINFOArrival,{})
+RegFunc("chatarr","DataArrival replacement.",UserInfo.ChatArrival,{})
+RegRC(UserInfo.Levels.UserInfo,"1 2","Info\\Userinfo\\Show info on USER","!getinfo %[nick]")
+RegRC(UserInfo.Levels.NoCleanUser,"1 2","Registry\\Cleaning\\Add USER to NoClean list","!noclean %[nick]")
+RegRC(UserInfo.Levels.NoCleanUser,"1 3","Registry\\Cleaning\\Add a user to the NoClean list...","!noclean %[line:Nick:]")
+RegRC(UserInfo.Levels.CleanRegisteredUsers,"1 3","Registry\\Cleaning\\Call the cleaner now","!cleanusers")
+RegRC(UserInfo.Levels.ShowNoClean,"1 3","Registry\\Cleaning\\Show the NoClean list","!shownoclean")
+RegRC(UserInfo.Levels.Size,"1 3","Info\\Userinfo\\Show the size of the database","!userinfosize")
+RegRC(UserInfo.Levels.Seen,"1 3","Info\\Userinfo\\Show when a user was last seen...","!seen %[line:Nick:]")
+RegRC(UserInfo.Levels.UserInfo,"1 3","Info\\Userinfo\\Show info on an offline user...","!getinfo %[line:Nick:]")
+RegRC(UserInfo.Levels.IPInfo,"1 3","Info\\Userinfo\\Show info on an IP...","!ipinfo %[line:IP:]")
+RegRC(UserInfo.Levels.IPRangeInfo,"1 3","Info\\Userinfo\\Show info on an IP range...","!iprangeinfo %[line:Start IP:]-%[line:End IP:]")

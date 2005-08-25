@@ -1,0 +1,102 @@
+ShowText={Timer=0}
+--[[
+Showtext plugin for LawMaker by bastya_elvtars
+Some code from Texter by plop & chilla
+Text files MUST reside in scripts/lawmaker/text folder!!!
+
+Generic config format:
+
+    ["command"]={
+                  level=1,
+                  file="anyfile.txt",
+                  help="help text",
+                },
+                  
+                  
+The commas are very important. Also it is important to understand that commands have to 
+be specified *without* prefix. (otherwise 2 prefixes are needed in main: !!reg :-P)
+--]]
+
+
+
+ShowText.Commands=
+  {
+    ["rules"]={
+                Level=1,
+                File="rules.txt", -- all should be in lawmaker/text folder
+                Help="See the rules",
+              },
+    ["hublists"]= {
+                    Level=1,
+                    File="hublists.txt",
+                    Help="Show hublists",
+                  },
+    ["dcpphelp"]= {
+                    Level=1,
+                    File="dcpphelp.txt",
+                    Help="Show help on DC++",
+                  },
+    ["faq"]={
+              Level=1,
+              File="faq.txt",
+              Help="Show the FAQ",
+            },
+    ["reg"]=  {  
+                Level=1,
+                File="reg.txt",
+                Help="Show info on registering.",
+              },
+  }
+
+
+
+--[[
+Format below:
+
+["HH:MM"]="filename.txt",
+
+Can even be 18:33 if this is your perversion :)
+Does not have to be a textfile reachable by command as well. :)
+A textfile can be bound to any number of timestamps.
+Just comment a line if you do not need it any longer, or rename the file to a non-existant.
+Or, delete the file (if a file does not exist, there are gonna be no errors).
+]]
+
+ShowText.HubAD=
+  {
+    ["18:00"]="blabla.txt",
+    ["22:33"]="thx.txt",
+  }
+
+function  ShowText.ShowTextFile(user,data,env,file)
+  local f=io.open("lawmaker/text/"..file,"r")
+  if f then
+    local contents = string.gsub(f:read("*a"),string.char(10), "\r\n")
+    user:SendPM(Bot.name,"\r\n"..contents.."\r\n")
+    f:close()
+  else
+    SendTxt(user,env,Bot.name,"The file \""..file.."\"does not exist. Please speak to an operator.") 
+  end
+end
+
+function ShowText.OnTimer()
+  local now=os.date("%H:%M")
+  if ShowText.Timer~=60 then
+    ShowText.Timer=ShowText.Timer+1
+  else
+    if ShowText.HubAD[now] then
+      local f=io.open("lawmaker/text/"..ShowText.HubAD[now],"r")
+      if f then
+	local contents = string.gsub(f:read("*a"),string.char(10), "\r\n")
+	SendToAll(Bot.name,"\r\n"..contents.."\r\n")
+      end
+    end
+    ShowText.Timer=0
+  end
+end
+
+for a,b in ShowText.Commands do
+  RegCmd(a,ShowText.ShowTextFile,{b.File},b.Level,"\t\t\t\t\t\t"..b.Help)
+  RegRC(b.Level,"1 3","Info\\"..b.Help,"!"..a)
+end
+RegFunc("ont","textshowing timer",ShowText.OnTimer,{})

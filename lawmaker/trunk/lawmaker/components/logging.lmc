@@ -1,0 +1,115 @@
+Logging={Levels={}}
+--[[
+LawMaker logging module.
+Cleans logs on request and searches for nicks.
+NOTE: I am unsure whether it works under Win9x/Me due to commandline folder management differences.
+Thx plop for posting a link to hide console window.
+]]
+
+-- clean logs
+Logging.Levels.CleanLogs=5
+
+-- search for usernames in logs.
+-- NOTE: in logs, usernames are always placed to line start.
+-- so it displays ONLY those.
+Logging.Levels.SearchLog=4
+
+-- in weeks, logs older than this will be cleaned with !cleanlogs
+-- NEW: can be overriden with command parameter (ie: !cleanlogs <maxage>)
+Logging.MaxAge=3 
+
+function Logging.Write(logfile,entry)
+  local f=io.open(logfile,"a+")
+  f:write(entry.."\n")
+  f:close()
+end
+
+function Logging.SearchLog(user,data,env)
+  local msg=""
+  local _,_,username=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  if username then
+    local logs=Logging.MakeLogList()
+    for i=1,table.getn(logs) do
+      local f=io.open("lawmaker/logs/"..logs[i],"r")
+      if f then
+	for line in f:lines() do
+	  local u
+	  if string.find(username,"%d+%.%d+%.%d+%.%d+") then
+	    _,_,u=string.find(line,"(%d+%.%d+%.%d+%.%d+)")
+	  else
+	    _,_,u=string.find(line,"^(%S+)")
+	  end
+	  if u==username then
+	    msg=msg.."\r\n"..logs[i].." ---> "..line
+	  end
+	end
+	f:close()
+      end
+    end
+    if msg~="" then
+      SendTxt(user,env,Bot.name,msg)
+    else
+      SendTxt(user,env,Bot.name,username.." was not found in the logs.")
+    end
+  else
+    SendTxt(user,env,Bot.name,"Please enter a username or an IP address!")
+  end
+end
+
+function Logging.MakeLogList()
+  local l={}
+  os.execute("wscript.exe \""..frmHub: GetPtokaXLocation().."scripts/lawmaker/invis.vbs\" \""..frmHub: GetPtokaXLocation().."scripts/lawmaker/components/getlogs.bat\"")
+  local f=io.open("lawmaker/components/metafiles/logs.lst","r")
+  if f then
+    for line in f:lines() do
+      table.insert (l,line)
+    end
+    f:close()
+  end
+  return l
+end
+
+function Logging.CleanLogs(user,data,env)
+  local _,_,logage=string.find(data,"%b<>%s+%S+%s+(%d+)")
+  if not logage then logage=Logging.MaxAge end
+  local juliannow = JulianDate(SplitTimeString(os.date("%Y. %m. %d. %X")))
+  local oldest = logage*7*1440
+  SendTxt(user,env,Bot.name,"Starting log cleaning. Every log older than " ..logage.." weeks will be deleted.")
+  local x=os.clock()
+  local count,count2=0,0
+  local logs=Logging.MakeLogList()
+  for i=1,table.getn(logs) do
+    count=count+1
+    local _,_,logdate=string.find(logs[i],"([^%_]+)")
+    local _,_,Y,M,D=string.find(logdate,"([^%-]+).([^%-]+).(%S+)")
+    local julianl=JulianDate(SplitTimeString(Y..". "..M..". "..D.." "..os.date("%X")))  -- here cant remember of the conversion
+    local diff=juliannow-julianl
+    local hours, mins= math.floor(diff) * 24 + math.floor(frac(diff) * 24), math.floor(frac(frac(diff)*24)*60)
+    local logtime=hours*60+mins
+    if logtime > oldest then
+      local success,err=os.remove(frmHub: GetPtokaXLocation().."scripts/lawmaker/logs/"..logs[i])
+      if success then
+        count2=count2+1
+      else
+        SendTxt(user,env,Bot.name,err)
+      end
+    end
+  end
+  if count2>0 then
+    SendTxt(user,env,Bot.name,count2.." logs deleted out of "..count.." in "..os.clock()-x.." seconds.")
+  else
+    SendTxt(user,env,Bot.name,"Damn, I checked "..count.." logs but none of them were older than "..logage.." weeks. It's good to make me work in vain, ain't it?")
+  end
+end
+
+function Logging.Main()
+  local f=io.open("lawmaker/components/getlogs.bat","w+")
+  f:write("dir \""..frmHub: GetPtokaXLocation().."scripts/lawmaker/logs\" /b /o:n > \""..frmHub: GetPtokaXLocation().."scripts/lawmaker/components/metafiles/logs.lst\"")
+  f:close()
+end
+
+RegFunc("main","making getlogs.bat",Logging.Main,{})
+RegCmd("cleanlogs",Logging.CleanLogs,{},Logging.Levels.CleanLogs,"<n>\t\t\t\t\tDeletes every log older than n weeks. if n is not specified, default value is "..Logging.MaxAge..".")
+RegCmd("searchlogs",Logging.SearchLog,{},Logging.Levels.SearchLog,"<nick>\t\t\t\t\tSearches for a nick or IP in the logs, and displays all relevant entries.")
+RegRC(Logging.Levels.CleanLogs,"1 3","Logs\\Prune...","!cleanlogs %[line:Max. age in weeks (Enter defaults to "..Logging.MaxAge.."):]")
+RegRC(Logging.Levels.SearchLog,"1 3","Logs\\Search...","!searchlogs %[line:IP/nick to find:]")

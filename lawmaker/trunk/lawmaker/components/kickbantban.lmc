@@ -1,0 +1,334 @@
+KickBanTBan={Levels={},KickNumbers={}}
+--[[
+Kick / ban / timeban module for LMCA.
+Bans on a certain amount of kicks, sends hubmail/webby on request.
+]]
+-- if 1, the builtin kick cannot be seen by anyone but you and the user involved :)
+KickBanTBan.BuiltInKickSilent=1
+
+-- set whether the kick have to be logged
+KickBanTBan.LogKicks=1 
+
+-- minutes, the temp ban on a kick
+KickBanTBan.KickTime=10 
+
+-- if user gets this amount of kicks, he gets banned for the time specified below
+KickBanTBan.MaxKick=3 
+
+--in hours, the temp ban which the user gets if he reaches the amount of kicks specified above
+KickBanTBan.MaxKickBan=24 
+
+-- kick a user
+KickBanTBan.Levels.KickUser=4
+
+-- silentkick or drop
+KickBanTBan.Levels.SilentKick=4
+
+-- ban a user, goes for banip and nickban as well
+KickBanTBan.Levels.Nuke=4
+
+
+-- temp ban a user
+KickBanTBan.Levels.TBan=4
+
+KickBanTBan.Levels.UnBan=4
+
+KickBanTBan.Levels.UnTBan=4
+
+KickBanTBan.Levels.ClearPermBan=5
+
+KickBanTBan.Levels.ClearTempBan=5
+
+KickBanTBan.Levels.GetBanList=5
+-----------
+function KickBanTBan.Kick(user,data,env,bool)
+  local _,_,nick = string.find(data,"%b<>%s+%S+%s+(%S+)")
+  local _,_,reason=string.find(data,"%b<>%s+%S+%s+%S+%s+(.+)")
+  local tail
+  if nick then
+    if nick==Bot.name then
+      SendTxt(user,env,Bot.name,"Dear "..user.sName.."! Don't you even try, cause I get angry... hmm... too late.")
+      user:Disconnect()
+      return 1
+    end
+    local usr=GetItemByName(nick)
+    if usr then
+      if not Immune or Immune.KickImmuned==1 or (Immune and not Immune.List[user.sName]) then
+	if userlevels[usr.iProfile] < userlevels[user.iProfile] then
+	  local kickrand,kicktoall,kicktoops,kicktime,kicktouser
+	  kicktoall=user.sName
+	  kicktouser="You are being kicked by "..user.sName
+	  kicktoops=usr.sName.." with IP "..usr.sIP.." has been kicked by "..user.sName.."."
+	  if RandomKicks and RandomKicks.OnOff==1 then
+	    kicktoall=kicktoall.." "..math.random(1,table.getn(RandomKicks.List)).." "..usr.sName
+	  else
+	    kicktoall=kicktoall.." has kicked "..usr.sName
+	  end
+	  if reason then
+	    tail=" because: "..reason
+	    kicktoall=kicktoall.." because: "..reason.."."
+	    kicktouser=kicktouser.." because: "..reason.."."
+	  else
+	    tail=""
+	    kicktoall=kicktoall.."."
+	    kicktouser=kicktouser.."."
+	  end
+	  if not KickBanTBan.KickNumbers.Table[usr.sName] then 
+	    KickBanTBan.KickNumbers.Table[usr.sName]=1
+	    kicktime=KickBanTBan.KickTime
+	  else
+	    if KickBanTBan.KickNumbers.Table[usr.sName] >= KickBanTBan.MaxKick then
+	      KickBanTBan.KickNumbers.Table[usr.sName]=nil
+	      kicktime=KickBanTBan.MaxKickBan*60
+	      kicktoall=kicktoall.." User reached "..KickBanTBan.MaxKick.." kicks and is now banned for "..KickBanTBan.MaxKickBan.." hours."
+	      kicktoops=kicktoops.." User has reached "..KickBanTBan.MaxKick.." kicks and is now banned for "..KickBanTBan.MaxKickBan.." hours."
+	      kicktouser=kicktouser.." You have reached "..KickBanTBan.MaxKick.." kicks and are now banned for "..KickBanTBan.MaxKickBan.." hours."
+	      if Logging then Logging.Write("lawmaker/logs/"..os.date("%Y-%m-%d_").."kicklog.log",usr.sName.." (with IP "..usr.sIP.." - "..os.date("%H:%M").." - timebanned because: kicked "..KickBanTBan.MaxKick.." by "..Bot.Name) end
+	    else
+	      KickBanTBan.KickNumbers.Table[usr.sName]=KickBanTBan.KickNumbers.Table[usr.sName]+1
+	      kicktime=KickBanTBan.KickTime
+	    end
+	  end
+	  if not bool then SendToAll(Bot.name,kicktoall) end
+	  SendToOps(Bot.name,kicktoops)
+	  usr:SendPM(Bot.name,kicktouser.." "..aah())
+	  usr:TimeBan(kicktime)
+	  if KickBanTBan.LogKicks==1 then 
+	    if Logging then Logging.Write("lawmaker/logs/"..os.date("%Y-%m-%d_").."kicklog.log",usr.sName.." (with IP "..usr.sIP.." - "..os.date("%H:%M").." - kicked"..tail.." by "..user.sName) end
+	  end  
+	else
+	  SendTxt(user,env,Bot.name,"You can only kick users with weaker profile than yours. As my profile is the strongest...")
+	  user:Disconnect()
+	end
+      elseif Immune and Immune.KickImmuned==0 and Immune.List[nick] then
+	SendTxt(user,env,Bot.name,nick.." is immuned, and protection of such users against kick is off.")
+      end
+    else
+      SendTxt(user,env,Bot.name,nick.." is offline.")
+    end
+  else
+    SendTxt(user,env,Bot.name,"Please specify at least a nick! :P")
+  end
+end
+
+function KickBanTBan.Ban(user,data,env,meth)
+  local nick,days,hours,mins,reason
+  if meth=="perm" then
+    _,_,nick=string.find(data,"%b<>%s+%S+%s+(%S+)")
+    _,_,reason=string.find(data,"%b<>%s+%S+%s+%S+%s+(%.+)")
+  else
+    _,_,nick,days,hours,mins=string.find(data,"%b<>%s+%S+%s+(%S+)%s+(%d+)%s+(%d+)%s+(%d+)")
+    _,_,reason=string.find(data,"%b<>%s+%S+%s+%S+%s+%d+%s+%d+%s+%d+%s+(.+)")
+  end
+  if nick then
+    if nick==Bot.name then
+      SendTxt(user,env,Bot.name,"Dear "..user.sName.."! Don't you even try, cause you don't know how i behave when i am anxious - wanna know?")
+      user:Disconnect()
+      return 1
+    else
+      local usr=GetItemByName(nick)
+      if usr then
+	if userlevels[usr.iProfile] >= userlevels[user.iProfile] then
+	  SendTxt(user,env,Bot.name,"Dear "..user.sName.."! Operators should not kick/ban operators. I am a bot, not an operator, so...")
+	  user:Disconnect()
+	else
+	  local tail
+	  if reason then
+	    tail=" because: "..reason
+	  else
+	    tail=""
+	  end
+	  if meth=="perm" then
+	    SendToOps(Bot.name,usr.sName.." (IP: "..usr.sIP..") has been banned and kicked by "..user.sName..tail..".")
+	    SendToAll(Bot.name,usr.sName.." has been banned by "..user.sName.." "..tail..aah())
+	    usr:SendPM(Bot.name,"You are being banned by "..user.sName..tail..aah())
+	    if Logging then Logging.Write("lawmaker/logs/"..os.date("%Y-%m-%d_").."banlog.log",usr.sName.." (with IP "..usr.sIP.." - "..os.date("%H:%M").." - banned"..tail.." by "..user.sName) end
+	    --usr:NickBan();
+	    usr:Ban()
+	  else
+	    SendToOps(Bot.name,usr.sName.." (IP: "..usr.sIP..") has been timebanned and kicked by "..user.sName..tail..".")
+	    SendToAll(Bot.name,usr.sName.." has been timebanned by "..user.sName.." for "..days.." days, "..hours.." hours and "..mins.." mins"..tail..aah())
+	    usr:SendPM(Bot.name,"You are being timebanned by "..user.sName.." for "..days.." days, "..hours.." hours and "..mins.." mins"..tail..aah())
+	    if Logging then Logging.Write("lawmaker/logs/"..os.date("%Y-%m-%d_").."banlog.log",usr.sName.." (with IP "..usr.sIP.." - "..os.date("%H:%M").." - banned for "..days.." days, "..hours.." hours and "..mins.." mins"..tail.." by "..user.sName) end
+	    usr:TimeBan(tonumber(days)*1440+tonumber(hours)*60+tonumber(mins))
+	  end
+	end
+      else
+	local yeah,bad
+	if string.find(nick,"%d+%.%d+%.%d+%.%d+") then
+	  local tIP = {}
+	  _,_,tIP.a,tIP.b,tIP.c,tIP.d= string.find(nick, "(%d+)%.(%d+)%.(%d+)%.(%d+)")
+	  for a,b in tIP do 
+	    if tonumber(b)<0 or tonumber(b)> 255 then
+	      SendTxt(user,env,Bot.name,"Invalid IP!")
+	      bad=true
+	      break
+	    end
+	  end
+	  tIP=nil
+	  if not bad then
+	    if meth=="perm" then
+	      Ban(nick)
+	      yeah=true
+	    else
+	      TempBan(nick,(tonumber(days)*1440+tonumber(hours)*60+tonumber(mins)))
+	      SendToAll(Bot.name,user.sName.." has added "..nick.." to the timebanlist.")
+	      if Logging then Logging.Write("lawmaker/logs/"..os.date("%Y-%m-%d_").."banlog.log",nick.." - banned by "..user.sName.." for "..days.." days, "..hours.." hours, "..mins.." mins.") end
+	    end
+	  end
+	else
+	  yeah=true
+	  NickBan(nick)
+	end
+	if yeah then
+	  SendToAll(Bot.name,user.sName.." has added "..nick.." to the banlist.")
+	  if Logging then Logging.Write("lawmaker/logs/"..os.date("%Y-%m-%d_").."banlog.log",nick.." - banned by "..user.sName) end
+	end
+      end
+    end
+  else
+    SendTxt(user,env,Bot.name,"Please specify a nick!")
+  end
+  Clear()
+end
+
+function KickBanTBan.UnBan(user,data,env,bTemp)
+  local yep
+  local _,_,arg=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  if arg then
+    for _,obj in frmHub:GetPermBanList() do
+      if obj.sNick==arg or obj.sIP==arg then
+	Unban(arg); Unban(obj.sIP)
+	SendTxt(user,env,Bot.name,arg.." unbanned.")
+	yep=true
+	break
+      end
+    end
+    if not yep then
+      if bTemp then
+	for _,obj in frmHub:GetTempBanList() do
+	  if obj.sNick==arg or obj.sIP==arg then
+	    TempUnban(arg);TempUnban(obj.sIP)
+	    SendTxt(user,env,Bot.name,arg.." untempbanned.")
+	    break
+	  end
+	end
+      else
+	SendTxt(user,env,Bot.name,arg.." was not found in the banlist.")
+      end
+    end
+  else
+    SendTxt(user,env,Bot.name,"Please specify a nick/IP to unban!")
+  end
+end
+
+function KickBanTBan.GetBanList(user,data,env,bTemp)
+  local count,name,tmp=0,nil,{}
+  if bTemp then
+    name="temp ban list"
+    for _,obj in frmHub:GetTempBanList() do
+      count=count+1
+      table.insert(tmp,obj.sNick.." with IP "..obj.sIP.."  - remaining time: "..obj.iTime)
+    end
+  else
+    name="perm ban list"
+    for _,obj in frmHub:GetPermBanList() do
+      count=count+1
+      table.insert(tmp,obj.sNick.." with IP "..obj.sIP..".")
+    end
+  end
+  if count~=0 then
+    user:SendPM(Bot.name,"\r\n\r\nThe "..name..":\r\n"..string.rep("=",35).."\r\n\r\n"..table.concat(tmp,"\r\n").."\r\n\r\n"..string.rep("=",35).."\r\n"..count.." items.")
+  else  
+    SendTxt(user,env,Bot.name,"The "..name.." contains no entries.")
+  end
+end
+
+function KickBanTBan.ClearBans(user,data,env,what)
+  if what=="permban" then
+    ClearPermBan()
+  else
+    what="tempban"
+    ClearTempBan()
+  end
+  SendTxt(user,env,Bot.name,"The "..what.." list has been cleared.")
+end
+
+function KickBanTBan.ToArrival(user,data)
+  if string.find(data,"You are being kicked because:") then
+    _,_,KickBanTBan.Reason=string.find(data,"You are being kicked because:%s+(.+)")
+  return "shit"
+  end
+end
+
+function KickBanTBan.ChatArrival(user,data)
+  if string.find(data,"%b<>%s+.-is%s+kicking.+because:") then
+    local _,_,why=string.find(data,"because:%s+(.+)")
+    if why==KickBanTBan.Reason then KickBanTBan.OKToKick=true return "shit" end
+  end
+end
+
+function KickBanTBan.KickArrival(user,data)
+  local _,_,nick=string.find(data,"%$Kick%s+(%S+)")
+  local r,b=nick,false
+  if KickBanTBan.BuiltInKickSilent==1 then b=true end
+  if KickBanTBan.Reason then r=r.." "..KickBanTBan.Reason end
+  if KickBanTBan.OKToKick then
+    KickBanTBan.OKToKick=false
+    KickBanTBan.Kick(user,"<"..user.sName.."> !kickuser "..r,"MAIN",b)
+    return "shit"
+  end
+end
+
+function KickBanTBan.Main()
+  KickBanTBan.KickNumbers.Table=maketable("lawmaker/components/metafiles/kicks.dat","|")
+end
+
+function KickBanTBan.OnExit()
+  savefile(KickBanTBan.KickNumbers.Table,"lawmaker/components/metafiles/kicks.dat","|")
+end
+
+RegFunc("onexit","saving kick #s",KickBanTBan.OnExit,{})
+RegCmd("kick",KickBanTBan.Kick,{},KickBanTBan.Levels.KickUser,"<nick> <reason>\t\t\tKicks a user and temporarily bans for "..KickBanTBan.KickTime.." minutes. Reason is optional.")
+RegCmd("kickuser",KickBanTBan.Kick,{},KickBanTBan.Levels.KickUser,"<nick> <reason>\t\t\tKicks a user and temporarily bans for "..KickBanTBan.KickTime.." minutes. Reason is optional.")
+RegCmd("silentkick",KickBanTBan.Kick,{true},KickBanTBan.Levels.SilentKick,"<nick> <reason>\t\t\tSilently kicks a user and temporarily bans for "..KickBanTBan.KickTime.." minutes. Reason is optional.")
+RegCmd("drop",KickBanTBan.Kick,{true},KickBanTBan.Levels.SilentKick,"<nick> <reason>\t\t\tSilently kicks a user and temporarily bans for "..KickBanTBan.KickTime.." minutes. Reason is optional.")
+RegCmd("nuke",KickBanTBan.Ban,{"perm"},KickBanTBan.Levels.Nuke,"<nick> <reason>\t\t\t\tBans a user permanently. Reason is optional.")
+RegCmd("ban",KickBanTBan.Ban,{"perm"},KickBanTBan.Levels.Nuke,"<nick> <reason>\t\t\t\tBans a user permanently. Reason is optional.")
+RegCmd("banip",KickBanTBan.Ban,{"perm"},KickBanTBan.Levels.Nuke,"<IP>\t\t\t\t\tBans an IP permanently.")
+RegCmd("nickban",KickBanTBan.Ban,{"perm"},KickBanTBan.Levels.Nuke,"<nick>t\t\t\t\tBans an offline nick permanently.")
+RegCmd("tban",KickBanTBan.Ban,{"temp"},KickBanTBan.Levels.TBan,"<nick> <days> <hours> <mins> <reason>\t\tBans a user for given time. Reason is optional.")
+RegCmd("tbanip",KickBanTBan.Ban,{"temp"},KickBanTBan.Levels.TBan,"<IP> <days> <hours> <mins>\t\t\tBans a IP for given time.")
+RegCmd("unban",KickBanTBan.UnBan,{},KickBanTBan.Levels.UnBan,"<nick/IP>\t\t\t\tUnbans a permbanned user/IP.")
+RegCmd("untempban",KickBanTBan.UnBan,{true},KickBanTBan.Levels.UnTBan,"<nick/IP>\t\t\t\tUnbans a tempbanned user/IP.")
+RegCmd("clrtempban",KickBanTBan.ClearBans,{"tempban"},KickBanTBan.Levels.ClearTempBan,"\t\t\t\t\tClears the temporary banlist.")
+RegCmd("clrpermban",KickBanTBan.ClearBans,{"permban"},KickBanTBan.Levels.ClearPermBan,"\t\t\t\t\tClears the permanent banlist.")
+RegCmd("getbanlist",KickBanTBan.GetBanList,{},KickBanTBan.Levels.GetBanList,"\t\t\t\t\tShows the temporary banlist.")
+RegCmd("gettempbanlist",KickBanTBan.GetBanList,{true},KickBanTBan.Levels.GetBanList,"\t\t\t\t\tShows the permanent banlist.")
+RegFunc("kickarr","blocking proto kick",KickBanTBan.KickArrival,{})
+RegFunc("chatarr","blocking \"is kicking\"",KickBanTBan.ChatArrival,{})
+RegFunc("toarr","blocking \"ur being kicked\"",KickBanTBan.ToArrival,{})
+RegFunc("main","loading kicks",KickBanTBan.Main,{})
+-- RegRC(KickBanTBan.Kick,"1 3",Kick/Ban\\
+RegRC(KickBanTBan.Levels.KickUser,"1 4","Kick USER with filename","!kick %[nick] %[file]") 
+RegRC(KickBanTBan.Levels.KickUser,"1 8","Kick USER with filename","!kick %[nick] %[file]")
+RegRC(KickBanTBan.Levels.KickUser,"1 4","Silently kick USER with filename","!kick %[nick] %[file]") 
+RegRC(KickBanTBan.Levels.KickUser,"1 8","Silently kick USER with filename","!kick %[nick] %[file]")
+RegRC(KickBanTBan.Levels.Nuke,"1 4","Ban USER with filename","!ban %[nick] %[file]") 
+RegRC(KickBanTBan.Levels.Nuke,"1 8","Ban USER with filename","!ban %[nick] %[file]")
+RegRC(KickBanTBan.Levels.TBan,"1 4","TimeBan USER with filename...","!tban %[nick] %[line:Days] %[line:Hours] %[line:Mins] %[nick] %[file]") 
+RegRC(KickBanTBan.Levels.TBan,"1 8","TimeBan USER with filename...","!tban %[nick] %[line:Days] %[line:Hours] %[line:Mins] %[file]")
+RegRC(KickBanTBan.Levels.KickUser,"1 2","Kick USER","!kick %[nick] %[line:Reason (optional):]")
+RegRC(KickBanTBan.Levels.TBan,"1 2","TimeBan USER","!tban %[nick] %[line:Days] %[line:Hours] %[line:Mins] %[line:Reason (optional):]")
+RegRC(KickBanTBan.Levels.Nuke,"1 2","Ban USER","!ban %[nick] %[line:Reason (optional):]")
+RegRC(KickBanTBan.Levels.Nuke,"1 2","Kick/Ban\\Ban\\USER...","!nickban %[nick] %[line:Reason (optional):]")
+RegRC(KickBanTBan.Levels.Nuke,"1 3","Kick/Ban\\Ban\\a nick...","!nickban %[line:Nick:] %[line:Reason (optional):]")
+RegRC(KickBanTBan.Levels.Nuke,"1 3","Kick/Ban\\Ban\\an IP...","!banip %[nick] %[line:Reason (optional):]")
+RegRC(KickBanTBan.Levels.TBan,"1 3","Kick/Ban\\Timeban\\an IP...","!tbanip %[line:IP:] %[line:Days] %[line:Hours] %[line:Mins]")
+RegRC(KickBanTBan.Levels.TBan,"1 2","Kick/Ban\\Timeban\\USER...","!tbanip %[line:IP:] %[line:Days] %[line:Hours] %[line:Mins] %[line:Reason (optional):]")
+RegRC(KickBanTBan.Levels.UnTBan,"1 3","Kick/Ban\\Unban\\a temp. banned nick/IP","!untempban %[line:Nick or IP:]")
+RegRC(KickBanTBan.Levels.UnBan,"1 3","Kick/Ban\\Unban\\a perm. banned nick/IP","!unban %[line:Nick or IP:]")
+RegRC(KickBanTBan.Levels.ClearTempBan,"1 3","Kick/Ban\\Ban List\\Clear\\Temp Bans","!clrtempban")
+RegRC(KickBanTBan.Levels.ClearPermBan,"1 3","Kick/Ban\\Ban List\\Clear\\Perm Bans","!clrpermban")
+RegRC(KickBanTBan.Levels.GetBanList,"1 3","Kick/Ban\\Ban List\\Show\\Perm Bans","!getbanlist")
+RegRC(KickBanTBan.Levels.GetBanList,"1 3","Kick/Ban\\Ban List\\Show\\Temp Bans","!gettempbanlist")

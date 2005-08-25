@@ -1,0 +1,200 @@
+OpVipChat={Levels={}} -- do not touch this line
+--[[
+OpChat/VIPChat module for LawMaker v1
+Based on chatrooms by tezlo
+For testing thx to: Mickey, TTB
+Also thx to PPK for helping in getting members for chatrooms.
+]]
+
+OpVipChat.OpChatBot=
+  {
+    name="-OpChat-",
+    desc="Private chatbox for operators",
+    email="opchat@lawmaker.lua" -- :-)
+  }
+
+OpVipChat.EnableVipChat=1 -- 1 to enable vipchat, 0 to disable
+
+OpVipChat.VipChatBot=
+  {
+    name="-VIPChat-",
+    desc="Private chatbox for VIPs and above",
+    email="vipchat@lawmaker.lua" -- :-)
+  }
+--invite to opchat
+
+OpVipChat.Levels.Invite=5 -- temporary invitation
+OpVipChat.Levels.PermInvite=5 -- permanent (until-removal) invitation
+OpVipChat.Levels.Remove=5 --removal from opchat
+
+
+--------------- command and chatroom fuck starts here ^^
+
+OpChat={}
+
+function OpVipChat.OpChatBasic(user,data,env)
+  local _,_,whoTo = string.find(data,"$To:%s+(%S+)")
+  if whoTo==OpVipChat.OpChatBot.name then
+    if user.bOperator then
+      if not OpVipChat.OpChat[user.sName] then
+        OpVipChat.OpChat[user.sName]=1
+        savefile(OpVipChat.OpChat,"lawmaker/components/metafiles/opchat.dat")
+      end
+    end
+    if not OpVipChat.OpChat[user.sName] and not user.bOperator then
+      user:SendPM(OpVipChat.OpChatBot.name, "You can't post here!") return 1
+    else
+      local _,_,cmd = string.find(data,"$To:%s+%S+%s+From:%s+%S+%s+$%b<>%s+[%!%+%#](%S+)")
+      if cmd then
+        if commandtable[cmd] then
+          return parsecmds(user,data,"PM",string.lower(cmd))
+        else
+          if cmd=="me" then
+            local _,_,str = string.find(data,"$To:%s+%S+%s+From:%s+%S+%s+$%b<>%s+[%!%+%#]%S+%s+(.+)")
+            if str then
+              OpVipChat.DoChat(user.sName,str,OpVipChat.OpChat,OpVipChat.OpChatBot.name,1) return 1
+            end
+          end
+        end
+      else
+        local _,_,str = string.find(data,"$To:%s+%S+%s+From:%s+%S+%s+$%b<>%s+(.+)")
+        OpVipChat.DoChat(user.sName,str,OpVipChat.OpChat,OpVipChat.OpChatBot.name,nil)
+      end
+    end
+  end
+end
+
+function OpVipChat.DoChat(from,str,tbl,bot,bool)
+  for a,b in tbl do
+    if bool then
+      SendToNick(a, "$To: "..a.." From: "..bot.." $ * "..from.." "..str)
+    else
+      if from~= a then SendToNick(a, "$To: "..a.." From: "..bot.." $<"..from.."> "..str) end
+    end
+  end
+end
+
+function OpVipChat.Invite(user, data, env,sess)
+  local _,_,args=string.find(data,"%b<>%s+%S+%s+(.+)")
+  if args then
+    string.gsub(args, "(%S+)", function(nick)
+      local tmp, bool1, bool2 = GetItemByName(nick), OpVipChat.OpChat[nick],GetItemByName(nick).bOperator
+      if tmp then
+        if not bool1 then
+          if not bool2 then
+            if sess=="perm" then
+              if tmp.iProfile==2 then
+                OpVipChat.OpChat[nick]=1;SendPmToOps(OpVipChat.OpChatBot.name,nick.." has been perm. invited by "..user.sName.."!")
+                SendPmToNick(nick,OpVipChat.OpChatBot.name,"You are invited by "..user.sName..", you can take part in here until you get removed.")
+                savefile(OpVipChat.OpChat,"lawmaker/components/metafiles/vipchat.dat")
+              else
+                SendTxt(user,env,OpVipChat.OpChatBot.name,nick.." is not a VIP, only VIPs can be invited for perm.")
+              end
+            else
+              OpVipChat.OpChat[nick]=1;SendPmToOps(OpVipChat.OpChatBot.name,nick.." has been temp. invited by "..user.sName.."!")
+              SendPmToNick(nick,OpVipChat.OpChatBot.name,"You are invited , you can take part in here for one session..")
+            end
+          else
+            SendTxt(user,env,OpVipChat.OpChatBot.name,nick.." is an OP, OPs get auto invitation ^_^.")
+          end
+        else
+         SendTxt(user,env,OpVipChat.OpChatBot.name,"Already a member of opchat")
+        end
+      else
+        SendTxt(user,env,OpVipChat.OpChatBot.name,nick.." not online...")
+      end
+    end)
+  else
+    SendTxt(user,env,OpVipChat.OpChatBot.name,"Ok, but who to invite?")
+  end
+end
+
+function OpVipChat.Remove(user, data, env,sess)
+  local _,_,args = string.find(data,"%b<>%s+%S+%s+(.+)")
+  if args then
+    string.gsub(args, "(%S+)", function(nick)
+      local id,tmp = OpVipChat.OpChat[nick],GetItemByName(nick)
+      if tmp then  
+        if id then
+          if not tmp.bOperator then
+            OpVipChat.OpChat[nick]=nil
+            SendPmToOps(OpVipChat.OpChatBot.name,nick.." has been removed by "..user.sName.."!")
+            SendPmToNick(nick,OpVipChat.OpChatBot.name,"You have been removed by "..user.sName..", so you cannot post here any longer.")
+            savefile(OpVipChat.OpChat,"lawmaker/components/metafiles/opchat.dat")
+          else
+            SendTxt(user,env,OpVipChat.OpChatBot.name,nick.."is an operator, operators cannot be removed.")
+          end
+        else
+          SendTxt(user,env,OpVipChat.OpChatBot.name,nick.. "is not a member of opchat")
+        end
+      else
+        SendTxt(user,env,OpVipChat.OpChatBot.name,nick.." not online...")
+      end
+    end)
+  else
+    SendTxt(user,env,OpVipChat.OpChatBot.name,"Ok, but who to remove?")
+  end
+end
+
+function OpVipChat.VipChatBasic(user,data)
+  local _,_,whoTo = string.find(data,"$To:%s+(%S+)")
+  if whoTo==OpVipChat.VipChatBot.name then
+    if user.bOperator or user.iProfile==2 then
+      if not OpVipChat.VipChat[user.sName] then
+        OpVipChat.VipChat[user.sName]=1
+        savefile(OpVipChat.VipChat,"lawmaker/components/metafiles/vipchat.dat")
+      end
+    end
+    if not OpVipChat.VipChat[user.sName] and not user.bOperator and user.iProfile~=2 then
+      user:SendPM(OpVipChat.VipChatBot.name, "You can't post here!") return 1
+    else
+      local _,_,cmd = string.find(data,"$To:%s+%S+%s+From:%s+%S+%s+$%b<>%s+[%!%+%#](%S+)")
+      local _,_,str = string.find(data, "^$To: %S+ From: %S+ $%b<>%s+%S+%s+(.+)$")
+      if cmd=="me" then
+        local _,_,str = string.find(data, "^$To: %S+ From: %S+ $%b<>%s+%S+%s+[%!%+%#](%S+)%s+(.+)$")
+        if str then
+          OpVipChat.DoChat(user.sName,str,OpVipChat.VipChat,OpVipChat.VipChatBot.name,1) return 1
+        end
+      else
+	local _,_,str = string.find(data, "^$To: %S+ From: %S+ $%b<>%s+(.*)$")
+        OpVipChat.DoChat(user.sName,str,OpVipChat.VipChat,OpVipChat.VipChatBot.name,nil)
+      end
+    end
+  end
+end
+
+function OpVipChat.UserDisconnected(user)
+  if OpVipChat.OpChat[user.sName] then
+    OpVipChat.OpChat[user.sName]=nil
+  end
+end
+
+function OpVipChat.Main()
+  frmHub:RegBot(OpVipChat.OpChatBot.name,1,OpVipChat.OpChatBot.desc,OpVipChat.OpChatBot.email)
+  if OpVipChat.EnableVipChat==1 then
+    frmHub:RegBot(OpVipChat.VipChatBot.name,1,OpVipChat.VipChatBot.desc,OpVipChat.VipChatBot.email)
+  else
+    frmHub:UnregBot(OpVipChat.VipChatBot.name)
+  end
+  OpVipChat.OpChat=maketable("lawmaker/components/metafiles/vipchat.dat")
+  OpVipChat.VipChat=maketable("lawmaker/components/metafiles/opchat.dat")
+  for _,obj in (frmHub:GetRegisteredUsers()) do
+   if not OpVipChat.VipChat[obj.sNick] and obj.iProfile <= 2 then OpVipChat.VipChat[obj.sNick]=1 end
+   if not OpVipChat.OpChat[obj.sNick] and obj.iProfile <= 1 then OpVipChat.OpChat[obj.sNick]=1 end
+  end
+    savefile(OpVipChat.OpChat,"lawmaker/components/metafiles/opchat.dat")
+    savefile(OpVipChat.VipChat,"lawmaker/components/metafiles/vipchat.dat")
+end
+
+------------------------------------------------------------------
+------------------------------------------------------------------
+RegCmd("invite",invite,{"temp"},OpVipChat.Levels.Invite,"\t\t\t\t\tInvite a user to opchat for one session. You can enter many nicks separated by spaces.")
+RegCmd("perminvite",OpVipChat.Invite,{"perm"},OpVipChat.Levels.PermInvite,"\t\t\t\t\tInvite a VIP to opchat until removal. You can enter many nicks separated by spaces.")
+RegCmd("remove",OpVipChat.Remove,{},OpVipChat.Levels.Remove,"\t\t\t\t\tRemove a(n) perm/temp invited user from opchat. You can enter many nicks separated by spaces.")
+RegFunc("toarr","opchatting",OpVipChat.OpChatBasic,{})
+RegFunc("toarr","vipchatting",OpVipChat.VipChatBasic,{})
+RegFunc("main","opchat bootup",OpVipChat.Main,{})
+RegFunc("userdisc","removal from tempopchat",OpVipChat.UserDisconnected,{})
+RegRC(OpVipChat.Levels.Invite,"1 2","OpChat\\Invite USER to opchat for one session","!invite %[nick]")
+RegRC(OpVipChat.Levels.PermInvite,"1 2","OpChat\\Invite USER to opchat","!perminvite %[nick]")
+RegRC(OpVipChat.Levels.Remove,"1 2","OpChat\\Remove USER from opchat","!remove %[nick]")

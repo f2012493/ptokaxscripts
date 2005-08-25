@@ -1,0 +1,86 @@
+  
+                     Welcome to
+
+               !!!!!                         !!!!!!!            !!!!!       !!!!!                                                                      !!!!
+    !!!!!!!!!!!!!!!!                       !!!!!!!!!            !!!!!       !!!!                                 !!!!                                  !!!!
+   !!!!!!!!!!!!!!!!                       !!!!  !!!!            !!!!        !!!!                                !!!!!                                  !!!!
+   !!! !!!! !!!!!!!!!!!    !!!!!         !!!!   !!!    !!!!!!   !!!!    !!!!!!!!   !!!!!    !!!!!!!!           !!!!!!    !!!!!!!!   !!!!!!!!   !!!!!   !!!!
+       !!!!    !!!!!!!!  !!! !!!!        !!!!        !!!!!!!!!  !!!!  !!!!!!!!!! !!! !!!!  !!!!!!!!!           !!!!!!   !!!!!!!!!  !!!!!!!!! !!! !!!!  !!!!
+      !!!!    !!!!!!!!!  !!  !!!!       !!!!         !!!! !!!! !!!!   !!!! !!!!  !!  !!!!  !!!!!!!!!          !!!!!!!   !!!!!!!!! !!!! !!!!  !!  !!!! !!!! 
+      !!!!    !!!!!!!!! !!!  !!!!       !!!! !!!!!! !!!!  !!!! !!!!  !!!!  !!!! !!!  !!!!  !!!!!!!!!         !!!!!!!!   !!!!!!!!! !!!! !!!! !!!  !!!! !!!! 
+      !!!!    !!!! !!!! !!!!!!!!!       !!!!  !!!!  !!!!  !!!! !!!!  !!!! !!!!! !!!!!!!!!  !!!! !!!!        !!!!!!!!!   !!!! !!!! !!!!!!!!  !!!!!!!!! !!!! 
+     !!!!    !!!! !!!! !!!!             !!!  !!!!  !!!!  !!!! !!!!  !!!! !!!!! !!!!       !!!! !!!!         !!!!!!!!!  !!!! !!!!   !!!!!!  !!!!      !!!!  
+     !!!!    !!!! !!!! !!!! !!          !!!  !!!!  !!!! !!!!! !!!!  !!!!!!!!!! !!!! !!    !!!! !!!!        !!!!  !!!!  !!!! !!!!   !!!     !!!! !!   !!!!  
+    !!!!!   !!!!!!!!!! !!!!!!!!         !!! !!!!!  !!!!!!!!! !!!!!  !!!!!!!!!! !!!!!!!!  !!!!! !!!!       !!!!   !!!! !!!!! !!!!  !!!!     !!!!!!!! !!!!!  
+   !!!!!!  !!!!!!!!!!!  !!!!!            !!!!!!!    !!!!!!   !!!!!   !!!!!!!!!  !!!!!   !!!!!!!!!!!      !!!!!  !!!!!!!!!!!!!!!!  !!!!!!    !!!!!   !!!!!  
+                                                                                                                                !!!!!!!!!                  
+                                                                                                                                !!!  !!!                   
+                                                                                                                                !!!!  !!!                  
+                                                                                                                                  !!!!!!                   
+
+
+                                            !!!!!  !!!!!       !!!!    !!!!! !!!!! !!!!!!      !!!!! !!!!!!!!!!! !!!!!!!!!!!!!! 
+                                            !!!!!  !!!!!      !!!!!    !!!!  !!!!! !!!!        !!!!  !!!!  !!!!  !!!!  !!!! !!!!
+                                            !!!!! !!!!!!     !!!!!!    !!!!  !!!!! !!!!        !!!!  !!!!  !!!!  !!!!  !!!! !!!!
+                                           !!!!!!!!!!!!!     !!!!!!    !!!!  !!!!! !!!!        !!!!!!!!!!  !!!!  !!!!  !!!!!!!! 
+                                           !!!!!!!!!!!!!    !!!!!!!   !!!!  !!!!!!!!!!        !!!!!!!!!!  !!!!  !!!!  !!!!!!!!  
+                                          !!!!!!!!!!!!!    !!!!!!!!   !!!!  !!!!!!!!!!        !!!!  !!!!  !!!!  !!!!  !!!!!!!!! 
+                                          !!!!!!!!!!!!!   !!!!!!!!!   !!!!  !!!!!!!!!!        !!!!  !!!!  !!!!  !!!!  !!!! !!!! 
+                                         !!!!!!!!!!!!!!   !!!!!!!!!  !!!!  !!!! !!!!!        !!!!  !!!!  !!!!  !!!!  !!!!  !!!! 
+                                         !!!!!!!!! !!!!  !!!!  !!!!  !!!!  !!!! !!!!!        !!!!  !!!!  !!!!  !!!!  !!!!  !!!! 
+                                        !!!! !!!!  !!!  !!!!   !!!! !!!!! !!!!! !!!!!       !!!!! !!!!!  !!!! !!!!  !!!!!!!!!!  
+                                       !!!!!!!!! !!!!!!!!!!!  !!!!!!!!!!!!!!!!! !!!!       !!!!!!!!!!!!   !!!!!!   !!!!!!!!!    
+
+
+                                  <DISCLAIMER>
+
+By Entering this hub you are agreeing to the following; If not, you must exit immediately:
+
+That this hub, and the activities that it was intended for, are in all ways legal. 
+
+The purpose of this hub is for users to share their private, personal files amongst each other. We do not condone nor encourage the distribution of "warez" or copyright works, software, etc. If any user participates in the illegal sharing of Any Copyrighted Material, they assume any and all responsiblity for their actions. You may not enter this hub if you are affiliated with, represent, or are visiting on behalf of; 
+
+(1) Any form of law enforcement agency.
+
+(2) Any software corporation. 
+
+(3) Any type of Internet Security Expert or hacker.
+
+The person/persons who host and or created this hub are not responsible for the actions of visitors to this hub.
+
+If you enter this private server and you are not agreeing to these terms, you are violating code 431.322.12 of the Internet Privacy Act signed by Bill Clinton in 1995 and that means that you can NOT threaten any person(s) storing these files, cannot prosecute any person(s) affiliated with this server which includes family, friends or individuals who run or enter this hub.
+
+
+enjoy your stay
+
+
+Tell others about this hub, to make more Data available, THX ahead
+
+Some usEful commands:
+
++rules................................................Shows the HUB rules.txt, which you accept by entering even if you haven't read it. 
++myip................................................Shows your IP adress 
++report <nick> <message>..........Sends a message to OP-Chat 
++help................................................Shows the help
++hubinfo...........................................Info on the hub
++faq...................................................Shows the FAQ
++releases.........................................Shows new stuff released in hubs.
++dcpphelp........................................Shows help on DC++
+
+TYPE /refresh to update your share list
+
+TGA Hubs:
+
+goldenangel.no-ip.org - main hub
+
+tgabigshare.no-ip.org - Zalbag's hub (50GB+)
+
+----------------------------------------------------------
+Visit the forum @ http://www.thegoldenangel.net
+For releases, requests, help, info ++++
+
+----------------------------------------------------------
+We are searching for dedicated TGA fans willing to host a new hub.
+If you have a 10Mbit++ connection and a fast computer wich can be used to run a dedicated hub.
+(only running the hub nothing more).
+Then contact Nidaros or plop.

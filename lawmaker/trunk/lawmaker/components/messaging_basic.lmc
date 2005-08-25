@@ -1,0 +1,149 @@
+Messaging={Levels={}}
+--[[
+basic messaging for lawmaker by bastya_elvtars
+topic notif, banner, mass, botmain, botpm, pmops, report 
+bastya_elvtars
+]]--
+
+-- SETTINGS
+
+-- banner
+Messaging.Levels.Banner=4
+
+-- mass message
+Messaging.Levels.MassMsg=4
+
+-- bot main
+Messaging.Levels.Say=4
+
+-- pm ops
+Messaging.Levels.OPM=4
+
+-- pm a user
+Messaging.Levels.BotPM=4
+
+-- report
+Messaging.Levels.Report=1
+
+-- topic
+Messaging.Levels.Topic=4
+
+-- END OF SETTINGS
+
+function Messaging.Topic(user,data,env)
+  local _,_,tp = string.find(data,"%b<>%s+%S+%s+(.+)")
+  if tp then
+    if frmHub:GetHubTopic() then
+      SendToAll(Bot.name, "Topic has been changed by "..user.sName.." to: \""..tp.."\".")
+      frmHub:SetHubTopic(tp)
+    else
+      SendToAll(Bot.name, "New topic has been created by "..user.sName..": \""..tp.."\".")
+      frmHub:SetHubTopic(tp)
+    end
+  else
+    SendToAll(Bot.name, "Topic has been deleted by "..user.sName..".")
+      frmHub:SetHubTopic("")
+  end
+end
+
+function Messaging.Banner(user, data,env)
+  local _,_,bannertext=string.find(data,"%b<>%s+%S+(.+)")
+  if bannertext then
+    SendToAll("***","******************************************************** <***>")
+    SendToAll("***",bannertext)
+    SendToAll("***","******************************************************** <***>")
+  else
+    SendTxt(user,env,Bot.name, "Please write the message too, im not a politician to keep telling nothing...=)")
+  end
+end
+
+function Messaging.MassMsg(user,data,env)
+  local _,_,message=string.find(data,"%b<>%s+%S+%s+(.+)")
+  if message then
+    for _,obj in frmHub:GetOnlineUsers() do
+      obj:SendData("$To: "..obj.sName.." From: "..Bot.name.." $<"..user.sName.."> "..message)
+    end
+  else
+    SendTxt(user,env,Bot.name,"Please write the message too, I'm not a politician to keep telling nothing... ;-)")
+  end
+end
+
+function Messaging.Say(user,data,env)
+  local _,_,message=string.find(data,"%b<>%s+%S+%s+(.+)")
+  if message then
+    SendToAll(Bot.name,message)
+  else
+    SendTxt(user,env,Bot.name,"Please write the message too, I'm not a politician to keep telling nothing... ;-)")
+  end
+end
+
+function Messaging.OPM(user,data,env)
+  local _,_,message=string.find(data,"%b<>%s+%S+%s+(.+)")
+  if message then
+    for _,obj in frmHub:GetOnlineOperators() do
+      obj:SendData("$To: "..obj.sName.." From: "..Bot.name.." $<"..user.sName.."> Message to operators: "..message)
+    end
+  else
+    SendTxt(user,env,Bot.name,"Please write the message too, I'm not a politician to keep telling nothing...=)")
+  end
+end
+
+function Messaging.BotPM(user,data,env)
+  local _,_,nick,message=string.find(data,"%b<>%s+%S+%s+(%S+)%s+(.+)")
+  if nick then
+    local usr=GetItemByName(nick)
+    if usr then
+      if message then
+	usr:SendPM(Bot.name,message.." // "..user.sName)
+      else
+	SendTxt(user,env,Bot.name,"Please write the message too, I'm not a politician to keep telling nothing... ;-)")
+      end
+    else
+      SendTxt(user,env,Bot.name,nick.." not online.")
+    end
+  else
+    SendTxt(user,env,Bot.name,"Please write the message too, im not a politician to keep telling nothing...=)")
+  end
+end
+
+function Messaging.Report(user,data,env)
+  local _,_,nick,problem=string.find(data,"%b<>%s+%S+%s+(%S+)%s+(.+)")
+  if nick then
+    if nick~=user.sName then
+      local usr=GetItemByName(nick)
+      if usr then
+        local botty
+        if OpVipChat then
+          botty=OpVipChat.OpChatBot.name
+        else
+          botty=Bot.name
+        end
+        SendPmToOps(botty,"Report from "..user.sName..": "..nick.." - "..problem)
+        SendTxt(user,env,Bot.name,"Your report has been successfully sent!")
+      else
+        SendTxt(user,env,Bot.name,"Sorry, but you can report online users only...")
+      end
+    else
+      SendTxt(user,env,Bot.name,"Are you trying to send a report about yourself? Then you must be a lamer DC criminal.")
+      user:Disconnect()
+    end
+  else
+    SendTxt(user,env,Bot.name,"Not enough information! Syntax: !report <nick> <problem>")
+  end
+end
+
+RegCmd("topic",Messaging.Topic,{},Messaging.Levels.Topic,"<topic> \t\t\t\t\tSets a new topic, with no argument you delete the current one.")
+RegCmd("banner",Messaging.Banner,{},Messaging.Levels.Banner,"<text>\t\t\t\t\tSends a banner into main.")
+RegCmd("mass",Messaging.MassMsg,{},Messaging.Levels.MassMsg,"<text>\t\t\t\t\tSends a private message to all users in the name of the bot.")
+RegCmd("say",Messaging.Say,{},Messaging.Levels.Say,"<text>\t\t\t\t\tMakes the bot speak in mainchat, saying the given text.")
+RegCmd("opm",Messaging.OPM,{},Messaging.Levels.OPM,"<text>\t\t\t\t\tSends a PM to every (super)operators in the name of the bot.")
+RegCmd("botpm",Messaging.BotPM,{},Messaging.Levels.BotPM,"<nick> <text>\t\t\t\tSends a PM to a user in the name of the bot.")
+RegCmd("report",Messaging.Report,{},Messaging.Levels.Report,"<nick> <problem>\t\t\t\tReport a bad user, who is faking, disconnecting etc.")
+RegRC(Messaging.Levels.Topic,"1 3","Messaging\\Topic\\Set/delete...","!topic %[line:New topic (Enter to delete):]")
+RegRC(Messaging.Levels.Banner,"1 3","Messaging\\Send a banner in main...","!banner %[line:Banner text:]")
+RegRC(Messaging.Levels.MassMsg,"1 3","Messaging\\Mass message...","!mass %[line:Message:]")
+RegRC(Messaging.Levels.Say,"1 3","Messaging\\Make the bot speak in main","!say %[line:Message:]")
+RegRC(Messaging.Levels.OPM,"1 3","Messaging\\Send a PM to OPs","!opm %[line:Message:]")
+RegRC(Messaging.Levels.BotPM,"1 2","Messaging\\Make the bot PM USER...","!botpm %[line:Message:]")
+RegRC(Messaging.Levels.Report,"1 2","Messaging\\Report USER....","!report %[nick] %[line:Problem:]")
+RegRC(Messaging.Levels.Report,"1 3","Messaging\\Report a user...","!report %[line:Nick:] %[line:Problem:]")
