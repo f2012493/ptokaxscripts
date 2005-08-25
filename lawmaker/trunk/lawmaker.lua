@@ -107,14 +107,8 @@ gb=1024*1024*1024 -- one gigabyte in bytes
 tNUCOrder= -- order of funcs to be called on NewUser(Op)Connected
   {
     "check ip range",
-    "clone check",
-    "check nick",
-    "check client",
-    "check share",
-    "check limiter",
-    "check hubs/slots",
+    "on-connect check",
     "add/refresh user in database",
-    "welcome",
     "random welcome message",
     "showing motd",
     "new message warning on connect",

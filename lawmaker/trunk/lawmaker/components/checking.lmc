@@ -846,15 +846,34 @@ function Checks.MyINFOArrival(user,data)
   end
 end
 
+function Checks.NewUserConnected(user)
+  local torun=
+    {
+      Checks.Clone.Check,
+      Checks.Nick.Check,
+      Checks.Client.Check,
+      Checks.Share.Check,
+      Checks.SlotHubLimit.CheckHubsAndSlots,
+      Checks.SlotHubLimit.CheckLimit,
+      Checks.Welcome,
+    }
+    for a=1,table.getn(torun) do
+      if torun[a](user)=="shit" then
+	return "shit"
+      end
+    end
+end
+
 --------------------------------------------------------------------------------=======================================================
 
-RegFunc("nuc","check client",Checks.Client.Check,{})
-RegFunc("nuc","check nick",Checks.Nick.Check,{})
-RegFunc("nuc","check share",Checks.Share.Check,{})
-RegFunc("nuc","check hubs/slots",Checks.SlotHubLimit.CheckHubsAndSlots,{})
-RegFunc("nuc","check limiter",Checks.SlotHubLimit.CheckLimit,{})
-RegFunc("nuc","welcome",Checks.Welcome,{})
-RegFunc("nuc","clone check",Checks.Clone.Check,{})
+-- RegFunc("nuc","check client",Checks.Client.Check,{})
+-- RegFunc("nuc","check nick",Checks.Nick.Check,{})
+-- RegFunc("nuc","check share",Checks.Share.Check,{})
+-- RegFunc("nuc","check hubs/slots",Checks.SlotHubLimit.CheckHubsAndSlots,{})
+-- RegFunc("nuc","check limiter",Checks.SlotHubLimit.CheckLimit,{})
+-- RegFunc("nuc","welcome",Checks.Welcome,{})
+-- RegFunc("nuc","clone check",Checks.Clone.Check,{})
+RegFunc("nuc","on-connect check",Checks.NewUserConnected,{})
 RegFunc("myinfo","checking an ALREADY CONNECTED user",Checks.MyINFOArrival,{})
 RegFunc("main","making lists needed for checks",Checks.Main,{})
 RegCmd("slothublimit",Checks.SlotHubLimit.Show,{},1,"\t\t\t\t\tShows a table on slot/hub/limit rules by connection type.")
