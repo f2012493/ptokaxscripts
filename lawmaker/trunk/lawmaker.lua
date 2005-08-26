@@ -1,6 +1,25 @@
 --[[ 
-LawMaker v1.0 alpha1 core by bastya_elvtars
-bastyaelvtars[at]gmail[dot]com
+LawMaker - a bot for PtokaX DC Hub
+Copyright (C) 2004-2005 bastya_elvtars (bastyaelvtars@gmail.com)
+
+The license does not apply for the sample text files included in the default package.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+---------------------------------------------------------------------------------------------------
+CREDITS 
+
 Some ideas in LMCA by plop, however it was totally written from scratch.
 Please see the help file(s) included on cofiguring the bot.
 Thx to: 
