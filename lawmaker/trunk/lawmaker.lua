@@ -19,7 +19,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ---------------------------------------------------------------------------------------------------
 CREDITS 
-
 Some ideas in LMCA by plop, however it was totally written from scratch.
 Please see the help file(s) included on cofiguring the bot.
 Thx to: 
@@ -178,10 +177,13 @@ function Main()
   end
   -- this is to make sure hub perceives !help. :)
   RegCmd("help",help,{},1,"\t\t\t\t\t\tShows the text you are looking at.")
+  RegCmd("license",license,{},1,"\t\t\t\t\t\tShows the license agreement (GNU GPL).")
   RegCmd("lagtest",lagtestonoff,{},1,"\t\t\t\t\t\tShows processing time of a commands.")
   RegRC(1,"1 3","Help","!help")
   RegRC(1,"1 3","Lagtest\\Enable","!lagtest on")
   RegRC(1,"1 3","Lagtest\\Disable","!lagtest off")
+  RegRC(1,"1 3","License agreement (GPL)","!license")
+  SendToAll(Bot.name,"\r\n"..Bot.version.."\r\nLicensed under the GNU GPL, see !license for details.")
   SendToOps(Bot.name,"Bootup finished, took "..os.clock()-x.." seconds, "..count.." plugins have been loaded.")
 end
 
@@ -580,6 +582,17 @@ function lagtestonoff (user,data,env)
   else
     onoff=onoff or "nothing"
     SendTxt(user,env,Bot.name,"The argument can be on or off, not "..onoff..".")
+  end
+end
+
+function license(user,data,env)
+  local f=io.open("lawmaker/License.txt","r")
+  if f then
+    local contents = string.gsub(f:read("*a"),string.char(10), "\r\n")
+    user:SendPM(Bot.name,"\r\n"..contents.."\r\n")
+    f:close()
+  else
+    SendToAll(Bot.name,"The file License.txt could not be found on this machine, so the GPL is being violated now!")
   end
 end
 
