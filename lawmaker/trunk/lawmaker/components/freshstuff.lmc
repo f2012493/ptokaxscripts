@@ -291,9 +291,10 @@ function FreshStuff.DelCrap(user, data)
     end
     table.sort(tmp)
     for k=table.getn(tmp),1,-1 do
-      if FreshStuff.AllStuff[k] then
-	SendTxt(user,env,Bot.name, FreshStuff.AllStuff[tmp[k]][4].." is deleted from the releases.")
-	FreshStuff.AllStuff[tmp[k]]=nil
+      local n=tmp[k]
+      if FreshStuff.AllStuff[n] then
+	SendTxt(user,env,Bot.name, FreshStuff.AllStuff[n][4].." is deleted from the releases.")
+	FreshStuff.AllStuff[n]=nil
 	cnt=cnt+1
       else
 	SendTxt(user,env,Bot.name, "release numbered "..wht.." wasn't found in the releases.")
