@@ -409,34 +409,33 @@ end
 
 ---------------- hub/slot/ratio checker
 Checks.SlotHubLimit.CheckHubsAndSlots=function(user)
-  local conn=user.sConnection
-  if string.find(user.sConnection,"%(.+%/.+%)") then -- dirty workaround for R2++ et al. :-)
-    _,_,conn=string.find(user.sConnection,"(.+)%(.+%/.+%)")
-  end
-  if not conn or not Checks.SlotHubLimit.Rules[conn] then
-    user:SendData("ConnectionCheck","Your connection type could not be determined or is unknown.")
-    return Checks.Punish(user,"c",Checks.Client.BadClientToDo)
-  else
-    if Checks.SlotHubLimit.SlotHubLevel >= userlevels[user.iProfile] then
-      if Immune and not Immune.List[user.sName] or not Immune then
-        local hubs,slots,Guest,Reg,OP,speed,limit,Maxslotsforconn,Ratioforconn,Maxhubsforconn,minlimitforconn,ratio,Share=Checks.ScanMyINFO(user)
-        if Maxslotsforconn==0 then -- kick unallowed
-          user:SendData("ConnectionCheck","Your connection is "..speed..", which is not allowed in here.")
-          user:Disconnect() return "shit"
-        elseif slots>Maxslotsforconn then
-          user:SendData("SlotperHubCheck","Too many slots! Maximum number of slots allowed for your "..speed.." connection: "..Maxslotsforconn..".")
-          return Checks.Punish(user,"sl",Checks.SlotHubLimit.BadSlotToDo)
-        elseif hubs>Maxhubsforconn then
-          user:SendData("SlotperHubCheck","Too many hubs! You can be in maximum "..Maxhubsforconn.." hubs with your connection type, and you are in "..hubs.." now!")
-          return Checks.Punish(user,"h",Checks.SlotHubLimit.BadHubToDo)
-        elseif Ratioforconn > (ratio) then
-          local min = tonumber(Ratioforconn)
-          local minslotsforconn=min*hubs
-          user:SendData("SlotperHubCheck","Your connection is "..speed..".")
-          user:SendData("SlotperHubCheck","You are in "..hubs.." hubs, and have "..slots.." slots.")
-          user:SendData("SlotperHubCheck","Open "..Ratioforconn.." slots per each hub for your connection type. (Currently you should have at least "..minslotsforconn.." slots open for this amount of hubs.")
-          return Checks.Punish(user,"r",Checks.SlotHubLimit.BadRatioToDo)
-        end
+  if Checks.SlotHubLimit.SlotHubLevel >= userlevels[user.iProfile] then
+    local conn=user.sConnection
+    if string.find(user.sConnection,"%(.+%/.+%)") then -- dirty workaround for R2++ et al. :-)
+      _,_,conn=string.find(user.sConnection,"(.+)%(.+%/.+%)")
+    end
+    if not conn or not Checks.SlotHubLimit.Rules[conn] then
+      user:SendData("ConnectionCheck","Your connection type could not be determined or is unknown.")
+      return Checks.Punish(user,"c",Checks.Client.BadClientToDo)
+    end
+    if Immune and not Immune.List[user.sName] or not Immune then
+      local hubs,slots,Guest,Reg,OP,speed,limit,Maxslotsforconn,Ratioforconn,Maxhubsforconn,minlimitforconn,ratio,Share=Checks.ScanMyINFO(user)
+      if Maxslotsforconn==0 then -- kick unallowed
+        user:SendData("ConnectionCheck","Your connection is "..speed..", which is not allowed in here.")
+        user:Disconnect() return "shit"
+      elseif slots>Maxslotsforconn then
+        user:SendData("SlotperHubCheck","Too many slots! Maximum number of slots allowed for your "..speed.." connection: "..Maxslotsforconn..".")
+        return Checks.Punish(user,"sl",Checks.SlotHubLimit.BadSlotToDo)
+      elseif hubs>Maxhubsforconn then
+        user:SendData("SlotperHubCheck","Too many hubs! You can be in maximum "..Maxhubsforconn.." hubs with your connection type, and you are in "..hubs.." now!")
+        return Checks.Punish(user,"h",Checks.SlotHubLimit.BadHubToDo)
+      elseif Ratioforconn > (ratio) then
+        local min = tonumber(Ratioforconn)
+        local minslotsforconn=min*hubs
+        user:SendData("SlotperHubCheck","Your connection is "..speed..".")
+        user:SendData("SlotperHubCheck","You are in "..hubs.." hubs, and have "..slots.." slots.")
+        user:SendData("SlotperHubCheck","Open "..Ratioforconn.." slots per each hub for your connection type. (Currently you should have at least "..minslotsforconn.." slots open for this amount of hubs.")
+        return Checks.Punish(user,"r",Checks.SlotHubLimit.BadRatioToDo)
       end
     end
   end
