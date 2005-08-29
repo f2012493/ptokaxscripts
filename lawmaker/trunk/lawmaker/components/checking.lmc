@@ -674,8 +674,8 @@ Checks.Welcome=function(user)
   local proftable={[-1]="Guest",[0]="Superoperator",[1]="Operator",[2]="VIP",[3]="Registered User"}
   local prof=proftable[user.iProfile] or "<Unknown profile>" 
   user:SendData(Bot.name,"Hello, "..user.sName.."! You are logging in as "..prof..".")
-  local hubs,slots,Guest,Reg,OP,speed,limit,Maxslotsforconn,Ratioforconn,Maxhubsforconn,minlimitforconn,ratio,Share=Checks.ScanMyINFO(user)
   if Immune and not Immune.List[user.sName] or not Immune then
+    local hubs,slots,Guest,Reg,OP,speed,limit,Maxslotsforconn,Ratioforconn,Maxhubsforconn,minlimitforconn,ratio,Share=Checks.ScanMyINFO(user)
     local clienttype,version=Checks.Client.Determine(user)
     user:SendData("ClientCheck","You are using "..clienttype..", version "..version..".")
     local v,u=bytestoh(user.iShareSize)
