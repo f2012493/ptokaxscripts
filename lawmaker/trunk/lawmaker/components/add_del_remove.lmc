@@ -1,66 +1,8 @@
 --[[
 Guestbook-like plugin for LawMaker by bastya_elvtars
-
-                      -- FULLY CUSTOMISABLE, GUESTBOOK-LIKE STUFF
-                       --=========================================
-Now you see how to add extras to this, feel free to mail to bastyaelvtars[at]gmail[dot]com if not clean.
+See lawmaker/components/cfg/add_del_remove.ini for config, nothing should be edited here
 ]]
-
-      --=========== #1
-
--- What it is called? This name will appear in the help text and in the rightclick menu if enabled
-AddDelShow=
-  {Containers=
-    {
-      ------------------
-      ["guestbook"]=
-      
-      { File="guestbook.dat",
-        ShowLevel=1,
-        ShowCmd="showguestbook",
-        AddLevel=1,
-        AddCmd="addguestbook",
-        DelLevel=5,
-        DelCmd="delguestbook",
-      },
-      
-      ------------------
-      ["news bulletin"]=
-      
-      { File="news.dat",
-        ShowLevel=1,
-        ShowCmd="shownews",
-        AddLevel=1,
-        AddCmd="addnews",
-        DelLevel=5,
-        DelCmd="delnews",
-      },
-      
-      ------------------
-      ["request board"]=
-      
-      { File="requests.dat",
-        ShowLevel=1,
-        ShowCmd="showrequests",
-        AddLevel=1,
-        AddCmd="addrequest",
-        DelLevel=5,
-        DelCmd="delrequest",
-      },
-      ------------------
-      ["operator message board"]=
-      
-      { File="opmsgboard.dat",
-        ShowLevel=4,
-        ShowCmd="showopmsg",
-        AddLevel=4,
-        AddCmd="addopmsg",
-        DelLevel=5,
-        DelCmd="delopmsg",
-      },
-    },
-  }
-
+dofile("lawmaker/components/cfg/add_del_remove.ini")
 
 function AddDelShow.AddShit(user,data,env,wtf,file)
   local container=AddDelShow.LoadShit(file)
