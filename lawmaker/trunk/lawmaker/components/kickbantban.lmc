@@ -143,7 +143,7 @@ function KickBanTBan.Ban(user,data,env,meth)
 	    SendToAll(Bot.name,usr.sName.." has been banned by "..user.sName.." "..tail..aah())
 	    usr:SendPM(Bot.name,"You are being banned by "..user.sName..tail..aah())
 	    if Logging then Logging.Write("lawmaker/logs/"..os.date("%Y-%m-%d_").."banlog.log",usr.sName.." (with IP "..usr.sIP.." - "..os.date("%H:%M").." - banned"..tail.." by "..user.sName) end
-	    --usr:NickBan();
+	    usr:NickBan();
 	    usr:Ban()
 	  else
 	    SendToOps(Bot.name,usr.sName.." (IP: "..usr.sIP..") has been timebanned and kicked by "..user.sName..tail..".")

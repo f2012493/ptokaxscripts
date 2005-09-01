@@ -231,6 +231,8 @@ function UserInfo.ScanMyINFO(myinfo)
     val=val or "unknown"
     return val
   end
+  local _,_,mail=string.find(myinfo,"%$%s+%$.+%$(.-)%$.+%$|$")
+  if mail=="" then mail="N/A" end
   local client,version=det(myinfo)
   if client then
     local _,slots,Guest,Reg,OP,speed,limit,_,_,_,_,_,Share=scanmyinfo(myinfo)
@@ -258,6 +260,7 @@ function UserInfo.ScanMyINFO(myinfo)
   else
     msg=msg.."Missing/invalid tag. I cannot give proper info on it.\r\n"
   end
+    msg=msg.."E-mail address: "..mail
   return msg
 end
 
@@ -556,8 +559,8 @@ function UserInfo.Append(user)
     }
   UserInfo.Data[user.sName]=UserInfo.Data[user.sName] or {}
   local now=os.date("%Y. %m. %d. %X") -- to avoid sync errors, I made only 1 call
-  for file,cor in cont do
-    coroutine.resume(cor,user,file,now)
+  for _,file in ipairs(cnt) do
+    coroutine.resume(cont[file],user,file,now)
   end
 end
 

@@ -516,6 +516,7 @@ local msg=""
       msg=msg..tmp[b]..b
     end
   end
+  if msg="" then msg="0" end
   return msg,weeks,days,hours,mins
 end
 
