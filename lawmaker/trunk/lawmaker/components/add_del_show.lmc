@@ -1,8 +1,9 @@
+AddDelShow={}
 --[[
 Guestbook-like plugin for LawMaker by bastya_elvtars
 See lawmaker/components/cfg/add_del_remove.ini for config, nothing should be edited here
 ]]
-Run(path.."/cfg/add_del_remove.ini")
+Run(path.."/cfg/add_del_show.ini")
 
 function AddDelShow.AddShit(user,data,env,wtf,file)
   local container=AddDelShow.LoadShit(file)
