@@ -7,18 +7,7 @@ Should add resetting of stats.
 Thx to RabidWombat for the original uptime calculation routine.
 ]]
 
--- the interval in which hub data is parsed (in minutes)
-HubStats.ParseInterval=60
-
--- show hub statistics
-HubStats.Levels.Show=1
-
--- show info on hub
-HubStats.Levels.HubInfo=1
-
--- show hub uptime
-HubStats.Levels.UpTime=1
-
+Run(path.."/cfg/hubstats.ini")
 ----------------
 -- END OF CONFIG
 ----------------

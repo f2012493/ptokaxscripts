@@ -6,15 +6,7 @@ bastya_elvtars, 2005.06. 20.
 Scripters: you may have noticed the order in deletion. It is reverse order and avoids effect of automatic table.setn.
 ]]
 
-
--- Levels are the same for leave messages.
--- add a random welcome/leave
-RandomCustomAnnounce.Levels.AddDel=4
-
--- show welcomes/leaves
-RandomCustomAnnounce.Levels.Show=4
-
---- end of settings
+Run(path.."cfg/randomcustomannounce.ini")
 
 function RandomCustomAnnounce.Add(user,data,env,what)
   if what=="welcome" then

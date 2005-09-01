@@ -27,13 +27,8 @@ args can be:
 	In this case, only address can be set/get.
 ]]
 
-Redirect.Levels.SetRedirect=5
+Run(path.."cfg/redirect.ini")
 
-Redirect.Levels.RedirectAllNow=5
-
-Redirect.Levels.RedirectUser=5
-
-Redirect.Levels.ShowRedirect=4
 frmHub.SetRedAddy=function(self,what,addy)
   local FuncTable=
   {

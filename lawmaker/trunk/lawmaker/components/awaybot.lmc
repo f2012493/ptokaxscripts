@@ -7,25 +7,10 @@ You can see others' away messages w/o PMing them if you want.
 Enjoy.
 --------------------------------------------------------------
 LMCA version by bastya_elvtars
+For config: lawmaker/components/cfg/awaybot.ini
 ]]
 
--- // CONFIG
-------------
-
--- away (afk) - same level as !back (obviously)
-AwayBot.Levels.AFK=1
-
--- show if you are away
-AwayBot.Levels.AmIAway=1
-
--- show a user's or all users' away msgs 
-AwayBot.Levels.ShowAway=1
-
--- Max. characters of an away message
-AwayBot.MaxAwayMessLength=150
-
--------------------
--- // END OF CONFIG
+Run(path.."/cfg/awaybot.ini")
 
 AwayBot.AFK={}
 

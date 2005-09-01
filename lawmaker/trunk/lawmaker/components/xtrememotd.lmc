@@ -9,14 +9,7 @@ Text file opening routine by plop & chilla
 To edit the MOTD, open MOTD.txt in LawMaker folder, or edit from DC++ :)
 ]]
 
-XtremeMotd.Levels.EnableDisable=1       -- enable/disable MOTD
-XtremeMotd.Levels.Show=1        -- see MOTD in pm
-XtremeMotd.Levels.Change=5 -- change MOTD
-
-XtremeMotd.ShowInPM=1 -- If set to 1, shows the MOTD in PM on connect (like in PtokaX :P).
-
-
-
+Run(path.."cfg/xtrememotd.ini")
 
 function XtremeMotd.Show(user) -- show the motd on connection
   if not XtremeMotd.NoMotd[user.sName] then

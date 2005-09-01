@@ -5,30 +5,7 @@ Random Kick messages in Main.
 bastya_elvtars
 ]]--
 
-
-----------------------------
--- SETTINGS
-
--- This sets whether you want random kick messages or not *by default*.
--- 1 for enabled
--- note that you can change this, but when you restart the scripts, this value will count. ]]--
-
-RandomKicks.OnOff=1
-
--- add a random kick message
-RandomKicks.Levels.Add=4
-
--- delete some messages
-RandomKicks.Levels.Delete=4
-
--- enable/disable random kick messages
-RandomKicks.Levels.OnOff=5
-
-
--- show random kick msgs
-RandomKicks.Levels.Show=4
-
--- END OF SETTINGS
+Run(path.."cfg/randomkicks.ini")
 
 function RandomKicks.Delete(user,data,env)
   local _,_,args=string.find(data,"%b<>%s+%S+%s+(.+)")

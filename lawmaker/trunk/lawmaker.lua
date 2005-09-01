@@ -138,6 +138,8 @@ commandtable={}
 lagtest={}
 modules={}
 
+path="lawmaker/components/"
+
 function Main()
   local x=os.clock()
   os.execute("dir \""..frmHub: GetPtokaXLocation().."scripts/lawmaker/components\" /b /o:n > \""..frmHub: GetPtokaXLocation().."scripts/lawmaker/components.lst\"")
@@ -594,6 +596,18 @@ function license(user,data,env)
     f:close()
   else
     SendToAll(Bot.name,"The file License.txt could not be found on this machine, so the GPL is being violated now!")
+  end
+end
+
+function Run(file)
+  local _,err=loadfile(file)
+  if not err then
+    dofile(file)
+    SendToAll(Bot.name,"Loaded "..file)
+  else
+    SendToOps("ERROR:","******************************************************** <***>")
+    SendToOps("ERROR:",err)
+    SendToOps("ERROR:","******************************************************** <***>")
   end
 end
 

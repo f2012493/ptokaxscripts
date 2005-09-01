@@ -3,14 +3,7 @@ Mute={};Mute.Levels={} -- do not touch this line
 Mute plugin for LawMaker by bastya_elvars
 Originally written by kepp and Typhoon
 ]]
-
---- Mute Stuff
-Mute.Time = 5 --- in minutes, the time which the victim gets muted for
-
-Mute.Levels.Mute=4      -- mute
-Mute.Levels.UnMute=4    -- unmute
-Mute.Levels.ShowMuted=4 -- show muted
-
+Run(path.."cfg/mute.ini")
 Mute.MUTE={}
 
 function Mute.DoMute(user, data,env)

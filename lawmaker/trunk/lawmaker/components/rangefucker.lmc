@@ -18,16 +18,7 @@ RangeFucker={Levels={}} -- don't touch this line
 -- some useless shit was removed.
 -- finalized. next will be the CIDR netmask adding
 
-RangeFucker.CheckOpsIPs=1 -- Set 0 to protect OPs, their IP will not be checked then.
-
--- ban a range
-RangeFucker.Levels.RangeBan=5
-
--- unban a range
-RangeFucker.Levels.RangeUnBan=5
-
--- show banned ranges
-RangeFucker.Levels.ShowBannedRanges=4
+Run(path.."cfg/rangefucker.ini")
 
 function RangeFucker.RangeBan(user,data,env)
   local _,_,ip1,ip2=string.find(data,"%b<>%s+%S+%s+(%d+%.%d+%.%d+%.%d+)%-(%d+%.%d+%.%d+%.%d+)")

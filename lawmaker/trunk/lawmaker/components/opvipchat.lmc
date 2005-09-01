@@ -5,28 +5,7 @@ Based on chatrooms by tezlo
 For testing thx to: Mickey, TTB
 Also thx to PPK for helping in getting members for chatrooms.
 ]]
-
-OpVipChat.OpChatBot=
-  {
-    name="-OpChat-",
-    desc="Private chatbox for operators",
-    email="opchat@lawmaker.lua" -- :-)
-  }
-
-OpVipChat.EnableVipChat=1 -- 1 to enable vipchat, 0 to disable
-
-OpVipChat.VipChatBot=
-  {
-    name="-VIPChat-",
-    desc="Private chatbox for VIPs and above",
-    email="vipchat@lawmaker.lua" -- :-)
-  }
---invite to opchat
-
-OpVipChat.Levels.Invite=5 -- temporary invitation
-OpVipChat.Levels.PermInvite=5 -- permanent (until-removal) invitation
-OpVipChat.Levels.Remove=5 --removal from opchat
-
+Run(path.."/cfg/opvipchat.ini")
 
 --------------- command and chatroom fuck starts here ^^
 

@@ -2,15 +2,10 @@ Bitching={Levels={},Settings={}} -- please do not touch
 --[[
 LMNF (LawMaker Needs Fun!)
 This shows the bot version, also shows a quote every 2 hour, and on script restart.
+see cfg/bitching.ini for config
 ]]
 
-Bitching.Timer=0
-
-Bitching.Levels.BotVersion=1
-
-Bitching.ShowOnScriptStart=0
-
-Bitching.ShowEveryTwoHours=1
+Run(path.."cfg/bitching.ini")
 
 function Bitching.BotVersion(user,data,env)
 local bitcharray={

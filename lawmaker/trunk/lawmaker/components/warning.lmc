@@ -4,24 +4,8 @@ Warning LMCA module
 Originally by pur, freed, gg3k, klownietklowniet
 ]]
 
---- Warn Stuff
+Run(path.."cfg/warning.ini")
 
--- in minutes, the time which the user reached the max warns will be banned for
-Warning.BanTime=30 
-
--- number of warnings before kick
-Warning.Max=3
-
--- warn
-Warning.Levels.Warn=4
-
--- reset warnings of a user
-Warning.Levels.ResetWarn=4
-
--- Set this to 1 to make warns persistent. (They wil be reset if they reach the maximum.)
-Warning.SaveWarns=1
---*************************************************************************************--
---*************************************************************************************--
 function Warning.Warn(user,data,env)
   local _,_,arg=string.find(data, "%b<>%s+%S+%s+(%S+)")
   local _,_,arg2=string.find(data, "%b<>%s+%S+%s+%S+%s+(.+)")

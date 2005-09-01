@@ -4,30 +4,10 @@ Basic hubsettings module for LawMaker by bastya_elvtars
 Hub desc,hub name, max users can be set.
 Originally from ChannelBot by Nathanos.
 Added restarting of scripts and hub by bastya_elvtars
+See cfg/hubsettings.ini for config
 ]]--
 
-                                -- HUB SETTINGS
-				-- =============
--- set hub desc
-HubSettings.Levels.SetHubDesc=5
-
--- set hubname
-HubSettings.Levels.SetHubName=5
-
--- set max. users
-HubSettings.Levels.SetMaxUsers=5
-
-HubSettings.Levels.Restart=5
-
-HubSettings.Levels.ReStartScripts=5
-
-HubSettings.Levels.SetRegServers=5
-
-HubSettings.Levels.GetRegServers=5
-
-HubSettings.Levels.GetHubDesc=1
----------------
---------------
+Run(path.."/cfg/hubsettings.ini")
 
 function HubSettings.SetHubDesc(user,data,env)
   local _,_,newdesc=string.find(data,"%b<>%s+%S+%s+(.+)")

@@ -3,44 +3,9 @@ KickBanTBan={Levels={},KickNumbers={}}
 Kick / ban / timeban module for LMCA.
 Bans on a certain amount of kicks, sends hubmail/webby on request.
 ]]
--- if 1, the builtin kick cannot be seen by anyone but you and the user involved :)
-KickBanTBan.BuiltInKickSilent=1
 
--- set whether the kick have to be logged
-KickBanTBan.LogKicks=1 
+Run(path.."/cfg/kickban.ini")
 
--- minutes, the temp ban on a kick
-KickBanTBan.KickTime=10 
-
--- if user gets this amount of kicks, he gets banned for the time specified below
-KickBanTBan.MaxKick=3 
-
---in hours, the temp ban which the user gets if he reaches the amount of kicks specified above
-KickBanTBan.MaxKickBan=24 
-
--- kick a user
-KickBanTBan.Levels.KickUser=4
-
--- silentkick or drop
-KickBanTBan.Levels.SilentKick=4
-
--- ban a user, goes for banip and nickban as well
-KickBanTBan.Levels.Nuke=4
-
-
--- temp ban a user
-KickBanTBan.Levels.TBan=4
-
-KickBanTBan.Levels.UnBan=4
-
-KickBanTBan.Levels.UnTBan=4
-
-KickBanTBan.Levels.ClearPermBan=5
-
-KickBanTBan.Levels.ClearTempBan=5
-
-KickBanTBan.Levels.GetBanList=5
------------
 function KickBanTBan.Kick(user,data,env,bool)
   local _,_,nick = string.find(data,"%b<>%s+%S+%s+(%S+)")
   local _,_,reason=string.find(data,"%b<>%s+%S+%s+%S+%s+(.+)")
