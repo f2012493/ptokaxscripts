@@ -4,7 +4,7 @@ Kick / ban / timeban module for LMCA.
 Bans on a certain amount of kicks, sends hubmail/webby on request.
 ]]
 
-Run(path.."/cfg/kickban.ini")
+Run(path.."cfg/kickban.ini")
 
 function KickBanTBan.Kick(user,data,env,bool)
   local _,_,nick = string.find(data,"%b<>%s+%S+%s+(%S+)")

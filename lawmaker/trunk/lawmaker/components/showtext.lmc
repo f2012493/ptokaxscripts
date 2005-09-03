@@ -1,4 +1,4 @@
-ShowText={Timer=0}
+ShowText={Commands={},HubAD={},Timer=0}
 --[[
 Showtext plugin for LawMaker by bastya_elvtars
 Some code from Texter by plop & chilla

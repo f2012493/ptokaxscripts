@@ -3,16 +3,20 @@ AddDelShow={}
 Guestbook-like plugin for LawMaker by bastya_elvtars
 See lawmaker/components/cfg/add_del_remove.ini for config, nothing should be edited here
 ]]
-Run(path.."/cfg/add_del_show.ini")
+Run(path.."cfg/add_del_show.ini")
 
 function AddDelShow.AddShit(user,data,env,wtf,file)
   local container=AddDelShow.LoadShit(file)
   number=number+1
   local _,_,entry=string.find(data,"%b<>%s+%S+%s+(.*)")
   if entry then
-    container[number]=os.date("%x").."|"..user.sName.."|"..entry
-    AddDelShow.SaveShit(container,file)
-    SendTxt(user,env,Bot.name,"Your entry has been successfully added to the "..wtf)
+    if string.len(entry) <= AddDelShow.MaxEntryLen then
+      container[number]=os.date("%x").."|"..user.sName.."|"..entry
+      AddDelShow.SaveShit(container,file)
+      SendTxt(user,env,Bot.name,"Your entry has been successfully added to the "..wtf)
+    else
+      SendTxt(user,env,Bot.name,"Maximum entry length: "..AddDelShow.MaxEntryLen.." chars.")
+    end
   else
     SendTxt(user,env,Bot.name,"Please add an entry, too.")
   end

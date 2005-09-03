@@ -151,7 +151,7 @@ function Main()
       if not err then
 	count=count+1
 	dofile("lawmaker/components/"..line)
-	--SendToAll(Bot.name,"Loaded "..line)
+-- 	SendToAll(Bot.name,"Loaded "..line)
       else
         SendToOps("ERROR:","******************************************************** <***>")
 	SendToOps("ERROR:",err)
@@ -603,7 +603,7 @@ function Run(file)
   local _,err=loadfile(file)
   if not err then
     dofile(file)
-    SendToAll(Bot.name,"Loaded "..file)
+--     SendToAll(Bot.name,"Loaded "..file)
   else
     SendToOps("ERROR:","******************************************************** <***>")
     SendToOps("ERROR:",err)

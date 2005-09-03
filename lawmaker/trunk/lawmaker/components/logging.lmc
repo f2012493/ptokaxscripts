@@ -5,7 +5,7 @@ Cleans logs on request and searches for nicks.
 NOTE: I am unsure whether it works under Win9x/Me due to commandline folder management differences.
 Thx plop for posting a link to hide console window.
 ]]
-Run(path.."/cfg/logging.ini")
+Run(path.."cfg/logging.ini")
 function Logging.Write(logfile,entry)
   local f=io.open(logfile,"a+")
   f:write(entry.."\n")

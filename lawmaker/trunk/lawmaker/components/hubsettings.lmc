@@ -7,7 +7,7 @@ Added restarting of scripts and hub by bastya_elvtars
 See cfg/hubsettings.ini for config
 ]]--
 
-Run(path.."/cfg/hubsettings.ini")
+Run(path.."cfg/hubsettings.ini")
 
 function HubSettings.SetHubDesc(user,data,env)
   local _,_,newdesc=string.find(data,"%b<>%s+%S+%s+(.+)")

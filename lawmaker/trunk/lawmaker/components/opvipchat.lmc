@@ -5,7 +5,7 @@ Based on chatrooms by tezlo
 For testing thx to: Mickey, TTB
 Also thx to PPK for helping in getting members for chatrooms.
 ]]
-Run(path.."/cfg/opvipchat.ini")
+Run(path.."cfg/opvipchat.ini")
 
 --------------- command and chatroom fuck starts here ^^
 

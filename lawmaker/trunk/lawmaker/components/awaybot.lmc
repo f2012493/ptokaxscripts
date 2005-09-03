@@ -10,7 +10,7 @@ LMCA version by bastya_elvtars
 For config: lawmaker/components/cfg/awaybot.ini
 ]]
 
-Run(path.."/cfg/awaybot.ini")
+Run(path.."cfg/awaybot.ini")
 
 AwayBot.AFK={}
 

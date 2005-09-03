@@ -86,25 +86,31 @@ function RegManagement.Register(user,data,env,level,bool)
     local tmp={[0]="Superoperator",[1]="Operator",[2]="VIP",[3]="Registered User"}
     if bool then
       if not user.bRegistered then
-	local passwd=nick or RegManagement.GeneratePass()
-	if string.len(passwd)<4 then
-	  SendTxt(user,env,Bot.name,"Password must be at least 4 characters long!")
-	  return 1
-	end
-	AddRegUser(user.sName,passwd,3)
-	SendTxt(user,env,Bot.name,"You are registered now, with password: "..passwd)
+        local passwd=nick
+	if passwd then -- local passwd=nick or RegManagement.GeneratePass()
+          if string.len(passwd)<4 or string.find(passwd,"([^A-Za-z0-9]+)") then
+            SendTxt(user,env,Bot.name,"Your password is too short, or contains non-alphanumeric characters!")
+            return 1
+          end
+        else
+          psswd=RegManagement.GeneratePass()
+        end
+        AddRegUser(user.sName,passwd,3)
+	SendTxt(user,env,Bot.name,"You are registered now, with password: "..passwd..". "..mrg)
       else
 	SendTxt(user,env,Bot.name,"You are already a(n) "..tmp[user.iProfile]..", "..RegManagement.BitchList[math.random(table.getn(RegManagement.BitchList))])
       end
     else
       if nick then
 	if not regusers[nick] then
-	  if string.len(pass)<4 then
-	    SendTxt(user,env,Bot.name,"Password must be at least 4 characters long!")
+          local mrg,rpl="",nil
+          pass,rpl=string.gsub(nick,"([^A-Za-z0-9]+])","")
+	  if string.len(pass)<4 or string.find(pass,"([^A-Za-z0-9]+)") then
+	    SendTxt(user,env,Bot.name,"Password must be at least 4 characters long, it should only contain alphanumeric characters!")
 	    return 1
 	  end
 	  AddRegUser(nick,pass,level)
-	  SendTxt(user,env,Bot.name,"You have made "..nick.." a(n) "..tmp[level].." with password: "..pass)
+	  SendTxt(user,env,Bot.name,"You have made "..nick.." a(n) "..tmp[level].." with password: "..pass..". "..mrg)
 	  SendPmToNick(nick,Bot.name,user.sName.." has made you a "..tmp[level]..". Your password is: "..pass)
 	else
 	  SendTxt(user,env,Bot.name,nick.." is alredy a(n) "..tmp[level]..", "..RegManagement.BitchList[math.random(table.getn(RegManagement.BitchList))])

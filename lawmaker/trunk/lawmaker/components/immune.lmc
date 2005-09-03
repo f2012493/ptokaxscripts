@@ -5,7 +5,7 @@ Immune against nick check (except bad chars), clone, share, limit check
 Option to immune against kick. (idea by Zinden).
 ]]
 
-Run(path.."/cfg/immune.ini")
+Run(path.."cfg/immune.ini")
 
 function Immune.Main() Immune.List=maketable("lawmaker/components/metafiles/immune.dat") end
 
