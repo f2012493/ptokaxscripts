@@ -152,11 +152,9 @@ function OpVipChat.Main()
   frmHub:RegBot(OpVipChat.OpChatBot.name,1,OpVipChat.OpChatBot.desc,OpVipChat.OpChatBot.email)
   if OpVipChat.EnableVipChat==1 then
     frmHub:RegBot(OpVipChat.VipChatBot.name,1,OpVipChat.VipChatBot.desc,OpVipChat.VipChatBot.email)
-  else
-    frmHub:UnregBot(OpVipChat.VipChatBot.name)
   end
-  OpVipChat.OpChat=maketable("lawmaker/components/metafiles/vipchat.dat")
-  OpVipChat.VipChat=maketable("lawmaker/components/metafiles/opchat.dat")
+  OpVipChat.OpChat=maketable("lawmaker/components/metafiles/opchat.dat")
+  OpVipChat.VipChat=maketable("lawmaker/components/metafiles/vipchat.dat")
   for _,obj in (frmHub:GetRegisteredUsers()) do
    if not OpVipChat.VipChat[obj.sNick] and obj.iProfile <= 2 then OpVipChat.VipChat[obj.sNick]=1 end
    if not OpVipChat.OpChat[obj.sNick] and obj.iProfile <= 1 then OpVipChat.OpChat[obj.sNick]=1 end
