@@ -185,7 +185,6 @@ function Main()
   RegRC(1,"1 3","Lagtest\\Enable","!lagtest on")
   RegRC(1,"1 3","Lagtest\\Disable","!lagtest off")
   RegRC(1,"1 3","License agreement (GPL)","!license")
-  SendToAll(Bot.name,"\r\n"..Bot.version.."\r\nLicensed under the GNU GPL, see !license for details.")
   SendToOps(Bot.name,"Bootup finished, took "..os.clock()-x.." seconds, "..count.." plugins have been loaded.")
 end
 
@@ -197,7 +196,6 @@ end
 
 function NewUserConnected(user)
   local bad
-  user:SendData(Bot.name,"Hub is secured and cheaters are killed by "..Bot.version)
   for k=1,table.getn(tNUCOrder) do
     if modules["nuc"][tNUCOrder[k]] then
       if modules["nuc"][tNUCOrder[k]]["func"](user,unpack(modules["nuc"][tNUCOrder[k]]["parms"]))=="shit" then
@@ -222,6 +220,7 @@ function NewUserConnected(user)
       user:SendData(Bot.name,"You just got "..(table.getn(rctosend)+3).." rightclick commands, please try them! :)")
     end
   end
+  user:SendData(Bot.name,Bot.version..". Licensed under the GNU GPL, type !license for details.")
 end
 
 function ToArrival(user,data)
@@ -551,7 +550,7 @@ function help(user,data,env)
     if b["level"]~=0 then
       if userlevels[user.iProfile] >= b["level"] then
         count=count+1
-        table.insert(hlptbl,"!"..a.." "..b["help"])
+        table.insert(hlptbl,"+"..a.." "..b["help"])
       end
     end
   end
