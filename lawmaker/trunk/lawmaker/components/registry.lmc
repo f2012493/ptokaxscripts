@@ -77,7 +77,7 @@ end
 function RegManagement.Register(user,data,env,level,bool)
   if env=="PM" then
     local _,_,nick = string.find(data,"%b<>%s+%S+%s+(%S+)")
-    local _,_,pass = string.find(data,"%b<>%s+%S+%s+(%S+)%s+(%S+)")
+    local _,_,pass = string.find(data,"%b<>%s+%S+%s+%S+%s+(%S+)")
     pass=pass or RegManagement.GeneratePass()
     local regusers={}
     for _,obj in frmHub:GetRegisteredUsers() do
@@ -93,27 +93,25 @@ function RegManagement.Register(user,data,env,level,bool)
             return 1
           end
         else
-          psswd=RegManagement.GeneratePass()
+          passwd=RegManagement.GeneratePass()
         end
         AddRegUser(user.sName,passwd,3)
-	SendTxt(user,env,Bot.name,"You are registered now, with password: "..passwd..". "..mrg)
+	SendTxt(user,env,Bot.name,"You are registered now, with password: "..passwd..".")
       else
 	SendTxt(user,env,Bot.name,"You are already a(n) "..tmp[user.iProfile]..", "..RegManagement.BitchList[math.random(table.getn(RegManagement.BitchList))])
       end
     else
       if nick then
 	if not regusers[nick] then
-          local mrg,rpl="",nil
-          pass,rpl=string.gsub(nick,"([^A-Za-z0-9]+])","")
-	  if string.len(pass)<4 or string.find(pass,"([^A-Za-z0-9]+)") then
-	    SendTxt(user,env,Bot.name,"Password must be at least 4 characters long, it should only contain alphanumeric characters!")
-	    return 1
-	  end
-	  AddRegUser(nick,pass,level)
-	  SendTxt(user,env,Bot.name,"You have made "..nick.." a(n) "..tmp[level].." with password: "..pass..". "..mrg)
-	  SendPmToNick(nick,Bot.name,user.sName.." has made you a "..tmp[level]..". Your password is: "..pass)
-	else
-	  SendTxt(user,env,Bot.name,nick.." is alredy a(n) "..tmp[level]..", "..RegManagement.BitchList[math.random(table.getn(RegManagement.BitchList))])
+          if string.len(pass)<4 or string.find(pass,"([^A-Za-z0-9]+)") then
+            SendTxt(user,env,Bot.name,"Password must be at least 4 characters long, it should only contain alphanumeric characters!")
+            return 1
+          end
+          AddRegUser(nick,pass,level)
+          SendTxt(user,env,Bot.name,"You have made "..nick.." a(n) "..tmp[level].." with password: "..pass..".")
+          SendPmToNick(nick,Bot.name,user.sName.." has made you a "..tmp[level]..". Your password is: "..pass)
+        else
+          SendTxt(user,env,Bot.name,nick.." is alredy a(n) "..tmp[level]..", "..RegManagement.BitchList[math.random(table.getn(RegManagement.BitchList))])
 	end
       else
 	SendTxt(user,env,Bot.name,"Please specify a nick to register!")
