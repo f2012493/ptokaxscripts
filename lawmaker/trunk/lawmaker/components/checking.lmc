@@ -18,10 +18,6 @@ It stops the loop of checks in the core file. Please keep an eye on this if
 you wanna rewrite this file (as I am sure some of you do. :D)
 ---------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------
-Ok, let's start (this is what you are waiting for probably)!
-Since this script is called every time a user sends a MyINFO or connects, it has to be optimized.
-As such, it may seem harder to configure, but I am sure You can do the job.
-Do not forget to read the manual as it will help you understand many things here.
 ]]
 
 for _,f in ipairs({"slot_hub_limit","share_clone","nickcheck","clientcheck"}) do
@@ -29,11 +25,11 @@ for _,f in ipairs({"slot_hub_limit","share_clone","nickcheck","clientcheck"}) do
 end
 
 Checks.ScanMyINFO=function(user) ----------
-  local speed = user.sConnection
-  local hubs,slots,Guest,Reg,OP
+  local speed,hubs,slots,Guest,Reg,OP
   if string.find(user.sConnection,"%(.+%/.+%)") then -- dirty workaround for R2++ et al. :-)
     _,_,speed=string.find(user.sConnection,"(.+)%(.+%/.+%)")
   end
+  speed=speed or user.sConnection
   if not user.iRegHubs then
     if user.iHubs==0 then
       Guest,Reg,OP= 0 , 1 , 0
@@ -46,9 +42,8 @@ Checks.ScanMyINFO=function(user) ----------
 --   local _,_,Hubs,Slots,speed = string.find(myinfo, "H:([^,]+),S:(%d+).*>$ $([^$]+)[^$]%$")
 --   local Guest,Reg,OP,slots,hubs,ratio
   local Maxslotsforconn,Ratioforconn,Maxhubsforconn,minlimitforconn=Checks.SlotHubLimit.Rules[speed].max_slots,Checks.SlotHubLimit.Rules[speed].min_ratio,Checks.SlotHubLimit.Rules[speed].max_hubs,Checks.SlotHubLimit.Rules[speed].min_limit
-  local _,_,limit1=string.find(user.sMyInfoString,"[BLU]:(%d+)")
+  local _,_,limit1=user.iLlimit or user.iBlimit--string.find(user.sMyInfoString,"[BLU]:(%d+)")
   local _,_,limit2 = string.find(user.sMyInfoString,"F:%d+/(%d+)")
-  local temp = user.iShare
 -- if tonumber (Hubs) then
 --      if Hubs=="0" then
 --              Guest,Reg,OP= "0", "1" , "0"
@@ -85,7 +80,7 @@ Checks.SlotHubLimit.CheckHubsAndSlots=function(user)
     end
     if not conn or not Checks.SlotHubLimit.Rules[conn] then
       user:SendData("ConnectionCheck","Your connection type could not be determined or is unknown.")
-      return Checks.Punish(user,"c",Checks.Client.BadClientToDo)
+      return Checks.Punish(user,"c",Checks.SlotHubLimit.BadConnToDo)
     end
     if Immune and not Immune.List[user.sName] or not Immune then
       local hubs,slots,Guest,Reg,OP,speed,limit,Maxslotsforconn,Ratioforconn,Maxhubsforconn,minlimitforconn,ratio,Share=Checks.ScanMyINFO(user)
@@ -266,17 +261,17 @@ Checks.Client.Check=function(user)
 	    if string.find(user.sTag,"%<%+%+.?V:") and not string.find(user.sTag,"%<%+%+%s+V:") then
 	      return Checks.Client.Killfaker(user,"No space found in tag between characters + and V.")
 	    end
-	    local _,_,Hubs = string.find(user.sMyInfoString, "H:([^,]+),")
+	    local _,_,Hubs = string.find(user.sTag, "H:([^,]+),")
 	    if not Hubs then
 	      return Checks.Client.Killfaker(user,"Missing hubcount in tag, or hubcount contains invalid characters.")
 	    else
 	      if tonumber(version) >= 0.24 then
-		if not string.find(Hubs,"%d+/%d+/%d+") then
-		  return Checks.Client.Killfaker(user,"Hubcount contains invalid characters.")
-		end
 		if tonumber(Hubs) then
 		  return Checks.Client.Killfaker(user,"Old-style hubcount with DC++ newer than 0.240.")
 		else
+                  if not string.find(Hubs,"%d+/%d+/%d+") then
+                    return Checks.Client.Killfaker(user,"Hubcount contains invalid characters.")
+                  end
 		  if string.find(Hubs,"%D*0/0/[^0]") and not user.bOperator then
 		    return Checks.Client.Killfaker(user,"0/0/x hubcount with not being op here.")
 		  elseif string.find(Hubs,"%D*0/[^0]/%d+") and not user.bRegistered then
@@ -303,7 +298,7 @@ Checks.Client.Check=function(user)
       end
     else
       if string.find(user.sMyInfoString, "dc-gui", 1, 1) or string.find(user.sMyInfoString, "dc.ketelhot.de", 1, 1) or string.find(user.sMyInfoString, "DCGUI", 1, 1) then 
-	if not string.find(user.sMyInfoString, "<DCGUI V:", 1, 1) then 
+	if not string.find(user.sTag, "<DCGUI V:", 1, 1) then 
 	  user:SendData("ClientCheck", "You are hiding your DCGUI tag, you are now being disconnected!")
 	  return Checks.Punish(user,"c",Checks.Client.BadClientToDo)
 	end
@@ -316,13 +311,14 @@ Checks.Client.Check=function(user)
 end
 
 function Checks.Client.Killfaker(user,why)
-  user:SendData("ClientCheck","Your tag is faked! ("..why..")")
+  tag=user.sTag or ""
+  user:SendData("ClientCheck","Your tag is faked! ("..why.."). Your tag is: "..tag)
   if Checks.Client.BanFakeTag==1 then
     user:SendData("ClientCheck","You are now being banned"..aah())
     if Checks.SeeBotBan==1 then
-      SendToAll("ClientCheck",user.sName.." has been banned for faked tag ("..why..")")
+      SendToAll("ClientCheck",user.sName.." has been banned for faked tag ("..why.."). Tag: "..tag)
     end
-    if Logging then Logging.Write("lawmaker/logs/"..os.date("%Y-%m-%d_").."botbanlog.log",user.sName.." "..os.date("%H:%M").." - (IP: "..user.sIP..") banned for faked tag. ("..why..")") end
+    if Logging then Logging.Write("lawmaker/logs/"..os.date("%Y-%m-%d_").."botbanlog.log",user.sName.." "..os.date("%H:%M").." - (IP: "..user.sIP..") banned for faked tag. ("..why.."). Tag: "..tag) end
     user:NickBan(); user:Ban() return "shit"
   else
     return Checks.Punish(user,"c",Checks.Client.BadClientToDo)
@@ -363,7 +359,7 @@ Checks.Welcome=function(user)
     user:SendData("SlotperHubCheck","The required minimum is "..Ratioforconn.." slots per each hub for this connection.")
     if minlimitforconn~=0 then
       if limit then
-        if Checks.Client.Determine(user)=="DCGUI" then
+        if user.sClient=="Valknut" then
           user:SendData("BandwidthCheck","Your upload limit is set to "..tonumber(limit)*slots.." kB/s, the minimum allowed for your class is "..minlimitforconn.." kB/s.")
         else
           user:SendData("BandwidthCheck","Your upload limit is set to "..limit.." kB/s, the minimum allowed for your class is "..minlimitforconn.." kB/s.")
@@ -525,8 +521,8 @@ function Checks.NewUserConnected(user)
       Checks.SlotHubLimit.CheckLimit,
       Checks.Welcome,
     }
-    for a=1,table.getn(torun) do
-      if torun[a](user)=="shit" then
+    for k,v in ipairs(torun) do
+      if v(user)=="shit" then
 	return "shit"
       end
     end

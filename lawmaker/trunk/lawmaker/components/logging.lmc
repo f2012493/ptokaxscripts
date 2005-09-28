@@ -14,15 +14,15 @@ end
 
 function Logging.SearchLog(user,data,env)
   local msg=""
-  local _,_,username=string.find(data,"%b<>%s+%S+%s+(%S+)")
-  if username then
+  local _,_,parm=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  if parm then
     local logs=Logging.MakeLogList()
     for i=1,table.getn(logs) do
       local f=io.open("lawmaker/logs/"..logs[i],"r")
       if f then
 	for line in f:lines() do
 	  local u
-	  if string.find(username,"%d+%.%d+%.%d+%.%d+") then
+	  if string.find(parm,"%d+%.%d+%.%d+%.%d+") then
 	    _,_,u=string.find(line,"(%d+%.%d+%.%d+%.%d+)")
 	  else
 	    _,_,u=string.find(line,"^(%S+)")

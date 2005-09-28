@@ -184,7 +184,7 @@ function Main()
   RegRC(1,"1 3","Help","!help")
   RegRC(1,"1 3","Lagtest\\Enable","!lagtest on")
   RegRC(1,"1 3","Lagtest\\Disable","!lagtest off")
-  RegRC(1,"1 3","License agreement (GPL)","!license")
+  RegRC(1,"1 3","License agreement (GPL)","+license")
   SendToOps(Bot.name,"Bootup finished, took "..os.clock()-x.." seconds, "..count.." plugins have been loaded.")
 end
 
@@ -220,7 +220,7 @@ function NewUserConnected(user)
       user:SendData(Bot.name,"You just got "..(table.getn(rctosend)+3).." rightclick commands, please try them! :)")
     end
   end
-  user:SendData(Bot.name,Bot.version..". Licensed under the GNU GPL, type !license for details.")
+  user:SendData(Bot.name,Bot.version..". Licensed under the GNU GPL, type +license for details.")
 end
 
 function ToArrival(user,data)
