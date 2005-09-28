@@ -272,9 +272,9 @@ Checks.Client.Check=function(user)
                   if not string.find(Hubs,"%d+/%d+/%d+") then
                     return Checks.Client.Killfaker(user,"Hubcount contains invalid characters.")
                   end
-		  if string.find(Hubs,"%D*0/0/[^0]") and not user.bOperator then
+		  if string.find(Hubs,"H:0/0/[^0]") and not user.bOperator then
 		    return Checks.Client.Killfaker(user,"0/0/x hubcount with not being op here.")
-		  elseif string.find(Hubs,"%D*0/[^0]/%d+") and not user.bRegistered then
+		  elseif string.find(Hubs,"H:0/[^0]/%d+") and not user.bRegistered then
 		    return Checks.Client.Killfaker(user,"0/x/x hubcount with not being registered here.")
 		  end
 		end
