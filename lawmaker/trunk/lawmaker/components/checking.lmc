@@ -377,18 +377,18 @@ end
 
 function Checks.Clone.Check(user,data)
   if Immune and not Immune.List[user.sName] or not Immune then
-    for _,Nick in frmHub:GetOnlineUsers() do
-      if user.sIP==Nick.sIP and not (Checks.Clone.Level >= userlevels[user.iProfile] or Checks.Clone.Level >= userlevels[Nick.iProfile] or not Immune.List[Nick.sName]) then
-        if user.iShare==Nick.iShare then
+    for _,obj in frmHub:GetOnlineUsers() do
+      if user.sIP==obj.sIP and Checks.Clone.Level > userlevels[user.iProfile] and Checks.Clone.Level > userlevels[obj.iProfile] and not Immune.List[obj.sName] then
+        if user.iShareSize==obj.iShareSize then
           user:SendData(Bot.name,"This hub does not allow the use of clones. Hit the bricks, ya leecher!")
-          Nick:SendData(Bot.name,"This hub does not allow the use of clones. Hit the bricks, ya leecher!")
+          obj:SendData(Bot.name,"This hub does not allow the use of clones. Hit the bricks, ya leecher!")
           if Checks.Clone.PMOps == 1 then
-            SendPmToOps(Bot.name, "*** Cloned user = "..user.sName.." logged in, Nick is a clone of = "..Nick.sName)
-            SendPmToOps(Bot.name, "***"..user.sName.." and "..Nick.sName.." have been disconnected")
+            SendPmToOps(Bot.name, "*** Cloned user = "..user.sName.." logged in, Nick is a clone of = "..obj.sName)
+            SendPmToOps(Bot.name, "***"..user.sName.." and "..obj.sName.." have been disconnected")
           end
-          Nick:Disconnect(); user:Disconnect(); return "shit"
+          obj:Disconnect(); user:Disconnect(); return "shit"
         else
-          SendPmToOps(Bot.name, "*** User "..user.sName.." logged in, with same IP as "..Nick.sName.." but with different share, please check.")
+          SendPmToOps(Bot.name, "*** User "..user.sName.." logged in, with same IP as "..obj.sName.." but with different share, please check.")
         end
       end
     end
@@ -507,13 +507,15 @@ function Checks.MyINFOArrival(user,data)
 	return "shit"
       end
     end
+  else
+    return Checks.Clone.Check(user)
   end
 end
 
 function Checks.NewUserConnected(user)
   local torun=
     {
-      Checks.Clone.Check,
+      --Checks.Clone.Check,
       Checks.Nick.Check,
       Checks.Client.Check,
       Checks.Share.Check,
