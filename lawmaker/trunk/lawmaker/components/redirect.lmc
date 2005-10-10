@@ -224,18 +224,20 @@ end
   
 
 function Redirect.RedirectAllNow(user,data,env)
-  local _,_,addy,reason=string.find(data,"%b<>%s+%S+%s+(%S+)%s")
+  local _,_,addy=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  local _,_,reason=string.find(data,"%b<>%s+%S+%s+%S+%s+(.+)")
+  reason=reason or "No reason specified."
   if not addy then
-  SendToOps(Bot, user.sName.." is redirecting all users to: "..frmHub:GetRedirectAddress()..".")
-  SendTxt(user,env,Bot.name,"You are redirecting all users to: "..frmHub:GetRedirectAddress()..".")
-    for _,obj in frmHub:GetOnlineUsers() do
-      obj:Redirect(frmHub:GetRedirectAddress())
-    end
+    SendToOps(Bot, user.sName.." is redirecting all users to: "..frmHub:GetRedirectAddress()..".")
+    SendTxt(user,env,Bot.name,"You are redirecting all users to: "..frmHub:GetRedirectAddress()..".")
+      for _,obj in frmHub:GetOnlineNonOperators() do
+        obj:Redirect(frmHub:GetRedirectAddress(),reason)
+      end
   else
     SendToOps(Bot, user.sName.." is redirecting all users to: "..addy..".")
     SendTxt(user,env,Bot.name,"You are redirecting all users to: "..addy..".")
-    for _,obj in frmHub:GetOnlineUsers() do
-      obj:Redirect(addy)
+    for _,obj in frmHub:GetOnlineNonOperators() do
+      obj:Redirect(addy,reason)
     end
   end
 end
@@ -311,7 +313,7 @@ end
 
 function Redirect.KillBuiltinRed(user,data)
   SendToOps(Bot.name,user.sName.." just tried to use the dc++ built-in redirect function ... naughty naughty!")
-  return 1
+  return "shit"
 end
 
 function Redirect.ShowRedirect(user,data,env)
@@ -395,5 +397,5 @@ for a,b in Redirect.WTFItIs do
 end
   RegRC(Redirect.Levels.SetRedirect,"1 3","Redirect\\Set the default redirect address","!setredirect default %[line:Address:]")
 RegRC(Redirect.Levels.RedirectAllNow,"1 2","Redirect\\Redirect USER to...","!redirectuser %[nick] %[line:Address (Enter for default):]")
-RegRC(Redirect.Levels.RedirectUser,"1 3","Redirect\\Redirect all users to...","!redirectallnow %[line:Address (Enter for default):]")
+RegRC(Redirect.Levels.RedirectUser,"1 3","Redirect\\Redirect all users to...","!redirectallnow %[line:Address (Enter for default):] %[line:Reason:]")
 RegRC(Redirect.Levels.SetRedirect,"1 3","Redirect\\Set redirect address for\\Same address for EVERYTHING","!setredirect all %[line:Address:]")
