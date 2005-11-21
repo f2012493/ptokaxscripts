@@ -512,7 +512,7 @@ local msg=""
 	[" minutes"]=mins
       }
       local tmp2={" weeks "," days "," hours "," minutes"}
-  for a,b in pairs(tmp2) do
+  for a,b in ipairs(tmp2) do
     if tmp[b] > 0 then
       msg=msg..tmp[b]..b
     end

@@ -27,7 +27,7 @@ function Warning.Warn(user,data,env)
 	SendPmToNick(Bot.name, "This was your last warning. Now have a rest for "..Warning.BanTime.." mins. ;) // "..user.sName)
 	SendToAll(Bot.name, arg.." could not change his mind ---> we have to go on with 1 user less for "..Warning.BanTime.." minutes. :P // "..user.sName)	
 	if Logging then Logging.Write("lawmaker/logs/"..os.date("%Y-%m-%d_").."botbanlog.log",victim.sName.." (with IP "..victim.sIP.." - "..os.date("%H:%M").." - banned for "..Warning.BanTime.." minutes	because	got warned "..Warning.Max.." times.") end
-	victim:TimeBan(Warning.BanTime)
+	victim:TimeBan("Warned 3 times"..aah(),Warning.BanTime,Warning.FullBan)
 	Warning.Warns[arg]=nil
 	if Warning.SaveWarns==1 then savefile(Warning.Warns,"lawmaker/components/metafiles/warnings.dat","|") end
       else 

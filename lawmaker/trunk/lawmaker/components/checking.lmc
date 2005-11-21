@@ -209,7 +209,8 @@ Checks.Client.Determine=function(user)
   if string.find(user.sMyInfoString,"<DCGUI") then 
     clienttype="DCGUI"
     _,_, version = string.find(user.sMyInfoString,"V:0.(%d+.%d+)")
-  elseif user.bHasTag then --string.find(user.sMyInfoString,"<++") or string.find(user.sMyInfoString,"<oDC") or string.find(user.sMyInfoString,"<StrgDC++") or string.find(user.sMyInfoString,"<RMDC++") or string.find (user.sMyInfoString,"<DC:PRO") then
+  elseif user.bHasTag or user.bHasSuspiciousTag then
+  --string.find(user.sMyInfoString,"<++") or string.find(user.sMyInfoString,"<oDC") or string.find(user.sMyInfoString,"<StrgDC++") or string.find(user.sMyInfoString,"<RMDC++") or string.find (user.sMyInfoString,"<DC:PRO") then
     for a,b in Checks.Client.Patterns do
       if string.find(user.sMyInfoString,a) then
         clienttype=b[1]
@@ -231,14 +232,15 @@ Checks.Client.Check=function(user)
     if clienttype then
       local fakes=
 	{
-	  [":%s+%S+,"]="Found spaces in the wrong place in the tag.",
-	  ["%s+,"]="Found spaces in the wrong place in the tag.",
-	  [",%s+"]="Found spaces in the wrong place in the tag.",
-	  ["[\"\\]"]="Found backslash or quotation mark in the tag."
+	  ["<.+:%s+%S+,.*>"]="Found spaces in the wrong place in the tag.",
+	  ["<.+%s+.*>,"]="Found spaces in the wrong place in the tag.",
+	  ["<.+,%s+.*>"]="Found spaces in the wrong place in the tag.",
+	  ["<.+[\"\\].*>"]="Found backslash or quotation mark in the tag.",
+          ["S%:%d+%:"]="Colon in the bad place in the tag.",
 	}
       local bad
       for a,b in fakes do
-	if string.find(user.sTag,a) then
+	if string.find(user.sMyInfoString,a) then
 	  bad=b
 	end
       end
@@ -272,9 +274,9 @@ Checks.Client.Check=function(user)
                   if not string.find(Hubs,"%d+/%d+/%d+") then
                     return Checks.Client.Killfaker(user,"Hubcount contains invalid characters.")
                   end
-		  if string.find(Hubs,"H:0/0/[^0]") and not user.bOperator then
+		  if string.find(Hubs,"^0/0/[^0]+$") and not user.bOperator then
 		    return Checks.Client.Killfaker(user,"0/0/x hubcount with not being op here.")
-		  elseif string.find(Hubs,"H:0/[^0]/%d+") and not user.bRegistered then
+		  elseif string.find(Hubs,"^0/[^0]/%d+$") and not user.bRegistered then
 		    return Checks.Client.Killfaker(user,"0/x/x hubcount with not being registered here.")
 		  end
 		end
@@ -298,7 +300,7 @@ Checks.Client.Check=function(user)
       end
     else
       if string.find(user.sMyInfoString, "dc-gui", 1, 1) or string.find(user.sMyInfoString, "dc.ketelhot.de", 1, 1) or string.find(user.sMyInfoString, "DCGUI", 1, 1) then 
-	if not string.find(user.sTag, "<DCGUI V:", 1, 1) then 
+	if not user.bHasTag or not string.find(user.sTag, "<DCGUI V:", 1, true) then 
 	  user:SendData("ClientCheck", "You are hiding your DCGUI tag, you are now being disconnected!")
 	  return Checks.Punish(user,"c",Checks.Client.BadClientToDo)
 	end
@@ -311,15 +313,17 @@ Checks.Client.Check=function(user)
 end
 
 function Checks.Client.Killfaker(user,why)
-  tag=user.sTag or ""
+  -- $MyINFO $ALL bastya_fak0r none<++ V:0.4032,M:P,H:"1/0/0",S:8>$ $Satellite$szakalgergo@hotmail.com$1337889395673$|
+  local _,_,taggy=string.find(user.sMyInfoString,"(%b<>)%$%s+%$")
+  local tag=taggy or user.sTag or ""
   user:SendData("ClientCheck","Your tag is faked! ("..why.."). Your tag is: "..tag)
   if Checks.Client.BanFakeTag==1 then
     user:SendData("ClientCheck","You are now being banned"..aah())
     if Checks.SeeBotBan==1 then
       SendToAll("ClientCheck",user.sName.." has been banned for faked tag ("..why.."). Tag: "..tag)
     end
-    if Logging then Logging.Write("lawmaker/logs/"..os.date("%Y-%m-%d_").."botbanlog.log",user.sName.." "..os.date("%H:%M").." - (IP: "..user.sIP..") banned for faked tag. ("..why.."). Tag: "..tag) end
-    user:NickBan(); user:Ban() return "shit"
+--     if Logging then Logging.Write("lawmaker/logs/"..os.date("%Y-%m-%d_").."botbanlog.log",user.sName.." "..os.date("%H:%M").." - (IP: "..user.sIP..") banned for faked tag. ("..why.."). Tag: "..tag) end
+    user:Ban("Faked tag ("..why.."): "..tag..aah() ,Bot.name,Checks.Client.FullBanFakeTag); return "shit"
   else
     return Checks.Punish(user,"c",Checks.Client.BadClientToDo)
   end
@@ -414,10 +418,9 @@ end
   
 
 function Checks.Nick.Check(user)
-  for c=1,table.getn(Checks.Nick.BadChars ) do
-    if string.find(user.sName,Checks.Nick.BadChars [c]) then
-      local bdchr=string.gsub(Checks.Nick.BadChars [c],"%%","")
-      user:SendData("NickNameCheck","Your nick contains the following invalid character (if nothing shows, it's a space): "..bdchr)
+  for i,v in ipairs(Checks.Nick.BadChars) do
+    if string.find(user.sName,v,1,true) then
+      user:SendData("NickNameCheck","Your nick contains the following invalid character (if nothing shows, it's a space): "..v)
       user:SendData("NickNameCheck","Please correct it and reconnect! Try using only numbers, letters, brackets, underscores and hyphens.")
       user:SendData("NickNameCheck","Disconnects...")
       user:Disconnect()
@@ -494,29 +497,28 @@ end
 -- So these checks run only if the user sending MyINFO is connected.
 -- It is not sure that he will be connected after the checks. :P
 function Checks.MyINFOArrival(user,data)
+  local torun
   if user.bConnected then
-    local torun=
+    torun=
       {
 	Checks.Client.Check,
 	Checks.Share.Check,
 	Checks.SlotHubLimit.CheckHubsAndSlots,
 	Checks.SlotHubLimit.CheckLimit,
       }
-    for a=1,table.getn(torun) do
-      if torun[a](user)=="shit" then
-	return "shit"
-      end
-    end
   else
-    return Checks.Clone.Check(user)
+    torun={Checks.Nick.Check,Checks.Clone.Check}
+  end
+  for k,v in ipairs(torun) do
+    if v(user)=="shit" then
+      return "shit"
+    end
   end
 end
 
 function Checks.NewUserConnected(user)
   local torun=
     {
-      --Checks.Clone.Check,
-      Checks.Nick.Check,
       Checks.Client.Check,
       Checks.Share.Check,
       Checks.SlotHubLimit.CheckHubsAndSlots,

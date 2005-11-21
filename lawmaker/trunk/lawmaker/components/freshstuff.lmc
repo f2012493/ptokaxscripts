@@ -67,7 +67,11 @@ function FreshStuff.AddCrap (user,data)
   local _,_,cat,tune= string.find(data, "%b<>%s+%S+%s+(%S+)%s+(.+)")
   if cat then
     if FreshStuff.Types[cat] then
-      if string.find(tune,"%$") then SendTxt(user,env,Bot.name, "The release name must NOT contain dollar sign ($)!") return 1 end
+      if string.find(tune,"$",1,true) then SendTxt(user,env,Bot.name, "The release name must NOT contain dollar sign ($)!") return 1 end
+      for i=1, FreshStuff.Count do
+        local ct,who,when,title=unpack(FreshStuff.AllStuff[i])
+        if title==tune then SendTxt(user,env,Bot.name, "The release is already added under category "..FreshStuff.Types[ct]..".") return 1 end
+      end
       SendTxt(user,env,Bot.name, tune.." is added to the releases as "..cat)
       SendToAll(Bot.name, user.sName.." added to the "..cat.." releases: "..tune)
       FreshStuff.Count = FreshStuff.Count + 1
@@ -248,14 +252,9 @@ function FreshStuff.SearchRel(user,data)
   local _,_,what=string.find(data,"%b<>%s+%S+%s+(.+)")
   if what then
     local res,rest=0,{}
-    local _,_,bdc=string.find(what,"([%%%[%]%(%)%*%+%-%?%^%$])")
     local msg="\r\n---------- You searched for keyword \""..what.."\". The results: ----------\r\n\r\n"
-    if bdc then
-      SendTxt(user,env,Bot.name,"you cannot use the character "..bdc)
-      return 1
-    end
     for a,b in FreshStuff.AllStuff do
-      if string.find(string.lower(b[4]),string.lower(what)) then
+      if string.find(string.lower(b[4]),string.lower(what),1,true) then
 	table.insert(rest,{b[1],b[2],b[3],b[4]})
       end
     end
@@ -278,7 +277,7 @@ end
 function FreshStuff.AddCatgry(user,data)
   local _,_,what1,what2=string.find(data,"%b<>%s+%S+%s+(%S+)%s+(.+)")
   if what1 then
-    if string.find(what1,"%$") then SendTxt(user,env,Bot.name, "The dollar sign is not allowed.") return 1 end
+    if string.find(what1,"$",1,true) then SendTxt(user,env,Bot.name, "The dollar sign is not allowed.") return 1 end
     if not FreshStuff.Types[what1] then
       FreshStuff.Types[what1]=what2
       SaveCt()
