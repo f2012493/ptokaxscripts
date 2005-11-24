@@ -48,7 +48,7 @@ function FreshStuff.NewUserConnected(user)
   end
 end
 
-function FreshStuff.ShowCrap(user,data)
+function FreshStuff.ShowCrap(user,data,env)
   local _,_,cat= string.find(data, "%b<>%s+%S+%s+(%S+)")
   if not cat then
     user:SendPM(Bot.name, FreshStuff.MsgAll)
@@ -63,7 +63,7 @@ function FreshStuff.ShowCrap(user,data)
   end
 end
 
-function FreshStuff.AddCrap (user,data)
+function FreshStuff.AddCrap (user,data,env)
   local _,_,cat,tune= string.find(data, "%b<>%s+%S+%s+(%S+)%s+(.+)")
   if cat then
     if FreshStuff.Types[cat] then
@@ -200,7 +200,7 @@ function FreshStuff.ShowRelType(what)
   return MsgType
 end
 
-function FreshStuff.DelCrap(user, data)
+function FreshStuff.DelCrap(user, data,env)
   local _,_,what=string.find(data,"%b<>%s+%S+%s+(.+)")
   if what then
     local cnt,x=0,os.clock()
@@ -240,7 +240,7 @@ function FreshStuff.SaveRel()
   f:close()
 end
 
-function FreshStuff.ReloadRel(user)
+function FreshStuff.ReloadRel(user,data,env)
   local x=os.clock()
   FreshStuff.OpenRel()
   FreshStuff.ShowRel(FreshStuff.NewestStuff)
@@ -248,7 +248,7 @@ function FreshStuff.ReloadRel(user)
   if user then SendTxt(user,env,Bot.name,"Releases reloaded, took "..os.clock()-x.." seconds.") end
 end
 
-function FreshStuff.SearchRel(user,data)
+function FreshStuff.SearchRel(user,data,env)
   local _,_,what=string.find(data,"%b<>%s+%S+%s+(.+)")
   if what then
     local res,rest=0,{}
@@ -274,20 +274,20 @@ function FreshStuff.SearchRel(user,data)
   end
 end
 
-function FreshStuff.AddCatgry(user,data)
+function FreshStuff.AddCatgry(user,data,env)
   local _,_,what1,what2=string.find(data,"%b<>%s+%S+%s+(%S+)%s+(.+)")
   if what1 then
     if string.find(what1,"$",1,true) then SendTxt(user,env,Bot.name, "The dollar sign is not allowed.") return 1 end
     if not FreshStuff.Types[what1] then
       FreshStuff.Types[what1]=what2
-      SaveCt()
+      FreshStuff.SaveCt()
       SendTxt(user,env,Bot.name,"The category "..what1.." has successfully been added.")
     else
       if FreshStuff.Types[what1]==what2 then
 	SendTxt(user,env,Bot.name,"Already having the type "..what1)
       else
 	FreshStuff.Types[what1]=what2
-	SaveCt()
+	FreshStuff.SaveCt()
 	SendTxt(user,env,Bot.name,"The category "..what1.." has successfully been changed.")
       end
     end
@@ -296,14 +296,14 @@ function FreshStuff.AddCatgry(user,data)
   end
 end
 
-function FreshStuff.DelCatgry(user,data)
+function FreshStuff.DelCatgry(user,data,env)
   local _,_,what=string.find(data,"%b<>%s+%S+%s+(%S+)")
   if what then
     if not FreshStuff.Types[what] then
       SendTxt(user,env,Bot.name,"The category "..what.." does not exist.")
     else
       FreshStuff.Types[what]=nil
-      SaveCt()
+      FreshStuff.SaveCt()
       SendTxt(user,env,Bot.name,"The category "..what.." has successfully been deleted.")
     end
   else
@@ -311,7 +311,7 @@ function FreshStuff.DelCatgry(user,data)
   end
 end
 
-function FreshStuff.ShowCatgries(user)
+function FreshStuff.ShowCatgries(user,data,env)
   local msg="\r\n======================\r\nAvilable categories:\r\n======================\r\n"
   for a,b in FreshStuff.Types do
     msg=msg.."\r\n"..a
@@ -319,7 +319,7 @@ function FreshStuff.ShowCatgries(user)
   user:SendPM(Bot.name,msg)
 end
 
-function SaveCt()
+function FreshStuff.SaveCt()
   local f=io.open("lawmaker/components/metafiles/fresh_categories.dat","w+")
   f:write("FreshStuff.Types={\n")
   for a,b in FreshStuff.Types do
@@ -329,7 +329,7 @@ function SaveCt()
   f:close()
 end
 
-function FreshStuff.PruneRel(user,data)
+function FreshStuff.PruneRel(user,data,env)
   local _,_,days=string.find(data,"%b<>%s+%S+%s+(%d+)")
   days=days or FreshStuff.MaxItemAge
   local cnt=0
@@ -354,7 +354,7 @@ function FreshStuff.PruneRel(user,data)
   end
 end
 
-function FreshStuff.ShowTopAdders(user)
+function FreshStuff.ShowTopAdders(user,data,env)
   local tmp,numtbl,msg={},{},"\r\nThe top "..FreshStuff.TopAddersCount.." release-addders are:\r\n"..string.rep("-",33).."\r\n"
   for a,b in FreshStuff.TopAdders do
     table.insert(numtbl,b)
