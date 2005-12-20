@@ -342,41 +342,42 @@ end
 Checks.Welcome=function(user)
   local proftable={[-1]="Guest",[0]="Superoperator",[1]="Operator",[2]="VIP",[3]="Registered User"}
   local prof=proftable[user.iProfile] or "<Unknown profile>" 
-  user:SendData(Bot.name,"Hello, "..user.sName.."! You are logging in as "..prof..".")
+  local wmess="\r\n\r\n|<ProfileCheck> Hello, "..user.sName.."! You are logging in as "..prof..".|"
   if Immune and not Immune.List[user.sName] or not Immune then
     local hubs,slots,Guest,Reg,OP,speed,limit,Maxslotsforconn,Ratioforconn,Maxhubsforconn,minlimitforconn,ratio,Share=Checks.ScanMyINFO(user)
     local clienttype,version=Checks.Client.Determine(user)
-    user:SendData("ClientCheck","You are using "..clienttype..", version "..version..".")
     local v,u=bytestoh(user.iShareSize)
-    user:SendData("ShareCheck","You are currently sharing "..v.." "..u..". The minimum share is currently set to "..Checks.Share.MinShare.." GB.")
-    user:SendData("ConnectionCheck","Your connection is "..speed..". You are in "..getmode(user.sMyInfoString).." mode.")
-    user:SendData("IPCheck","Your IP is "..user.sIP..".")
-    user:SendData("SlotperHubCheck","You are on "..hubs.. " hub(s) in total. "..Guest.." as guest, "..Reg.." as registered, "..OP.." as operator.")
-    user:SendData("SlotperHubCheck","Maximum hubs allowed for your connection is "..Maxhubsforconn..".")
-    user:SendData("SlotperHubCheck","You have "..slots.." slots open. The maximum allowed for you is "..Maxslotsforconn..".")
+    wmess=wmess.."<ClientCheck> You are using "..clienttype..", version "..version..".|"..
+    "<ShareCheck> You are currently sharing "..v.." "..u..". The minimum share is currently set to "..Checks.Share.MinShare.." GB.|"..
+    "<ConnectionCheck> Your connection is "..speed..". You are in "..getmode(user.sMyInfoString).." mode.|"..
+    "<IPCheck> Your IP is "..user.sIP..".|"..
+    "<SlotperHubCheck> You are on "..hubs.. " hub(s) in total. "..Guest.." as guest, "..Reg.." as registered, "..OP.." as operator.|"..
+    "<SlotperHubCheck> Maximum hubs allowed for your connection is "..Maxhubsforconn..".|"..
+    "<SlotperHubCheck> You have "..slots.." slots open. The maximum allowed for you is "..Maxslotsforconn..".|"
     if tonumber(OP)>0 and Checks.SlotHubLimit.OpHubsCount==1 then
-      user:SendData("SlotperHubCheck","Operator hubs count into total number of hubs.")
+      wmess=wmess.."<SlotperHubCheck","Operator hubs count into total number of hubs.|"
     elseif tonumber(OP)>0 then
-      user:SendData("SlotperHubCheck","Operator hubs don't count into total number of hubs.")
+      wmess=wmess.."<SlotperHubCheck>Operator hubs don't count into total number of hubs.|"
     end
-    user:SendData("SlotperHubCheck","According to these, your slot/hub ratio is "..ratio..".")
-    user:SendData("SlotperHubCheck","The required minimum is "..Ratioforconn.." slots per each hub for this connection.")
+    wmess=wmess.."<SlotperHubCheck> According to these, your slot/hub ratio is "..ratio..".|"..
+    "<SlotperHubCheck> The required minimum is "..Ratioforconn.." slots per each hub for this connection.|"
     if minlimitforconn~=0 then
       if limit then
         if user.sClient=="Valknut" then
-          user:SendData("BandwidthCheck","Your upload limit is set to "..tonumber(limit)*slots.." kB/s, the minimum allowed for your class is "..minlimitforconn.." kB/s.")
+          wmess=wmess.."<BandwidthCheck> Your upload limit is set to "..tonumber(limit)*slots.." kB/s, the minimum allowed for your class is "..minlimitforconn.." kB/s.|"
         else
-          user:SendData("BandwidthCheck","Your upload limit is set to "..limit.." kB/s, the minimum allowed for your class is "..minlimitforconn.." kB/s.")
+          wmess=wmess.."<BandwidthCheck> Your upload limit is set to "..limit.." kB/s, the minimum allowed for your class is "..minlimitforconn.." kB/s.|"
         end
       else
-        user:SendData("BandwidthCheck","You aren't limiting your upload, the minimum limit allowed for your connection is "..minlimitforconn.." kB/s.")
+        wmess=wmess.."<BandwidthCheck> You aren't limiting your upload, the minimum limit allowed for your connection is "..minlimitforconn.." kB/s.|"
       end
     else
-      user:SendData("BandwidthCheck","Bandwidth limiting is not allowed for your connection type.")
+      wmess=wmess.."<BandwidthCheck> Bandwidth limiting is not allowed for your connection type.|"
     end 
   else
-    user:SendData(Bot.name,"You are immuned against checking. Therefore I won't send any info. Something for something! ;)")
+    wmess=wmess.."<"..Bot.name.."> You are immuned against checking. Therefore I won't send any info. Something for something! ;)"
   end
+  user:SendData(wmess.."|\r\n\r\n")
 end
 
 function Checks.Clone.Check(user,data)
@@ -523,8 +524,8 @@ function Checks.NewUserConnected(user)
       Checks.Share.Check,
       Checks.SlotHubLimit.CheckHubsAndSlots,
       Checks.SlotHubLimit.CheckLimit,
-      Checks.Welcome,
     }
+    if Checks.Client.WelcomeMessage==1 then table.insert(torun,Checks.Welcome) end
     for k,v in ipairs(torun) do
       if v(user)=="shit" then
 	return "shit"

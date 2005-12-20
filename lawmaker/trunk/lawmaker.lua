@@ -134,6 +134,7 @@ tNUCOrder= -- order of funcs to be called on NewUser(Op)Connected
   }
 
 rightclick={}
+rctosend={}
 commandtable={}
 lagtest={}
 modules={}
@@ -185,6 +186,7 @@ function Main()
   RegRC(1,"1 3","Lagtest\\Enable","!lagtest on")
   RegRC(1,"1 3","Lagtest\\Disable","!lagtest off")
   RegRC(1,"1 3","License agreement (GPL)","+license")
+  CreateRightClicks()
   SendToOps(Bot.name,"Bootup finished, took "..os.clock()-x.." seconds, "..count.." plugins have been loaded.")
 end
 
@@ -208,16 +210,8 @@ function NewUserConnected(user)
     user:SendData(Bot.name,"Welcome to "..frmHub:GetHubName()..", enjoy your stay, happy chatting and downloading!")
     user:SendData(Bot.name,"Type !help in mainchat or in PM session with me to see the commands you can use.")
     if  user.bUserCommand then -- if login is successful, and usercommands can be sent
-      -- let's alphabetize
-      local rctosend={} -- create an array
-      for a,b in rightclick do -- run thru the rightclick table
-	if userlevels[user.iProfile] >= b then -- if user is allowed to use
-	  table.insert(rctosend,a) -- then put to the array
-	end
-      end
-      table.sort(rctosend) -- sort the array
-      user:SendData(table.concat(rctosend,"|")) -- and send all the data in one bolus :)
-      user:SendData(Bot.name,"You just got "..(table.getn(rctosend)+3).." rightclick commands, please try them! :)")
+      user:SendData(table.concat(rctosend[user.iProfile],"|"))
+      user:SendData(Bot.name,"You just got "..(table.getn(rctosend[user.iProfile])).." rightclick commands, come on, unleash my full power! :)")
     end
   end
   user:SendData(Bot.name,Bot.version..". Licensed under the GNU GPL, type +license for details.")
@@ -342,6 +336,20 @@ function parsecmds(user,data,env,cmd,bot)
       SendTxt(user,env,bot,"The command you tried to use is disabled now. Contact the hubowner if you want it back.")
     end
     return 1 -- not to be seen in main
+  end
+end
+
+function CreateRightClicks()
+  for _,idx in {-1,0,1,2,3} do -- usual profiles
+    rctosend[idx]=rctosend[idx] or {} -- create if not exist (but this is not SQL :-P)
+    for a,b in pairs(rightclick) do -- run thru the rightclick table
+      if userlevels[idx] >= b then -- if user is allowed to use
+        table.insert(rctosend[idx],a) -- then put to the array
+      end
+    end
+    for _,arr in pairs(rctosend) do -- and we alphabetize (sometimes eyecandy is also necessary)
+      table.sort(arr) -- sort the array
+    end
   end
 end
 
