@@ -13,6 +13,32 @@ Registered User status cannot be upgraded to. There is registration, so this is 
 ]]
 
 Run(path.."cfg/registry.ini")
+
+function RegManagement.Onreg(user,nick,prof,bSelf)
+  if not bSelf then
+    if RegManagement.ShowReg==2 then
+      if OpVipChat then
+        OpVipChat.DoChat(Bot.name,user.sName.." has made "..nick.." a(n) "..prof..".",OpVipChat.OpChat,OpVipChat.OpChatBot.name,false)
+      else
+        SendToAll(Bot.name,user.sName.." has made "..nick.." a(n) "..prof..".")
+      end
+    elseif RegManagement.ShowReg==1 then
+      SendToAll(Bot.name,user.sName.." has made "..nick.." a(n) "..prof..".")
+    end
+  else
+    if RegManagement.ShowReg==2 then
+      if OpVipChat then
+        OpVipChat.DoChat(Bot.name,user.sName.." has registered himself.",OpVipChat.OpChat,OpVipChat.OpChatBot.name,false)
+      else
+        SendToAll(Bot.name,user.sName.." has registered himself.")
+      end
+    elseif RegManagement.ShowReg==1 then
+      SendToAll(Bot.name,user.sName.." has registered himself.")
+    end
+  end
+end
+    
+    
 RegManagement.BitchList=
 	{
 	  "in case you didn't know. :P",
@@ -97,6 +123,7 @@ function RegManagement.Register(user,data,env,level,bool)
         end
         AddRegUser(user.sName,passwd,3)
 	SendTxt(user,env,Bot.name,"You are registered now, with password: "..passwd..".")
+        RegManagement.Onreg(user,nil,nil,bool)
       else
 	SendTxt(user,env,Bot.name,"You are already a(n) "..tmp[user.iProfile]..", "..RegManagement.BitchList[math.random(table.getn(RegManagement.BitchList))])
       end
@@ -110,6 +137,7 @@ function RegManagement.Register(user,data,env,level,bool)
           AddRegUser(nick,pass,level)
           SendTxt(user,env,Bot.name,"You have made "..nick.." a(n) "..tmp[level].." with password: "..pass..".")
           SendPmToNick(nick,Bot.name,user.sName.." has made you a "..tmp[level]..". Your password is: "..pass)
+          RegManagement.Onreg(user,nick,tmp[level],bool)
         else
           SendTxt(user,env,Bot.name,nick.." is alredy a(n) "..tmp[level]..", "..RegManagement.BitchList[math.random(table.getn(RegManagement.BitchList))])
 	end

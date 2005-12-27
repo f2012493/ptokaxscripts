@@ -1,6 +1,6 @@
 UserInfo={Levels={},Data={},IPTable={}}
 --[[
-Userinfo and regcleaner plugin for LawMaker by bastya_elvtarsú
+Userinfo and regcleaner plugin for LawMaker by bastya_elvtars
 Features: IP logging, uptime logging, last seen time and MyINFO logging.
 Does all IP-related things that a hubowner should ever need.
 This seems very big, and indeed it is, but I want to avoid module dependencies.
@@ -344,9 +344,7 @@ function UserInfo.Clean()
     local usrtime=hours*60+mins
     if (usrtime) > oldest then
       Count2 = Count2 +1
-    UserInfo.Data[a]=nil
-    else
-      UserInfo.Data[a].seen = os.date("%Y. %m. %d. %X")
+      UserInfo.Data[a]=nil
     end
   end
   if Count2 > 0 then
