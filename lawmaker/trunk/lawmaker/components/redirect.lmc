@@ -59,6 +59,9 @@ frmHub.SetRedAddy=function(self,what,addy)
     ["default"]=function (addy)
 		    self:SetRedirectAddress(addy)
 		  end,
+    ["nicklen"]= function (addy)
+                    self:SetNickLenRedirAddr(addy)
+                  end,
     ["notag"]=function (addy)
 		self:SetNoTagRedirAddr(addy)
 		end,
@@ -96,6 +99,9 @@ frmHub.GetRedAddy=function(self,what)
     ["ban"]=function ()
 		return self:GetBanRedirAddr()
 	      end,
+    ["nicklen"]= function ()
+                  return self:GetNickLenRedirAddr()
+                end,
     ["default"]=function ()
 		    return self:GetRedirectAddress()
 		  end,
@@ -125,6 +131,9 @@ frmHub.SetRed=function(self,what,p)
     ["nickrule"]=function (p)
 			self:SetNickRuleRedirect(p)
 		      end,
+    ["nicklen"]=function (p)
+                  self:SetNickLenRedir(p)
+                end,
     ["tempban"]=function (p)
 		    self:SetTempBanRedirect(p)
 		  end,
@@ -147,6 +156,11 @@ frmHub.SetRed=function(self,what,p)
     return true
   end
 end
+
+-- GetNickLenRedir()
+-- SetNickLenRedir(0/1)
+-- GetNickLenRedirAddr()
+-- SetNickLenRedirAddr(rediraddr)
 
 frmHub.GetRed=function(self,what)
   local FuncTable=
@@ -183,6 +197,9 @@ frmHub.GetRed=function(self,what)
     ["allnew"]=function ()
 		    return self:GetRedirectAll()
 		  end,
+    ["nicklen"]= function()
+                  return self:GetNickLenRedirAddr()
+                end,
     ["full"]=function ()
 		      return self:GetRedirectFull()
 		    end,
@@ -205,6 +222,7 @@ Redirect.WTFItIs=
     ["tempban"]="temporary ban",
     ["nickrule"]="bad/no nick prefix",
     ["notag"]="no/bad tag",
+    ["nicklen"]="nick length",
   }
 
 function Redirect.CheckIfControlledByScript(arg)

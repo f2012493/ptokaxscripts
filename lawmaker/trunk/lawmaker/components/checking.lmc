@@ -429,7 +429,7 @@ function Checks.Nick.Check(user)
     end
   end
   if Immune and not Immune.List[user.sName] or not Immune then
-    local _,_,prefix = string.find(user.sName, "^([%[%{%(]%S+[%)%}%]])%S+")
+    local _,_,prefix = string.find(user.sName, "^([%[%{%(]%S-[%)%}%]])%S+")
     if prefix and Checks.Nick.Prefixes.Bad[prefix] and not user.bRegistered then
       user:SendData("NickNameCheck", prefix.." - This prefix is not allowed for you to use.")
       user:Disconnect() return "shit"

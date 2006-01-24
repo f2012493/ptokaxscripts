@@ -28,6 +28,7 @@ function ShowText.OnTimer()
       if f then
 	local contents = string.gsub(f:read("*a"),string.char(10), "\r\n")
 	SendToAll(Bot.name,"\r\n"..contents.."\r\n")
+        f:close()
       end
     end
     ShowText.Timer=0

@@ -64,8 +64,10 @@ function HubSettings.SetRegServers(user,data,env,add)
       table.insert(srvtbl,w)
     end
     if add then
-      for w in string.gfind(frmHub:GetRegServer(),"([^;]+)") do
-	table.insert(srvtbl,w)
+      if frmHub:GetRegServer() then
+        for w in string.gfind(frmHub:GetRegServer(),"([^;]+)") do
+          table.insert(srvtbl,w)
+        end
       end
     end
     table.sort(srvtbl)
@@ -79,10 +81,15 @@ end
 
 function HubSettings.GetRegServers(user,data,env)
   local srvtbl={}
-  for w in string.gfind(frmHub:GetRegServer(),"([^;]+)") do
-    table.insert(srvtbl,w)
+  local msg
+  if frmHub:GetRegServer() then
+    for w in string.gfind(frmHub:GetRegServer(),"([^;]+)") do
+      table.insert(srvtbl,w)
+    end
+    msg="The following reg servers are set now:\r\n\r\n"..table.concat(srvtbl,"\r\n")
+  else
+    msg="There aren't any reg servers set at the moment."
   end
-  local msg="The following reg servers are set now:\r\n\r\n"..table.concat(srvtbl,"\r\n")
   if user then
     user:SendPM(Bot.name,msg)
   else
