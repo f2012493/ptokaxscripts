@@ -4,12 +4,14 @@ OpChat/VIPChat module for LawMaker v1
 Based on chatrooms by tezlo
 For testing thx to: Mickey, TTB
 Also thx to PPK for helping in getting members for chatrooms.
+Thanks to CrazyGuy for helping me test the history feature.
 ]]
 Run(path.."cfg/opvipchat.ini")
 
 --------------- command and chatroom fuck starts here ^^
 
 OpChat={}
+OpVipChat.History={}
 
 function OpVipChat.OpChatBasic(user,data,env)
   local _,_,whoTo = string.find(data,"$To:%s+(%S+)")
@@ -31,21 +33,26 @@ function OpVipChat.OpChatBasic(user,data,env)
           if cmd=="me" then
             local _,_,str = string.find(data,"$To:%s+%S+%s+From:%s+%S+%s+$%b<>%s+[%!%+%#]%S+%s+(.+)")
             if str then
-              OpVipChat.DoChat(user.sName,str,OpVipChat.OpChat,OpVipChat.OpChatBot.name,1) return 1
+              OpVipChat.DoChat(user.sName,str,OpVipChat.OpChat,OpVipChat.OpChatBot.name,true,false) return 1
             end
           end
         end
       else
         local _,_,str = string.find(data,"$To:%s+%S+%s+From:%s+%S+%s+$%b<>%s+(.+)")
-        OpVipChat.DoChat(user.sName,str,OpVipChat.OpChat,OpVipChat.OpChatBot.name,nil)
+        OpVipChat.DoChat(user.sName,str,OpVipChat.OpChat,OpVipChat.OpChatBot.name,false,false)
       end
     end
   end
 end
 
-function OpVipChat.DoChat(from,str,tbl,bot,bool)
-  for a,b in tbl do
-    if bool then
+function OpVipChat.DoChat(from,str,room,bot,bME,bVip)
+  local datetbl={"%H:%M","%I:%M %p","%Y. %m. %d. HH:MM","%c"}
+  if OpVipChat.DateFormat==0 or OpVipChat.DateFormat > table.getn(datetbl) then dt="" else dt="["..os.date(datetbl[ChatHistory.DateFormat]).."]" end
+  local tabl=OpVipChat.History.Opchat if bVip then tabl=OpVipChat.History.Vipchat end
+  if table.getn(tabl) >= OpVipChat.LastLines then table.remove(tabl,table.getn(tabl)) end
+  if bME then  table.insert(tabl,dt.." * "..from.." "..str) else table.insert(tabl,dt.." <"..from.."> "..str) end
+  for a,b in pairs(room) do
+    if bME then
       SendToNick(a, "$To: "..a.." From: "..bot.." $ * "..from.." "..str)
     else
       if from~= a then SendToNick(a, "$To: "..a.." From: "..bot.." $<"..from.."> "..str) end
@@ -53,6 +60,48 @@ function OpVipChat.DoChat(from,str,tbl,bot,bool)
   end
 end
 
+function OpVipChat.VipChatBasic(user,data)
+  local _,_,whoTo = string.find(data,"$To:%s+(%S+)")
+  if whoTo==OpVipChat.VipChatBot.name then
+    if user.bOperator or user.iProfile==2 then
+      if not OpVipChat.VipChat[user.sName] then
+        OpVipChat.VipChat[user.sName]=1
+        savefile(OpVipChat.VipChat,"lawmaker/components/metafiles/vipchat.dat")
+      end
+    end
+    if not OpVipChat.VipChat[user.sName] and not user.bOperator and user.iProfile~=2 then
+      user:SendPM(OpVipChat.VipChatBot.name, "You can't post here!") return 1
+    else
+      local _,_,cmd = string.find(data,"$To:%s+%S+%s+From:%s+%S+%s+$%b<>%s+[%!%+%#](%S+)")
+      if cmd=="me" then
+        local _,_,str = string.find(data,"$To:%s+%S+%s+From:%s+%S+%s+$%b<>%s+[%!%+%#]%S+%s+(.+)")
+        if str then
+          OpVipChat.DoChat(user.sName,str,OpVipChat.VipChat,OpVipChat.VipChatBot.name,true,true) return 1
+        end
+      else
+	local _,_,str = string.find(data, "$To: %S+ From: %S+ $%b<>%s+(.*)")
+        OpVipChat.DoChat(user.sName,str,OpVipChat.VipChat,OpVipChat.VipChatBot.name,false,true)
+      end
+    end
+  end
+end
+
+function OpVipChat.Log(file,data)
+  local f=io.open(file,"a+")
+  f:write(file.."\n")
+  f:close()
+end
+
+function OpVipChat.Last(user,data,env,bVip)
+  local name=OpVipChat.OpChatBot.name if bVip then name=OpVipChat.VipChatBot.name end
+  local tbl=OpVipChat.History.Opchat if bVip then tbl=OpVipChat.History.Vipchat end
+  local room=OpVipChat.OpChat if bVip then room=OpVipChat.Vipchat end
+  if not (user.bOperator or room[user.sName]) then SendTxt(user,env,name,"You are not the member of me. :-)") return end
+  user:SendPM(name,"Last "..OpVipChat.LastLines.." lines spoken in here:\r\n"..string.rep("-",100).."\r\n"
+  ..table.concat(tbl,"\r\n").."\r\n"..string.rep("-",100))
+end
+  
+  
 function OpVipChat.Invite(user, data, env,sess)
   local _,_,args=string.find(data,"%b<>%s+%S+%s+(.+)")
   if args then
@@ -115,33 +164,6 @@ function OpVipChat.Remove(user, data, env,sess)
   end
 end
 
-function OpVipChat.VipChatBasic(user,data)
-  local _,_,whoTo = string.find(data,"$To:%s+(%S+)")
-  if whoTo==OpVipChat.VipChatBot.name then
-    if user.bOperator or user.iProfile==2 then
-      if not OpVipChat.VipChat[user.sName] then
-        OpVipChat.VipChat[user.sName]=1
-        savefile(OpVipChat.VipChat,"lawmaker/components/metafiles/vipchat.dat")
-      end
-    end
-    if not OpVipChat.VipChat[user.sName] and not user.bOperator and user.iProfile~=2 then
-      user:SendPM(OpVipChat.VipChatBot.name, "You can't post here!") return 1
-    else
-      local _,_,cmd = string.find(data,"$To:%s+%S+%s+From:%s+%S+%s+$%b<>%s+[%!%+%#](%S+)")
-      local _,_,str = string.find(data, "^$To: %S+ From: %S+ $%b<>%s+%S+%s+(.+)$")
-      if cmd=="me" then
-        local _,_,str = string.find(data, "^$To: %S+ From: %S+ $%b<>%s+%S+%s+[%!%+%#](%S+)%s+(.+)$")
-        if str then
-          OpVipChat.DoChat(user.sName,str,OpVipChat.VipChat,OpVipChat.VipChatBot.name,1) return 1
-        end
-      else
-	local _,_,str = string.find(data, "^$To: %S+ From: %S+ $%b<>%s+(.*)$")
-        OpVipChat.DoChat(user.sName,str,OpVipChat.VipChat,OpVipChat.VipChatBot.name,nil)
-      end
-    end
-  end
-end
-
 function OpVipChat.UserDisconnected(user)
   if OpVipChat.OpChat[user.sName] then
     OpVipChat.OpChat[user.sName]=nil
@@ -159,8 +181,33 @@ function OpVipChat.Main()
    if not OpVipChat.VipChat[obj.sNick] and obj.iProfile <= 2 then OpVipChat.VipChat[obj.sNick]=1 end
    if not OpVipChat.OpChat[obj.sNick] and obj.iProfile <= 1 then OpVipChat.OpChat[obj.sNick]=1 end
   end
-    savefile(OpVipChat.OpChat,"lawmaker/components/metafiles/opchat.dat")
-    savefile(OpVipChat.VipChat,"lawmaker/components/metafiles/vipchat.dat")
+  savefile(OpVipChat.OpChat,"lawmaker/components/metafiles/opchat.dat")
+  savefile(OpVipChat.VipChat,"lawmaker/components/metafiles/vipchat.dat")
+  OpVipChat.History.Opchat,OpVipChat.History.Vipchat={},{}
+  local f=io.open("lawmaker/components/metafiles/opchathistory.dat")
+  if f then for line in f:lines() do table.insert(OpVipChat.History.Opchat,line) end f:close() end
+  f=io.open("lawmaker/components/metafiles/vipchathistory.dat")
+  if f then for line in f:lines() do table.insert(OpVipChat.History.Vipchat,line) end f:close() end
+end
+
+function OpVipChat.OnExit()
+  for file,tbl in pairs({["lawmaker/components/metafiles/opchathistory.dat"]=OpVipChat.History.Opchat,["lawmaker/components/metafiles/vipchathistory.dat"]=OpVipChat.History.Vipchat}) do
+    local f=io.open(file,"w+")
+    f:write(table.concat(tbl,"\n"))
+    f:close()
+  end
+end
+
+function OpVipChat.NewUserConnected(user)
+  if user.bOperator then
+    if not OpVipChat.OpChat[user.sName] then OpVipChat.OpChat[user.sName]=1 end
+    user:SendData("$UserCommand 1 3 "..rightclick_menuname.."\\OpChat\\History (last "..OpVipChat.LastLines.." lines)$<%[mynick]> !opchathistory&#124;")
+    user:SendData("$UserCommand 1 3 "..rightclick_menuname.."\\VipChat\\History (last "..OpVipChat.LastLines.." lines)$<%[mynick]> !vipchathistory&#124;")
+  end
+  if user.iProfile==2 then
+    if not OpVipChat.VipChat[user.sName] then OpVipChat.VipChat[user.sName]=1 end
+    user:SendData("$UserCommand 1 3 "..rightclick_menuname.."\\VipChat\\History (last "..OpVipChat.LastLines.." lines)$<%[mynick]> !vipchathistory&#124;")
+  end
 end
 
 ------------------------------------------------------------------
@@ -168,10 +215,14 @@ end
 RegCmd("invite",invite,{"temp"},OpVipChat.Levels.Invite,"\t\t\t\t\tInvite a user to opchat for one session. You can enter many nicks separated by spaces.")
 RegCmd("perminvite",OpVipChat.Invite,{"perm"},OpVipChat.Levels.PermInvite,"\t\t\t\t\tInvite a VIP to opchat until removal. You can enter many nicks separated by spaces.")
 RegCmd("remove",OpVipChat.Remove,{},OpVipChat.Levels.Remove,"\t\t\t\t\tRemove a(n) perm/temp invited user from opchat. You can enter many nicks separated by spaces.")
+RegCmd("opchathistory",OpVipChat.Last,{false},1,"\t\t\t\t\tShows last "..OpVipChat.LastLines.." lines os opchat.")
+RegCmd("vipchathistory",OpVipChat.Last,{true},1,"\t\t\t\t\tShows last "..OpVipChat.LastLines.." lines os vipchat.")
 RegFunc("toarr","opchatting",OpVipChat.OpChatBasic,{})
 RegFunc("toarr","vipchatting",OpVipChat.VipChatBasic,{})
 RegFunc("main","opchat bootup",OpVipChat.Main,{})
 RegFunc("userdisc","removal from tempopchat",OpVipChat.UserDisconnected,{})
+RegFunc("onexit","saving opchat history",OpVipChat.OnExit,{})
+RegFunc("nuc","sending opchat/vipchat history rightclk",OpVipChat.NewUserConnected,{})
 RegRC(OpVipChat.Levels.Invite,"1 2","OpChat\\Invite USER to opchat for one session","!invite %[nick]")
 RegRC(OpVipChat.Levels.PermInvite,"1 2","OpChat\\Invite USER to opchat","!perminvite %[nick]")
 RegRC(OpVipChat.Levels.Remove,"1 2","OpChat\\Remove USER from opchat","!remove %[nick]")

@@ -375,7 +375,7 @@ function Redirect.ShowRedirect(user,data,env)
 	  msg=msg.."\r\n"..Redirect.WTFItIs[a].." - no address set."
 	end
       else
-	msg=msg.."\r\n"..Redirect.WTFItIs[a].." - no separate address can be set, the default is used: "..frmHub:GetRedirectAddress()
+	local reddy=frmHub:GetRedirectAddress() or "<N/A>" msg=msg.."\r\n"..Redirect.WTFItIs[a].." - no separate address can be set, the default is used: "..reddy
       end
       if frmHub:GetRed(a)~=-1 then
 	if Redirect.CheckIfControlledByScript(a) then

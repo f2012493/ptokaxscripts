@@ -131,6 +131,7 @@ tNUCOrder= -- order of funcs to be called on NewUser(Op)Connected
     "showing motd",
     "new message warning on connect",
     "announcing new releases",
+    "sending opchat/vipchat history rightclk",
   }
 
 rightclick={}
@@ -198,9 +199,9 @@ end
 
 function NewUserConnected(user)
   local bad
-  for k=1,table.getn(tNUCOrder) do
-    if modules["nuc"][tNUCOrder[k]] then
-      if modules["nuc"][tNUCOrder[k]]["func"](user,unpack(modules["nuc"][tNUCOrder[k]]["parms"]))=="shit" then
+  for _,todo in ipairs(tNUCOrder) do
+    if modules["nuc"][todo] then
+      if modules["nuc"][todo]["func"](user,unpack(modules["nuc"][todo]["parms"]))=="shit" then
 	bad=true
 	return 1
       end
