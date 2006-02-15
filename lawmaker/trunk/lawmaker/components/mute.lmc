@@ -97,13 +97,13 @@ function Mute.ChatArrival(user,data)
   end
 end
 
-RegCmd("mute",Mute.DoMute,{},Mute.Levels.Mute,"\t\t\t\tMutes a user for "..Mute.Time.." minutes, disabling his/her posting to main.")
-RegCmd("gag",Mute.DoMute,{},Mute.Levels.Mute,"<nick>\t\t\t\tMutes a user for "..Mute.Time.." minutes, disabling his/her posting to main.")
+RegCmd("mute",Mute.DoMute,{},Mute.Levels.MuteUser,"\t\t\t\tMutes a user for "..Mute.Time.." minutes, disabling his/her posting to main.")
+RegCmd("gag",Mute.DoMute,{},Mute.Levels.MuteUser,"<nick>\t\t\t\tMutes a user for "..Mute.Time.." minutes, disabling his/her posting to main.")
 RegCmd("unmute",Mute.DoUnMute,{},Mute.Levels.UnMute,"<nick>\t\t\t\tUnmutes a user, re-enabling him/her to post into main.")
 RegCmd("ungag",Mute.DoUnMute,{},Mute.Levels.UnMute,"<nick>\t\t\t\tUnmutes a user, re-enabling him/her to post into main.")
 RegCmd("showmuted",Mute.ShowMuted,{},Mute.Levels.ShowMuted,"\t\t\t\t\tShows all muted users.")
 RegFunc("ont","mute timer part",Mute.OnTimer,{})
 RegFunc("chatarr","muting in mainchat",Mute.ChatArrival,{})
-RegRC(Mute.Levels.Mute,"1 2","Mute\\Mute USER","!mute %[nick]")
+RegRC(Mute.Levels.MuteUser,"1 2","Mute\\Mute USER","!mute %[nick]")
 RegRC(Mute.Levels.UnMute,"1 2","Mute\\UnMute USER","!unmute %[nick]")
 RegRC(Mute.Levels.ShowMuted,"1 3","Mute\\Show muted users","!showmuted")

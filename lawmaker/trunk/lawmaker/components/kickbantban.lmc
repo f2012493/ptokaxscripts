@@ -1,10 +1,12 @@
-KickBanTBan={Levels={},KickNumbers={}}
+KickBanTBan={Levels={}}
 --[[
 Kick / ban / timeban module for LMCA.
 Bans on a certain amount of kicks, sends hubmail/webby on request.
 ]]
 
 Run(path.."cfg/kickban.ini")
+
+KickBanTBan.KickNumbers={}
 
 function KickBanTBan.Kick(user,data,env,bool)
   local _,_,nick = string.find(data,"%b<>%s+%S+%s+(%S+)")
@@ -197,48 +199,6 @@ function KickBanTBan.UnBan(user,data,env,bTemp)
   end
 end
 
-function KickBanTBan.GetBanList(user,data,env,bTemp)
-  local count,name,tmp=0,nil,{}
-  local function GetTail(obj)
-    if obj.bFullIpBan then
-      return "-- // IP is: "..obj.sIP
-    elseif obj.bIpBan then
-        return "-- // IP is: "..obj.sIP..". IP is FULLY banned!"
-    else
-      return "-- // Nickban!"
-    end
-  end
-  if bTemp then
-    name="temp ban list"
-    for _,obj in frmHub:GetTempBanList() do
-      count=count+1
-      local remn=minutestoh(obj.iTime/60)
-      table.insert(tmp,obj.sNick.." - remaining time: "..remn.." "..GetTail(obj))
-    end
-  else
-    name="perm ban list"
-    for _,obj in frmHub:GetPermBanList() do
-      count=count+1
-      table.insert(tmp,obj.sNick.." "..GetTail(obj))
-    end
-  end
-  if count~=0 then
-    user:SendPM(Bot.name,"\r\n\r\nThe "..name..":\r\n"..string.rep("=",35).."\r\n\r\n"..table.concat(tmp,"\r\n").."\r\n\r\n"..string.rep("=",35).."\r\n"..count.." items.")
-  else  
-    SendTxt(user,env,Bot.name,"The "..name.." contains no entries.")
-  end
-end
-
-function KickBanTBan.ClearBans(user,data,env,what)
-  if what=="permban" then
-    ClearPermBan()
-  else
-    what="tempban"
-    ClearTempBan()
-  end
-  SendTxt(user,env,Bot.name,"The "..what.." list has been cleared.")
-end
-
 function KickBanTBan.ToArrival(user,data)
   if string.find(data,"You are being kicked because:") then
     _,_,KickBanTBan.Reason=string.find(data,"You are being kicked because:%s+(.+)")
@@ -286,10 +246,6 @@ RegCmd("tban",KickBanTBan.Ban,{"temp",0},KickBanTBan.Levels.TBan,"<nick> <unit><
 RegCmd("tbanip",KickBanTBan.Ban,{"temp",0},KickBanTBan.Levels.TBan,"<IP> <unit><m/h/D/W\>\t\t\tBans a IP for given time.")
 RegCmd("unban",KickBanTBan.UnBan,{},KickBanTBan.Levels.UnBan,"<nick/IP>\t\t\t\tUnbans a permbanned user/IP.")
 RegCmd("untempban",KickBanTBan.UnBan,{true},KickBanTBan.Levels.UnTBan,"<nick/IP>\t\t\t\tUnbans a tempbanned user/IP.")
-RegCmd("clrtempban",KickBanTBan.ClearBans,{"tempban"},KickBanTBan.Levels.ClearTempBan,"\t\t\t\t\tClears the temporary banlist.")
-RegCmd("clrpermban",KickBanTBan.ClearBans,{"permban"},KickBanTBan.Levels.ClearPermBan,"\t\t\t\t\tClears the permanent banlist.")
-RegCmd("getbanlist",KickBanTBan.GetBanList,{},KickBanTBan.Levels.GetBanList,"\t\t\t\t\tShows the temporary banlist.")
-RegCmd("gettempbanlist",KickBanTBan.GetBanList,{true},KickBanTBan.Levels.GetBanList,"\t\t\t\t\tShows the permanent banlist.")
 RegFunc("kickarr","blocking proto kick",KickBanTBan.KickArrival,{})
 RegFunc("chatarr","blocking \"is kicking\"",KickBanTBan.ChatArrival,{})
 RegFunc("toarr","blocking \"ur being kicked\"",KickBanTBan.ToArrival,{})
@@ -312,8 +268,4 @@ RegRC(KickBanTBan.Levels.Nuke,"1 3","Kick/Ban\\Ban\\an IP...","!banip %[nick] %[
 RegRC(KickBanTBan.Levels.TBan,"1 3","Kick/Ban\\Timeban\\an IP...","!tbanip %[line:IP:] %[line:Days] %[line:Hours] %[line:Mins]")
 RegRC(KickBanTBan.Levels.TBan,"1 2","Kick/Ban\\Timeban\\USER...","!tbanip %[line:IP:] %[line:Days] %[line:Hours] %[line:Mins] %[line:Reason (optional):]")
 RegRC(KickBanTBan.Levels.UnTBan,"1 3","Kick/Ban\\Unban\\a temp. banned nick/IP","!untempban %[line:Nick or IP:]")
-RegRC(KickBanTBan.Levels.UnBan,"1 3","Kick/Ban\\Unban\\a perm. banned nick/IP","!unban %[line:Nick or IP:]")
-RegRC(KickBanTBan.Levels.ClearTempBan,"1 3","Kick/Ban\\Ban List\\Clear\\Temp Bans","!clrtempban")
-RegRC(KickBanTBan.Levels.ClearPermBan,"1 3","Kick/Ban\\Ban List\\Clear\\Perm Bans","!clrpermban")
-RegRC(KickBanTBan.Levels.GetBanList,"1 3","Kick/Ban\\Ban List\\Show\\Perm Bans","!getbanlist")
-RegRC(KickBanTBan.Levels.GetBanList,"1 3","Kick/Ban\\Ban List\\Show\\Temp Bans","!gettempbanlist")
+RegRC(BanList.Levels.UnBan,"1 3","Kick/Ban\\Unban\\a perm. banned nick/IP","!unban %[line:Nick or IP:]")

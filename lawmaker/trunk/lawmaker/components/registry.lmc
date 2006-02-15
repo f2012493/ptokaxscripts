@@ -121,8 +121,14 @@ function RegManagement.Register(user,data,env,level,bool)
         else
           passwd=RegManagement.GeneratePass()
         end
-        AddRegUser(user.sName,passwd,3)
-	SendTxt(user,env,Bot.name,"You are registered now, with password: "..passwd..".")
+        local mesg="You are registered now, with password: "..passwd.."."
+        if RegManagement.SelfRegAutoPrefix~="nope" then
+          AddRegUser(RegManagement.SelfRegAutoPrefix..user.sName,passwd,3)
+          mesg=mesg.." Your registered nick is "..RegManagement.SelfRegAutoPrefix..user.sName
+        else
+          AddRegUser(user.sName,passwd,3)
+        end
+	SendTxt(user,env,Bot.name,mesg)
         RegManagement.Onreg(user,nil,nil,bool)
       else
 	SendTxt(user,env,Bot.name,"You are already a(n) "..tmp[user.iProfile]..", "..RegManagement.BitchList[math.random(table.getn(RegManagement.BitchList))])
@@ -239,10 +245,10 @@ function RegManagement.GetPass(user,data,env)
   end
 end
 
-RegCmd("showops",RegManagement.Do,{1},RegManagement.Levels.Ops,"\t\t\t\t\t\tShows all operators.")
-RegCmd("showsuperops",RegManagement.Do,{0},RegManagement.Levels.SuperOps,"\t\t\t\t\t\tShows all superoperators.")
-RegCmd("showregs",RegManagement.Do,{3},RegManagement.Levels.Regs,"\t\t\t\t\t\tShows all registered users.")
-RegCmd("showvips",RegManagement.Do,{2},RegManagement.Levels.Vips,"\t\t\t\t\t\tShows all VIPs.")
+RegCmd("showops",RegManagement.Do,{1},RegManagement.Levels.ShowOps,"\t\t\t\t\t\tShows all operators.")
+RegCmd("showsuperops",RegManagement.Do,{0},RegManagement.Levels.ShowSuperOps,"\t\t\t\t\t\tShows all superoperators.")
+RegCmd("showregs",RegManagement.Do,{3},RegManagement.Levels.ShowRegs,"\t\t\t\t\t\tShows all registered users.")
+RegCmd("showvips",RegManagement.Do,{2},RegManagement.Levels.ShowVips,"\t\t\t\t\t\tShows all VIPs.")
 RegCmd("addop",RegManagement.Register,{1},RegManagement.Levels.AddOp,"<username> <password>\t\t\tAdds a new operator. If you do not specify the password, I will generate one.")
 RegCmd("addsuperop",RegManagement.Register,{0},RegManagement.Levels.AddSuperOp,"<username> <password>\t\t\tAdds a new superoperator. If you do not specify the password, I will generate one.")
 RegCmd("addreg",RegManagement.Register,{3},RegManagement.Levels.AddReg,"<username> <password>\t\t\tAdds a new registered user. If you do not specify the password, I will generate one.")
@@ -283,7 +289,7 @@ RegRC(RegManagement.Levels.DownGradeToReg,"1 3","Registry\\Downgrade a user to\\
 RegRC(2,"1 3","Registry\\Change your own password","!chpass %[line:New password (Enter to auto-generate):]",true)
 RegRC(RegManagement.AllowSelfReg,"1 3","Registry\\Add yourself as registered user","!regme %[line:Password (Enter to auto-generate):]",true)
 RegRC(RegManagement.Levels.GetPass,"1 3","Registry\\Get password for a user...","!getpass %[line:Nick:]")
-RegRC(RegManagement.Levels.Ops,"1 3","Registry\\Show\\Operators","!showops")
-RegRC(RegManagement.Levels.SuperOps,"1 3","Registry\\Show\\Superoperators","!showsuperops")
-RegRC(RegManagement.Levels.Regs,"1 3","Registry\\Show\\Registered users","!showregs")
-RegRC(RegManagement.Levels.Vips,"1 3","Registry\\Show\\VIPs","!showvips")
+RegRC(RegManagement.Levels.ShowOps,"1 3","Registry\\Show\\Operators","!showops")
+RegRC(RegManagement.Levels.ShowSuperOps,"1 3","Registry\\Show\\Superoperators","!showsuperops")
+RegRC(RegManagement.Levels.ShowRegs,"1 3","Registry\\Show\\Registered users","!showregs")
+RegRC(RegManagement.Levels.ShowVips,"1 3","Registry\\Show\\VIPs","!showvips")

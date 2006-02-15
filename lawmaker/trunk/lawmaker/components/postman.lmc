@@ -12,12 +12,14 @@ Run(path.."cfg/postman.ini")
 
 -------------------------------------- Command Functions
 
+UserInfo=UserInfo or {Data={}}
+
 --- post msg
 function PostMan.Send( user, data, env )
   local _,_,nick,msg = string.find(data,"%b<>%s+%S+%s+(%S+)%s+(.*)")
   if nick then
     if not GetItemByName(nick) then
-      if (UserInfo and UserInfo.Data[nick]) or not UserInfo then
+      if UserInfo.Data[nick] then
 	local function GetOfflineUserLevel(nick)
 	  for _,obj in frmHub:GetRegisteredUsers() do
 	    if obj.sName==nick then
@@ -40,7 +42,7 @@ function PostMan.Send( user, data, env )
 	else
 	  SendTxt( user,env,Bot.name,"User has no rights to have inbox.")
 	end
-      elseif UserInfo and not UserInfo.Data[nick] then
+      else
         SendTxt( user,env,Bot.name, "User "..nick.." has never been in the hub." )
       end
     else
@@ -51,8 +53,6 @@ function PostMan.Send( user, data, env )
   end
   Clear()
 end
-
-
 
 function PostMan.Delete( user, data, env )
   if PostMan.Messages[user.sName] then
@@ -154,8 +154,6 @@ function PostMan.SaveMsg()
   f:write(s.."\n}")
   f:close()
 end
-
-
 
 function PostMan.NewUserConnected(user)
   if PostMan.Messages[user.sName] then

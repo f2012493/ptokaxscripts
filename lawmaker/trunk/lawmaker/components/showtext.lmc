@@ -1,4 +1,4 @@
-ShowText={Commands={},HubAD={},Timer=0}
+ShowText={Commands={},HubAD={}}
 --[[
 Showtext plugin for LawMaker by bastya_elvtars
 Some code from Texter by plop & chilla
@@ -6,6 +6,8 @@ Text files MUST reside in scripts/lawmaker/text folder!!!
 ]]
 
 Run(path.."cfg/showtext.ini")
+
+ShowText.Timer=0
 
 function  ShowText.ShowTextFile(user,data,env,file)
   local f=io.open("lawmaker/text/"..file,"r")

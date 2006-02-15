@@ -1,32 +1,29 @@
-ChatHistory={Lines={},Levels={}}
+ChatHistory={Levels={}}
 --[[
 Simple chat history plugin for LawMaker
 Supports max. no of lines to store, 4 date formats, 
 Works like: !history <lines#>
 Thx to: DCH++ devs ;-)
-Also for TïMê†råVêlléR for testing
+Also thanks to TiMeTrAVelleR for testing
 ]]
 
 Run(path.."cfg/history.ini")
-
+ChatHistory.Lines={}
 function ChatHistory.Display(user,data,env)
   if table.getn(ChatHistory.Lines)==0 then SendTxt(user,env,Bot.name,"History buffer is empty. :(") return end
   local _,_,no=string.find(data,"%b<>%s+%S+%s+(%d+)")
   local msg,hey="\r\n\r\n"..string.rep("=",15).." Start of chat history "..string.rep("=",13).."\r\n\r\n",""
   if not no then no=ChatHistory.LinesToDisplay end
-  if tonumber(no) > table.getn(ChatHistory.Lines) then 
-    no=table.getn(ChatHistory.Lines)
-    hey="\r\n\r\nI decreased the number of lines displayed to "..no..", cause this is all I can provide now."
-    for l=1,no do
-      msg=msg..ChatHistory.Lines[l].."\r\n"
-    end
+  if tonumber(no) >= table.getn(ChatHistory.Lines) then
+    hey="\r\n\r\nI decreased the number of lines displayed to "..table.getn(ChatHistory.Lines)..", cause this is all I can provide now."
+    msg=msg..table.concat(ChatHistory.Lines,"\r\n").."\r\n"
   else
-    no=tonumber(no)
-    local st=table.getn(ChatHistory.Lines)-(no-1)
---     SendToAll(st)
-    for l=st,table.getn(ChatHistory.Lines) do
-      msg=msg..ChatHistory.Lines[l].."\r\n"
-    end
+    local orig=table.getn(ChatHistory.Lines)
+    table.setn(ChatHistory.Lines,no)
+    table.sort(ChatHistory.Lines,function(v1,v2) return v1>v2 end)
+    msg=msg..table.concat(ChatHistory.Lines,"\r\n").."\r\n"
+    table.setn(ChatHistory.Lines,orig)
+    table.sort(ChatHistory.Lines)
   end
   msg=msg..hey.."\r\n\r\n"..string.rep("=",15).." End of chat history "..string.rep("=",15)
   user:SendPM(Bot.name,msg)
@@ -63,6 +60,7 @@ function ChatHistory.Main()
     for line in f:lines() do
       table.insert(ChatHistory.Lines,line)
     end
+    f:close()
   end
 end
 

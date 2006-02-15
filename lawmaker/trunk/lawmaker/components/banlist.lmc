@@ -1,0 +1,83 @@
+BanList={Levels={},}
+
+-- Banlist manager for LawMaker
+-- Takes care of IP/nick bans
+
+Run(path.."cfg/banlist.ini")
+
+-- function BanList.Get(user,data,env,bTemp)
+--   local count,name,tmp=0,nil,{}
+--   local function GetTail(obj)
+--     if obj.bFullIpBan then
+--       return "-- // IP is: "..obj.sIP
+--     elseif obj.bIpBan then
+--         return "-- // IP is: "..obj.sIP..". IP is FULLY banned!"
+--     else
+--       return "-- // Nickban!"
+--     end
+--   end
+--   if bTemp then
+--     name="temp ban list"
+--     for _,obj in frmHub:GetTempBanList() do
+--       count=count+1
+--       local remn=minutestoh(obj.iTime/60)
+--       table.insert(tmp,obj.sNick.." - remaining time: "..remn.." "..GetTail(obj))
+--     end
+--   else
+--     name="perm ban list"
+--     for _,obj in frmHub:GetPermBanList() do
+--       count=count+1
+--       table.insert(tmp,obj.sNick.." "..GetTail(obj))
+--     end
+--   end
+--   if count~=0 then
+--     user:SendPM(Bot.name,"\r\n\r\nThe "..name..":\r\n"..string.rep("=",35).."\r\n\r\n"..table.concat(tmp,"\r\n").."\r\n\r\n"..string.rep("=",35).."\r\n"..count.." items.")
+--   else  
+--     SendTxt(user,env,Bot.name,"The "..name.." contains no entries.")
+--   end
+-- end
+
+function BanList.Search(user,data,env,bTemp)
+  local list=frmHub:GetPermBanList() if bTemp then list=frmHub:GetTempBanList() end
+  local _,_,srchstring=string.find(data,"%b<>%s+%S+%s+(.+)")
+  local msg=""
+  if srchstring then
+    for _,obj in ipairs(list) do
+      for _,thingy in ipairs({obj.sBy, obj.sIP, obj.sReason}) do
+        if string.find(thingy,srchstring,1,true) then
+          msg=msg.."\r\n========================\r\nFound: "..obj.sNick
+          if obj.bIpBan then msg=msg.." IP: "..obj.sIP else msg=msg.." - NickBan!" end
+          if obj.bFullIpBan then msg=msg.." // IP is FULLY banned!" end
+          if obj.sReason then msg=msg.." - Reason: "..obj.sReason end
+          if obj.iTime then msg=msg.." - Time remaining: "..minutestoh(math.ceil(obj.iTime/60)) end
+          
+          msg=msg.."\r\n========================"
+        end
+      end
+    end
+    if msg~="" then user:SendPM(Bot.name,msg) else SendTxt(user,env,Bot.name,"No matches found for "..srchstring) end
+  else
+    SendTxt(user,env,Bot.name,"Need a search string too! :P")
+  end
+end
+
+function BanList.ClearBans(user,data,env,what)
+  if what=="permban" then
+    ClearPermBan()
+  else
+    what="tempban"
+    ClearTempBan()
+  end
+  SendTxt(user,env,Bot.name,"The "..what.." list has been cleared.")
+end
+
+
+RegCmd("clrtempban",BanList.ClearBans,{"tempban"},BanList.Levels.ClearTempBan,"\t\t\t\t\tClears the temporary banlist.")
+RegCmd("clrpermban",BanList.ClearBans,{"permban"},BanList.Levels.ClearPermBan,"\t\t\t\t\tClears the permanent banlist.")
+RegCmd("searchbans",BanList.Search,{false},BanList.Levels.Search,"\t\t\t\t\tShows the temporary banlist.")
+RegCmd("searchtempbans",BanList.Search,{true},BanList.Levels.Search,"\t\t\t\t\tShows the permanent banlist.")
+
+RegRC(BanList.Levels.ClearTempBan,"1 3","Kick/Ban\\Ban List\\Clear\\Temp Bans","!clrtempban")
+RegRC(BanList.Levels.ClearPermBan,"1 3","Kick/Ban\\Ban List\\Clear\\Perm Bans","!clrpermban")
+-- RegRC(BanList.Levels.Get,"1 3","Kick/Ban\\Ban List\\Show\\Perm Bans","!getbanlist")
+-- RegRC(BanList.Levels.Get,"1 3","Kick/Ban\\Ban List\\Show\\Temp Bans","!gettempbanlist")

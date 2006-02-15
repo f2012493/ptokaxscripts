@@ -230,6 +230,7 @@ Checks.Client.Check=function(user)
     local clienttype,version=Checks.Client.Determine(user)
     local spec={["Sasser"]=1,["DC++k CDM"]=1,["DCDM++"]=1,["DC:PRO"]=1,["StrongDC++"]=1,["DCGUI++"]=1,["iDC++"]=1,["SoﬂeR++"]=1,["PeerWebDC"]=1,["Zion++"]=1,["R2++"]=1,["Goofy++"]=1}
     if clienttype then
+      local str=user.sTag; if user.bHasSuspiciousTag then str=user.sMyInfoString end
       local fakes=
 	{
 	  ["<.+:%s+%S+,.*>"]="Found spaces in the wrong place in the tag.",
@@ -237,10 +238,11 @@ Checks.Client.Check=function(user)
 	  ["<.+,%s+.*>"]="Found spaces in the wrong place in the tag.",
 	  ["<.+[\"\\].*>"]="Found backslash or quotation mark in the tag.",
           ["S%:%d+%:"]="Colon in the bad place in the tag.",
+          ["S%:%D+"]="Non-numeric or missing slots count.",
 	}
       local bad
       for a,b in fakes do
-	if string.find(user.sMyInfoString,a) then
+	if string.find(str,a) then
 	  bad=b
 	end
       end
@@ -259,10 +261,13 @@ Checks.Client.Check=function(user)
 	  if not version then
 	    user:SendData("ClientCheck","You are hiding your DC++ tag, or tag is corrupt!")
 	    return Checks.Punish(user,"c",Checks.Client.BadClientToDo)
-	  else
-	    if string.find(user.sTag,"%<%+%+.?V:") and not string.find(user.sTag,"%<%+%+%s+V:") then
+	  else--<++ V:0.401,H:1/0/0,S:7>
+            local str=user.sTag; if user.bHasSuspiciousTag then str=user.sMyInfoString end
+	    if string.find(str,"%<%+%+.?V:") and not string.find(str,"%<%+%+%s+V:") then
 	      return Checks.Client.Killfaker(user,"No space found in tag between characters + and V.")
-	    end
+	    elseif not string.find(str,"M:[APS5]") then
+              return Checks.Client.Killfaker(user,"No connection mode found in tag.")
+            end
 	    local _,_,Hubs = string.find(user.sTag, "H:([^,]+),")
 	    if not Hubs then
 	      return Checks.Client.Killfaker(user,"Missing hubcount in tag, or hubcount contains invalid characters.")
@@ -355,9 +360,9 @@ Checks.Welcome=function(user)
     "<SlotperHubCheck> Maximum hubs allowed for your connection is "..Maxhubsforconn..".|"..
     "<SlotperHubCheck> You have "..slots.." slots open. The maximum allowed for you is "..Maxslotsforconn..".|"
     if tonumber(OP)>0 and Checks.SlotHubLimit.OpHubsCount==1 then
-      wmess=wmess.."<SlotperHubCheck","Operator hubs count into total number of hubs.|"
+      wmess=wmess.."<SlotperHubCheck> Operator hubs count into total number of hubs.|"
     elseif tonumber(OP)>0 then
-      wmess=wmess.."<SlotperHubCheck>Operator hubs don't count into total number of hubs.|"
+      wmess=wmess.."<SlotperHubCheck> Operator hubs don't count into total number of hubs.|"
     end
     wmess=wmess.."<SlotperHubCheck> According to these, your slot/hub ratio is "..ratio..".|"..
     "<SlotperHubCheck> The required minimum is "..Ratioforconn.." slots per each hub for this connection.|"

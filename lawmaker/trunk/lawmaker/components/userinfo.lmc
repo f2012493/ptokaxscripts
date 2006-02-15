@@ -332,29 +332,52 @@ end
 
 function UserInfo.Clean()
   local x=os.clock()
-  SendToAll(Bot.name, "Userinfo database prune process started. This might take long, so please be patient!")
+  if UserInfo.AutoClean~=1 then
+    SendToAll(Bot.name, "Userinfo database prune process started. During this, all userinfo entries older than "..
+    UserInfo.Weeks.." weeks will be removed.")
+  else
+    SendToAll(Bot.name, "Userinfo database & account prune processes started. During this, all userinfo entries older than "..
+    UserInfo.Weeks.." weeks will be removed, along with the registered nicks belonging to them. If you are going to be offline for "..
+    "a period longer than that, please contact the operators!")
+  end
+  local UsersTable=UserInfo.LoadRegisteredUsers()
   local juliannow = JulianDate(SplitTimeString(os.date("%Y. %m. %d. %X")))
   local oldest = UserInfo.Weeks*7*1440
-  local Count2,Count = 0,0
-  for a,b in UserInfo.Data do
+  local Count3,Count2,Count = 0,0,0
+  for a,b in pairs(UserInfo.Data) do
     Count = Count+1
     local julianu=JulianDate(SplitTimeString(b.seen))
     local diff=juliannow-julianu
     local hours, mins= math.floor(diff) * 24 + math.floor(frac(diff) * 24), math.floor(frac(frac(diff)*24)*60)
     local usrtime=hours*60+mins
-    if (usrtime) > oldest then
+--     SendToAll(usrtime,oldest)
+    if (usrtime) >= oldest then
       Count2 = Count2 +1
       UserInfo.Data[a]=nil
+      if UserInfo.AutoClean==1 then
+        if UsersTable[a] and not NoClean[a] then
+            DelRegUser(a)
+            UsersTable[a]=nil
+            Count3 = Count3 +1
+        end
+      end
     end
+  end
+  for k,v in pairs(UsersTable) do
+    UserInfo.Data[k]=UserInfo.Data[k] or {ip="0.0.0.0.0",seen=os.date("%Y. %m. %d. %X"),myinfo="$MyINFO $ALL "..k.." <++ V:0.674,M:A,H:0/1/0,S:10>$ $DSL$ $0$|",uptime=0}
+    Count2 = Count2 +1
   end
   if Count2 > 0 then
     UserInfo.Save()
     UserInfo.Data=nil
+    UsersTable=nil
     Clear()
     UserInfo.Data={}
     UserInfo.Load()
   end
-  SendToAll(Bot.name,"This cleanup took "..os.clock()-x.." seconds, during that "..Count.." items were processed, and "..Count2.." were deleted.")
+  local send="This cleanup took "..os.clock()-x.." seconds, during that "..Count.." items were processed, and "..Count2.." were deleted."
+  if UserInfo.AutoClean==1 then send=send.." There have been "..Count3.." registered users removed." end
+  SendToAll(Bot.name,send)
 end
 
 function UserInfo.SeenUser(user, data,env)
@@ -373,13 +396,13 @@ function UserInfo.SeenUser(user, data,env)
 end
 
 function UserInfo.CleanRegisteredUsers()
-  SendToAll(Bot.name, "Account prune has started. Every registered user' who hasn't been in the hub for "..UserInfo.Weeks.." weeks will be unregistered.")
-  SendToAll(Bot.name, "Contact the operators if you're gonna be offline for a period longer than that!")
+  SendToAll(Bot.name, "Account prune process started. During this, all registered nicks older than "..
+  UserInfo.Weeks.." weeks will be removed. If you are going to be offline for a period longer than that, please contact the operators!")
   local UsersTable=UserInfo.LoadRegisteredUsers()
   local juliannow = JulianDate(SplitTimeString(os.date("%Y. %m. %d. %X")))
   local oldest = UserInfo.Weeks*7*1440
   local Count3,Count2,Count = 0,0,0
-  for a,b in UsersTable do
+  for a,b in pairs(UsersTable) do
     Count = Count+1
     if UserInfo.Data[a] then
       if not NoClean[a] then
@@ -396,7 +419,7 @@ function UserInfo.CleanRegisteredUsers()
         Count3=Count3+1
       end
     else
-      UserInfo.Data[a]={ip="0.0.0.0.0",seen=os.date("%Y. %m. %d. %X"),myinfo="$MyINFO $ALL "..a.." <++ V:0.674,M:A,H:0/1/0,S:10>$ $DSL$ $0$|",uptime=0}
+      UserInfo.Data[a]={ip="127.0.0.33",seen=os.date("%Y. %m. %d. %X"),myinfo="$MyINFO $ALL "..a.." <++ V:0.674,M:A,H:0/1/0,S:10>$ $DSL$ $0$|",uptime=0}
     end
   end
   if Count ~= 0 then
@@ -573,7 +596,7 @@ function UserInfo.ReCalcIP(ip)
   tmp=math.mod(tmp,65536)
   pt3=math.floor((tmp)/256)
   pt4=math.mod(tmp,256)
-  return (pt4.."."..pt3.."."..pt2.."."..pt1)
+  return (pt1.."."..pt2.."."..pt3.."."..pt4)
 end
 
 function UserInfo.IPInfo(user,data,env,bool)
@@ -672,9 +695,9 @@ UserInfo.MyINFOArrival=function(user,data)
   if CleanDay ~= os.date("%Y. %m. %d.") then -- user cleaning trigger, works as a timer without a timer
     CleanDay = os.date("%Y. %m. %d.")
     UserInfo.Clean()
-    if UserInfo.AutoClean == 1 then
-      UserInfo.CleanRegisteredUsers()
-    end
+--     if UserInfo.AutoClean == 1 then
+--       UserInfo.CleanRegisteredUsers()
+--     end
   end
   if user.bConnected then
     UserInfo.Append(user)
@@ -685,9 +708,9 @@ UserInfo.ChatArrival=function(user,data)
   if CleanDay ~= os.date("%Y. %m. %d.") then -- user cleaning trigger, works as a timer without a timer (plop)
     CleanDay = os.date("%Y. %m. %d.")
     UserInfo.Clean()
-    if UserInfo.AutoClean == 1 then
-      UserInfo.CleanRegisteredUsers()
-    end
+--     if UserInfo.AutoClean == 1 then
+--       UserInfo.CleanRegisteredUsers()
+--     end
   end
 end
 
@@ -695,9 +718,9 @@ UserInfo.UserDisconnected=function(user,data)
   if CleanDay ~= os.date("%Y. %m. %d.") then
     CleanDay = os.date("%Y. %m. %d.")
     UserInfo.Clean()
-    if UserInfo.AutoClean == 1 then
-      UserInfo.CleanRegisteredUsers()
-    end
+--     if UserInfo.AutoClean == 1 then
+--       UserInfo.CleanRegisteredUsers()
+--     end
   end
   if UserInfo.Data[user.sName] then
     UserInfo.Append(user)

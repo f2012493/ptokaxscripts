@@ -1,4 +1,4 @@
-RandomKicks={Levels={},List={}}
+RandomKicks={Levels={}}
 --[[
 Random Kicks module for LawMaker
 Random Kick messages in Main.
@@ -6,6 +6,8 @@ bastya_elvtars
 ]]--
 
 Run(path.."cfg/randomkicks.ini")
+
+RandomKicks.List={}
 
 function RandomKicks.Delete(user,data,env)
   local _,_,args=string.find(data,"%b<>%s+%S+%s+(.+)")

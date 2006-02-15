@@ -1,8 +1,11 @@
---[[ 
+--[[About
 LawMaker - a bot for PtokaX DC Hub
 Copyright (C) 2004-2005 bastya_elvtars (bastyaelvtars@gmail.com)
 
+Website: http://lawmaker.no-ip.org/
+
 The license does not apply for the sample text files included in the default package.
+Those files are not considered as part of the standard package, just examples.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,11 +22,15 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ---------------------------------------------------------------------------------------------------
 CREDITS 
-Some ideas in LMCA by plop, however it was totally written from scratch.
+Some ideas in LMCA by plop & NightLitch (however it was totally written from scratch).
 Please see the help file(s) included on cofiguring the bot.
-Thx to: 
-  
+Thanks to: 
+----------
   First of all:  my beautiful girlfriend.
+  
+  For PtokaX: Ptaczek/PPK/aMutex/frontline3k
+  
+  LUA 5 (and later) Copyright © 1994-2005 Lua.org, PUC-Rio
   
   For inspiration:
   
@@ -32,9 +39,9 @@ Thx to:
   tezlo (RetroBot)
   OpiumVolage (ModBot)
   
-  For helping:
+  For help:
   
-  plop, PPK, NightLitch, RabidWombat, Herodes, tezlo, jiten, Dessamator, BottledHate, Hawk, Optimus,
+  plop, PPK, NightLitch, RabidWombat, Herodes, tezlo, jiten, Dessamator, BottledHate, Hawk, Optimus, GeceBekcisi,
   TTB, Mutor, kepp, chilla, Nathanos, Skrollster, Sedulus, nErBoS, Skippy84, psf8500, Typhoon, yepyepyep4711
   And yes, thx to others in LUA Hub, LUA Board(s) and DCDev (not a mistake) that I forgot now.
   There are detailed credits in plugins.
@@ -44,15 +51,15 @@ Thx to:
   TiMeTrAVelleR, Psycho_Chihuahua
   Nidaros, Libbe, Darkstar and other Golden Angel ops,
   zinden, kaotkbliss and all the ops of PC Gamers,
-  Mickey, Makavelli-2Pac, 6Marylin6Manson6, Psycho_Chihuahua, LiqUiD~TrolL
+  Mickey, Makavelli-2Pac, 6Marilyn6Manson6, LiqUiD~TrolL,
+  Bumbi, GrinSlaw, gander
   
   Special thanks to:
   
   Neil Hodgson, creator of SciTE, a GREAT & FREE editor (http://www.scintilla.org)
   OpiumVolage, the primary LUA board hoster (http://board.univ-angers.fr)
   Matt, the secondary LUA board hoster (http://lua.uknnet.com)
-  Psycho_Chihuahua, host of PtokaX Wiki (http://ptxwiki.psycho-chihuahua.net/)
-    and PtokaX Script Database (http://ptxscriptdb.psycho-chihuahua.net/)
+  Psycho_Chihuahua, host of PtokaX Wiki (http://ptxwiki.psycho-chihuahua.net/) and PtokaX Script Database (http://ptxscriptdb.psycho-chihuahua.net/)
   [NL]Pur, who established the Moon5 project at Sourceforge.
   
 ----------------------------------------------------------------------------------------  
@@ -66,52 +73,35 @@ Thx to:
 -- BASIC SETTINGS
 -- all should be easy ;)
 
+-- Place any directories that contain setting scripts that your script uses between these tags
+--<SettingsDirectoriesStart>
+--\lawmaker\components\cfg
+--<SettingsDirectoriesEnd>
+--<SettingsStart>
+founder="bastya_elvtars" -- Hub founder's name, exact nick please!!!
+owner="U" -- Hub owner's name, exact nick please!!!
 
--- Hub's data
-
-founder="bastya_elvtars" -- hub founder's name, exact nick please!!!
-
-owner="U" -- hub owner's name, exact nick please!!!
-
-hubwebsite="www.your-hubs-site.net" --- replace with your hub's website
-
--- Bot's data
-
-Bot={
-name="-LawMaker-"
-,
-desc="Main Hub Bot"
-,
-email="lawmaker@lawmaker.lua" -- equal to the hub's e-mail addy
-}
+Bot={ 
+      name="-LawMaker-",
+      desc="Main Hub Bot",
+      email="lawmaker@lawmaker.lua", -- equal to the hub's e-mail addy
+} -- Bot's data
 
 autoreg=1 -- 0 do disable, 1 to enable autoreg on various hublist servers
 
-complaint=2 -- adress sent to perm/temp banned user.
-	    --0= none, 1= hub's email, 2= hub's website 
-	    
-complainttext="You may cry a river at: " -- text before the sent addy
-	    
-	    
--- Debugging. It is better to enable.
+complaint=2 -- Adress sent to perm/temp banned user. 0=nothing, 1=e-mail (the bot's mail address), 2=website
+hubwebsite="www.your-hubs-site.net" -- Replace with your hub's website. Will be sent on ban.
+complainttext="You may cry a river at: " -- text before the sent addyű
 
--- PMs specified users on error.
-debug_send = 1 
+debug_log=1 -- Logs debug messages. Please leave it enabled.
+debug_send=1 -- PMs specified users on error. See the next setting.
+debug_sendto={ 
+  "[TGA-OP]bastya_elvtars", 
+  "bastya_elvtars",
+} -- Specify the usernames that you want the errormessages to be sent to.
 
--- Logs debug messages. Please leave it enabled.
-debug_log= 1 
-
--- The specified users:
-debug_sendto=
-  { 
-   
-    "[TGA-OP]bastya_elvtars", 
-    "bastya_elvtars",
-    
-  }
-
--- Name of the parent menu for rightclick commands.
-rightclick_menuname="-LawMaker-"
+rightclick_menuname="-LawMaker-" -- Name of the parent menu for rightclick commands.
+--<SettingsEnd>
 -------------------------------------------------------------------------------------
 -- END OF BASIC SETTINGS, NO EDITING NEEDED BELOW THIS POINT UNLESS YOU FIND A BUG --
 -------------------------------------------------------------------------------------
@@ -557,6 +547,7 @@ function help(user,data,env)
   local hlp="\r\nCommands available to you are:\r\n=================================================================================================================================\r\n"
   for a,b in commandtable do
     if b["level"]~=0 then
+--       SendToAll(a)
       if userlevels[user.iProfile] >= b["level"] then
         count=count+1
         table.insert(hlptbl,"+"..a.." "..b["help"])

@@ -1,4 +1,4 @@
-FreshStuff={Commands={},Levels={},AllStuff = {},NewestStuff = {},TopAdders={}} -- do not touch this line
+FreshStuff={Commands={},Levels={}} -- do not touch this line
 --[[
 FreshStuff module for LawMaker by bastya_elvtars
 Based on FreshStuff 3.4.2 which was originally written by plop and taken over by me :)
@@ -7,6 +7,8 @@ I left the possibility for custom commands here (why truncate?)
 ]]
 
 Run(path.."cfg/freshstuff.ini")
+
+FreshStuff.AllStuff = {};FreshStuff.NewestStuff = {};FreshStuff.TopAdders={}
 
 FreshStuff.Timer=0
 
@@ -39,24 +41,32 @@ function FreshStuff.Main()
 end
 
 function FreshStuff.NewUserConnected(user)
-  if FreshStuff.ShowOnEntry ~=0 then
-    if FreshStuff.ShowOnEntry==1 then
-      SendTxt(user,"PM",Bot.name, FreshStuff.MsgNew)
-    else
-      SendTxt(user,"MAIN",Bot.name, FreshStuff.MsgNew)
+  if FreshStuff.Count > 0 then
+    if FreshStuff.ShowOnEntry ~=0 then
+      if FreshStuff.ShowOnEntry==1 then
+        SendTxt(user,"PM",Bot.name, FreshStuff.MsgNew)
+      else
+        SendTxt(user,"MAIN",Bot.name, FreshStuff.MsgNew)
+      end
     end
   end
 end
 
 function FreshStuff.ShowCrap(user,data,env)
+  if FreshStuff.Count < 1 then SendTxt(user,env,Bot.name,"There are no releases yet, please check back soon.") return end
   local _,_,cat= string.find(data, "%b<>%s+%S+%s+(%S+)")
+  local _,_,latest=string.find(data, "%b<>%s+%S+%s+%S+%s+(%d+)")
   if not cat then
     user:SendPM(Bot.name, FreshStuff.MsgAll)
   else
     if cat == "new" then
       user:SendPM(Bot.name, FreshStuff.MsgNew)
     elseif FreshStuff.Types[cat] then
-      user:SendPM(Bot.name, FreshStuff.ShowRelType(cat))
+      if latest then
+        user:SendPM(Bot.name,FreshStuff.ShowRelNum(cat,latest))
+      else
+        user:SendPM(Bot.name, FreshStuff.ShowRelType(cat))
+      end
     else
       SendTxt(user,env,Bot.name,"No such type.")
     end
@@ -67,10 +77,12 @@ function FreshStuff.AddCrap (user,data,env)
   local _,_,cat,tune= string.find(data, "%b<>%s+%S+%s+(%S+)%s+(.+)")
   if cat then
     if FreshStuff.Types[cat] then
-      if string.find(tune,"$",1,true) then SendTxt(user,env,Bot.name, "The release name must NOT contain dollar sign ($)!") return 1 end
-      for i=1, FreshStuff.Count do
-        local ct,who,when,title=unpack(FreshStuff.AllStuff[i])
-        if title==tune then SendTxt(user,env,Bot.name, "The release is already added under category "..FreshStuff.Types[ct]..".") return 1 end
+      if string.find(tune,"$",1,true) then SendTxt(user,env,Bot.name, "The release name must NOT contain any dollar signs ($)!") return end
+      if FreshStuff.Count > 0 then
+        for i=1, FreshStuff.Count do
+          local ct,who,when,title=unpack(FreshStuff.AllStuff[i])
+          if title==tune then SendTxt(user,env,Bot.name, "The release is already added under category "..FreshStuff.Types[ct]..".") return end
+        end
       end
       SendTxt(user,env,Bot.name, tune.." is added to the releases as "..cat)
       SendToAll(Bot.name, user.sName.." added to the "..cat.." releases: "..tune)
@@ -132,6 +144,7 @@ function FreshStuff.ShowRel(tab)
   local Msg = "\r\n"
   local cat,who,when,title
   local tmptbl={}
+  local cunt=0
   if tab == FreshStuff.NewestStuff then
     if FreshStuff.Count2 == 0 then
       FreshStuff.MsgNew = "\r\n\r\n".." --------- The Latest Releases -------- \r\n\r\n  No releases on the list yet\r\n\r\n --------- The Latest Releases -------- \r\n\r\n"
@@ -143,14 +156,16 @@ function FreshStuff.ShowRel(tab)
 	    if FreshStuff.Types[cat] then cat=FreshStuff.Types[cat] end
 	    if not tmptbl[cat] then tmptbl[cat]={} end
 	    table.insert(tmptbl[cat],Msg.."ID: "..i.."\t"..title.." // (Added by "..who.." at "..when..")")
+            cunt=cunt+1
 	  end
 	end
       end
     end
     for a,b in pairs (tmptbl) do
       Msg=Msg.."\r\n"..a.."\r\n"..string.rep("-",33).."\r\n"..table.concat(b).."\r\n"
-    end      
-    FreshStuff.MsgNew = "\r\n\r\n".." --------- The Latest "..FreshStuff.MaxNew.." Releases -------- "..Msg.."\r\n\ --------- The Latest "..FreshStuff.MaxNew.."  Releases -------- \r\n\r\n"
+    end
+    local new=FreshStuff.MaxNew if cunt < FreshStuff.MaxNew then new=cunt end
+    FreshStuff.MsgNew = "\r\n\r\n".." --------- The Latest "..new.." Releases -------- "..Msg.."\r\n\ --------- The Latest "..new.."  Releases -------- \r\n\r\n"
   else
     if FreshStuff.Count == 0 then
       FreshStuff.MsgAll = "\r\n\r\r\n".." --------- All The Releases -------- \r\n\r\n  No releases on the list yet\r\n\r\n --------- All The Releases -------- \r\n\r\n"
@@ -200,6 +215,27 @@ function FreshStuff.ShowRelType(what)
   return MsgType
 end
 
+function FreshStuff.ShowRelNum(what,num) -- to show numbers of categories
+  num=tonumber(num)
+  local Msg="\r\n"
+  local cunt=0
+  local target=num
+  local cat,who,when,title
+  if num > FreshStuff.Count then target=1 end
+  for i=FreshStuff.Count,target,-1 do
+    if FreshStuff.AllStuff[i] then
+      cat,who,when,title=unpack(FreshStuff.AllStuff[i])
+      Msg = Msg.."ID: "..i.."\t"..title.." // (Added by "..who.." at "..when..")\r\n"
+      cunt=cunt+1
+    else
+      break
+    end
+  end
+  if cunt < num then num=cunt end
+  local MsgType = "\r\n\r\n".." --------- The Latest "..num.." "..FreshStuff.Types[what].." -------- \r\n\r\n"..Msg.."\r\n\r\n --------- The Latest "..num.." "..FreshStuff.Types[what].." -------- \r\n\r\n"
+  return MsgType
+end
+  
 function FreshStuff.DelCrap(user, data,env)
   local _,_,what=string.find(data,"%b<>%s+%S+%s+(.+)")
   if what then
