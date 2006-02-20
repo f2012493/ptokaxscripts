@@ -1,4 +1,4 @@
-PostMan={Levels={},Messages={}}
+PostMan={Levels={}}
 --[[
 PostMan Bot 0.6 by bastya_elvtars (the rock n' roll doctor)
 Herodes optimized it and made encryption for messages.
@@ -13,6 +13,8 @@ Run(path.."cfg/postman.ini")
 -------------------------------------- Command Functions
 
 UserInfo=UserInfo or {Data={}}
+
+PostMan.Messages={}
 
 --- post msg
 function PostMan.Send( user, data, env )

@@ -35,7 +35,9 @@ function FreshStuff.Main()
   end
   for a,b in FreshStuff.Types do
     RegRC(FreshStuff.Levels.Add,"1 3","Releases\\Add an item to the\\"..b,"!"..FreshStuff.Commands.Add.." "..a.." %[line:Name:]")
-    RegRC(FreshStuff.Levels.Show,"1 3","Releases\\Show items of type\\"..b,"!"..FreshStuff.Commands.Show.." "..a)
+    RegRC(FreshStuff.Levels.Show,"1 3","Releases\\Show items of type\\"..b.."\\All","!"..FreshStuff.Commands.Show.." "..a)
+    RegRC(FreshStuff.Levels.Show,"1 3","Releases\\Show items of type\\"..b.."\\Latest...","!"..FreshStuff.Commands.Show.." "..a.." %[line:Number of items to show:]")
+
   end
   FreshStuff.ReloadRel()
 end
@@ -219,7 +221,7 @@ function FreshStuff.ShowRelNum(what,num) -- to show numbers of categories
   num=tonumber(num)
   local Msg="\r\n"
   local cunt=0
-  local target=num
+  local target=FreshStuff.Count-num
   local cat,who,when,title
   if num > FreshStuff.Count then target=1 end
   for i=FreshStuff.Count,target,-1 do

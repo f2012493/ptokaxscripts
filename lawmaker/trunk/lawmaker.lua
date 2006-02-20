@@ -182,16 +182,17 @@ function Main()
 end
 
 function OnTimer()
-  for a,b in modules["ont"] do -- runs through the funcs to be called now
-    modules["ont"][a]["func"](unpack(modules["ont"][a]["parms"]))
+  for _,name in pairs(modules.ont) do -- runs through the funcs to be called now
+    name.func (unpack(name.parms))
   end
 end
 
 function NewUserConnected(user)
   local bad
   for _,todo in ipairs(tNUCOrder) do
-    if modules["nuc"][todo] then
-      if modules["nuc"][todo]["func"](user,unpack(modules["nuc"][todo]["parms"]))=="shit" then
+    local name=modules.nuc[todo]
+    if modules.nuc[todo] then
+      if name.func(user,unpack(name.parms))=="shit" then
 	bad=true
 	return 1
       end
@@ -204,8 +205,8 @@ function NewUserConnected(user)
       user:SendData(table.concat(rctosend[user.iProfile],"|"))
       user:SendData(Bot.name,"You just got "..(table.getn(rctosend[user.iProfile])).." rightclick commands, come on, unleash my full power! :)")
     end
+    user:SendData(Bot.name,Bot.version..". Licensed under the GNU GPL, type +license for details.")
   end
-  user:SendData(Bot.name,Bot.version..". Licensed under the GNU GPL, type +license for details.")
 end
 
 function ToArrival(user,data)
@@ -217,8 +218,8 @@ function ToArrival(user,data)
     if lagtest[user.sName] then SendTxt(user,"PM",Bot.name,"Executing this command took "..os.clock()-x.." seconds.") end
     return 1
   else
-    for a,b in modules["toarr"] do -- runs through the funcs to be called now
-      if modules["toarr"][a]["func"](user,data,unpack(modules["toarr"][a]["parms"]))=="shit" then return 1 end
+    for _,name in pairs(modules.toarr) do -- runs through the funcs to be called now
+      if name.func(user,data,unpack(name.parms))=="shit" then return 1 end
     end
   end
 end
@@ -232,41 +233,41 @@ function ChatArrival(user,data)
     if lagtest[user.sName] then SendTxt(user,"MAIN",Bot.name,"Executing this command took "..os.clock()-x.." seconds.") end
     return 1
   else
-    for a,b in modules["chatarr"] do -- runs through the funcs to be called now
-      if modules["chatarr"][a]["func"](user,data,unpack(modules["chatarr"][a]["parms"]))=="shit" then return 1 end
+    for _,name in pairs(modules.chatarr) do -- runs through the funcs to be called now
+      if name.func(user,data,unpack(name.parms))=="shit" then return 1 end
     end
   end
 end
 
 function MyINFOArrival (user,data)
   data=string.sub(data,1,string.len(data)-1)
-  for a,b in modules["myinfo"] do -- runs through the funcs to be called now
-    if modules["myinfo"][a]["func"](user,data,unpack(modules["myinfo"][a]["parms"]))=="shit" then break end
+  for _,name in pairs(modules.myinfo) do -- runs through the funcs to be called now
+    if name.func(user,data,unpack(name.parms))=="shit" then break end
   end
 end
 
 function KickArrival(user,data)
   data=string.sub(data,1,string.len(data)-1)
-  for a,b in modules["kickarr"] do -- runs through the funcs to be called now
-    if modules["kickarr"][a]["func"](user,data,unpack(modules["kickarr"][a]["parms"]))=="shit" then return 1 end
+  for _,name in pairs(modules.kickarr) do -- runs through the funcs to be called now
+    if name.func(user,data,unpack(name.parms))=="shit" then return 1 end
   end
 end
 
 function OnExit()
-  for a,b in modules["onexit"] do -- runs through the funcs to be called now
-    modules["onexit"][a]["func"](user,data,unpack(modules["onexit"][a]["parms"]))
+  for _,name in pairs(modules.onexit) do -- runs through the funcs to be called now
+    name.func(user,data,unpack(name.parms))
   end
 end
 
 function UserDisconnected(user)
-  for a,b in modules["userdisc"] do -- runs through the funcs to be called now
-    modules["userdisc"][a]["func"](user,unpack(modules["userdisc"][a]["parms"]))
+  for _,name in pairs(modules.userdisc) do -- runs through the funcs to be called now
+    name.func(user,unpack(name.parms))
   end
 end
 
 function OpForceMoveArrival(user,data)
-  for a,b in modules["forcemovearr"] do -- runs through the funcs to be called now
-    if modules["forcemovearr"][a]["func"](user,data,unpack(modules["forcemovearr"][a]["parms"]))=="shit" then return 1 end
+  for _,name in pairs(modules.forcemovearr) do -- runs through the funcs to be called now
+    if name.func(user,data,unpack(name.parms))=="shit" then return 1 end
   end
 end
 
@@ -316,10 +317,11 @@ userlevels={ [-1] = 1, [0] = 5, [1] = 4, [2] = 3, [3] = 2 } -- rights management
 
 function parsecmds(user,data,env,cmd,bot)
   if env~="PM" then bot=Bot.name end
+  local name=commandtable[cmd]
   if commandtable[cmd] then -- if it exists
-    if commandtable[cmd]["level"]~=0 then -- and enabled
-      if userlevels[user.iProfile] >= commandtable[cmd]["level"] then -- and user has enough rights
-        commandtable[cmd]["func"](user,data,env,unpack(commandtable[cmd]["parms"])) -- user,data,env and more params afterwards
+    if name.level~=0 then -- and enabled
+      if userlevels[user.iProfile] >= name.level then -- and user has enough rights
+        name.func(user,data,env,unpack(name.parms)) -- user,data,env and more params afterwards
       else
         SendTxt(user,env,bot,"You are not allowed to use this command.")
       end
@@ -333,9 +335,9 @@ end
 function CreateRightClicks()
   for _,idx in {-1,0,1,2,3} do -- usual profiles
     rctosend[idx]=rctosend[idx] or {} -- create if not exist (but this is not SQL :-P)
-    for a,b in pairs(rightclick) do -- run thru the rightclick table
-      if userlevels[idx] >= b then -- if user is allowed to use
-        table.insert(rctosend[idx],a) -- then put to the array
+    for item,level in pairs(rightclick) do -- run thru the rightclick table
+      if userlevels[idx] >= level then -- if user is allowed to use
+        table.insert(rctosend[idx],item) -- then put to the array
       end
     end
     for _,arr in pairs(rctosend) do -- and we alphabetize (sometimes eyecandy is also necessary)
@@ -344,12 +346,14 @@ function CreateRightClicks()
   end
 end
 
-function RegFunc(when,name,func,params,riteclk) -- func to be called on ptokax events :)
+-- I know function calls introduce some overhead, but these are left for future experiments with Lua 5.1.
+----
+function RegFunc(when,name,func,params,riteclk) -- Functions to be called on ptokax events :)
   if not modules[when] then modules[when]={} end
   modules[when][name]={["func"]=func,["parms"]=params}
 end
 
-function RegCmd(cmnd,func,parms,level,help) -- regs a command, parsed on ToArrival and ChatArrival
+function RegCmd(cmnd,func,parms,level,help) -- Regs a command, parsed on ToArrival and ChatArrival
   commandtable[cmnd]={["func"]=func,["parms"]=parms,["level"]=level,["help"]=help}
 end
 
@@ -361,7 +365,7 @@ function RegRC(level,context,name,command,PM)
     rightclick["$UserCommand "..context.." "..rightclick_menuname.."\\"..name.."$$To: "..Bot.name.." From: %[mynick] $<%[mynick]> "..command.."&#124;"]=level
   end
 end
-
+----
 -- General functions that can be useful in any component.
 function maketable(file,separator) -- opens a file and adds its contents to a table.
   local tbl={}
@@ -409,11 +413,14 @@ function getmode(myinfo) -- returns mode name from M: string
 end
 
 function SendTxt(user,env,bot,text) -- sends message according to environment (main or pm)
-  if env=="PM" then
-    user:SendPM(bot,text)
-  else
-    user:SendData(bot,text)
-  end
+  local to={["PM"]=user.SendPM}
+  local todo=to[env] or user.SendData
+  todo(user, bot, text)
+--   if env=="PM" then
+--     user:SendPM(bot,text)
+--   else
+--     user:SendData(bot,text)
+--   end
 end
 
 function Clear() -- cleanup
@@ -564,7 +571,7 @@ function help(user,data,env)
   hlp=hlp..table.concat(hlptbl,"\r\n").."\r\nAll the "..count.." commands you can use can be typed in main or in PM session with anyone, and the available prefixes are: ! # + - ?\r\n=================================================================================================================================\r\n*** "..Bot.version
   user:SendPM(Bot.name,hlp)
 end
- 
+
 function lagtestonoff (user,data,env)
   local _,_,onoff=string.find(data,"%b<>%s+%S+%s+(%S+)")
   if onoff=="on" then
