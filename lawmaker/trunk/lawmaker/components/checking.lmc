@@ -26,6 +26,7 @@ end
 
 Checks.ScanMyINFO=function(user) ----------
   local speed,hubs,slots,Guest,Reg,OP
+	if not user.sConnection then return "noconn" end
   if string.find(user.sConnection,"%(.+%/.+%)") then -- dirty workaround for R2++ et al. :-)
     _,_,speed=string.find(user.sConnection,"(.+)%(.+%/.+%)")
   end
@@ -74,17 +75,17 @@ end
 ---------------- hub/slot/ratio checker
 Checks.SlotHubLimit.CheckHubsAndSlots=function(user)
   if Checks.SlotHubLimit.SlotHubLevel >= userlevels[user.iProfile] then
+		local bad
     local conn=user.sConnection
-    if string.find(user.sConnection,"%(.+%/.+%)") then -- dirty workaround for R2++ et al. :-)
-      _,_,conn=string.find(user.sConnection,"(.+)%(.+%/.+%)")
+    if conn and string.find(conn,"%(.+%/.+%)") then -- dirty workaround for R2++ et al. :-)
+      _,_,conn=string.find(conn,"(.+)%(.+%/.+%)")
     end
-    if not conn or not Checks.SlotHubLimit.Rules[conn] then
-      user:SendData("ConnectionCheck","Your connection type could not be determined or is unknown.")
-      return Checks.Punish(user,"c",Checks.SlotHubLimit.BadConnToDo)
-    end
+		if not conn or conn=="" then user:SendData("ConnectionCheck","Your connection type could not be determined.") bad=true end
+    if not Checks.SlotHubLimit.Rules[conn] then user:SendData("ConnectionCheck","Your connection type is unknown.") bad=true end
+		if bad then return Checks.Punish(user,"c",Checks.SlotHubLimit.BadConnToDo) end
     if Immune and not Immune.List[user.sName] or not Immune then
       local hubs,slots,Guest,Reg,OP,speed,limit,Maxslotsforconn,Ratioforconn,Maxhubsforconn,minlimitforconn,ratio,Share=Checks.ScanMyINFO(user)
-      if Maxslotsforconn==0 then -- kick unallowed
+			if Maxslotsforconn==0 then -- kick unallowed
         user:SendData("ConnectionCheck","Your connection is "..speed..", which is not allowed in here.")
         user:Disconnect() return "shit"
       elseif slots>Maxslotsforconn then
@@ -181,12 +182,12 @@ Checks.Client.Patterns=
 	["reverseconnect.sf.net"]={"ReverseConnect","V:(0.%d+)"},
 	["www.RevConnect.com"]={"ReverseConnect","V:(0.%d+)"},
 	["<DCDM"]={"DCDM++","<DCDM%s+(0.%d+)"},
-	["<RMDC++"]={"rmDC++","V:(0.%d+)"},
-	["<DC@fe++"]={"DC@fe++","V:(0.%d+)"},
+	["<RMDC%+%+"]={"rmDC++","V:(0.%d+)"},
+	["<DC@fe%+%+"]={"DC@fe++","V:(0.%d+)"},
 	["MS++V"]={"MS++V","V:(0.%d+)"},
 	["<DC:PRO"]={"DC:PRO","V:([^,]+)."},
 	["zDC++"]={"zDC++","V:(0.%d+)"},
-	["<StrgDC++"]={"StrongDC++","V:([^,]+)."}, --<StrgDC++ V:1.00 RC10,M:A,H:2/1/2,S:5> <StrgDC++ V:1.00 RC10cvs126,M:A,H:0/1/2,S:1>
+	["<StrgDC%+%+"]={"StrongDC++","V:([^,]+)."}, --<StrgDC++ V:1.00 RC10,M:A,H:2/1/2,S:5> <StrgDC++ V:1.00 RC10cvs126,M:A,H:0/1/2,S:1>
 	["<.P>"]={".PhantomDC++","V:(0.%d+)"},
 	["<CDM"]={"DC++k CDM","<CDM%s+(%d+.%d+)"},
 	["<iDC"]={"iDC++","V:(0.%d+)"},
@@ -195,32 +196,36 @@ Checks.Client.Patterns=
 	["%[%d+%s*sl%]"]={"BCDC++","V:(0.%d+)"},
 	["%[%d+[kM]%]"]={"BCDC++","V:(0.%d+)"},
 	["V:%[Sasser.+"]={"Sasser","Sasser%s+(0.%d+)"},
-        ["<So.eR++"]={"SoßeR++","%[(0.%d+)"},
-	["<LDC++"]={"LDC++","V:(0.%d+)"},
-	["<PWDC++"]={"PeerWebDC","V:(0.%d+)"},
+	["<So.eR%+%+"]={"SoßeR++","%[(0.%d+)"},
+	["<LDC%+%+"]={"LDC++","V:(0.%d+)"},
+	["<PWDC%+%+"]={"PeerWebDC","V:(0.%d+)"},
 	["%<%<%<sababadcpp%.6x%.to%>%>%>"]={"SababaDC++","V:(0.%d+)"},
-	["<Z++"]={"Zion++","V:(%d+.%d+)"},
-        ["<R2++"]={"R2++", "%[(.+)%]"},
-        ["<Goofy++"]={"Goofy++","V:(0.%d+)"},
-    }
+	["<Z%+%+"]={"Zion++","V:(%d+.%d+)"},
+  ["<R2%+%+"]={"R2++", "%[(.+)%]"},
+  ["<Goofy%+%+"]={"Goofy++","V:(0.%d+)"},
+	["<Xion%+%+"]={"Xion++","V:([^,]+)."}, --V:X03,M:A,H:1/0/7,S:3>
+	}
 
 Checks.Client.Determine=function(user)
   local clienttype, version
   if string.find(user.sMyInfoString,"<DCGUI") then 
     clienttype="DCGUI"
     _,_, version = string.find(user.sMyInfoString,"V:0.(%d+.%d+)")
-  elseif user.bHasTag or user.bHasSuspiciousTag then
+  else
+		local str=user.sTag; if user.bHasSuspiciousTag then str=user.sMyInfoString end
   --string.find(user.sMyInfoString,"<++") or string.find(user.sMyInfoString,"<oDC") or string.find(user.sMyInfoString,"<StrgDC++") or string.find(user.sMyInfoString,"<RMDC++") or string.find (user.sMyInfoString,"<DC:PRO") then
-    for a,b in Checks.Client.Patterns do
-      if string.find(user.sMyInfoString,a) then
-        clienttype=b[1]
-        _,_,version=string.find(user.sMyInfoString,b[2])
-        break
-      else
-        clienttype = "DC++" 
-        _,_,version=string.find(user.sMyInfoString,"V:(0.%d+)")
-      end
-    end
+		if str then
+			for a,b in Checks.Client.Patterns do
+				if string.find(str,a) then
+					clienttype=b[1]
+					_,_,version=string.find(str,b[2])
+					break
+				else
+					clienttype = "DC++" 
+					_,_,version=string.find(str,"V:(0.%d+)")
+				end
+			end
+		end
   end
   return clienttype,version
 end
@@ -228,23 +233,24 @@ end
 Checks.Client.Check=function(user)
   if Immune and not Immune.List[user.sName] or  not Immune then
     local clienttype,version=Checks.Client.Determine(user)
-    local spec={["Sasser"]=1,["DC++k CDM"]=1,["DCDM++"]=1,["DC:PRO"]=1,["StrongDC++"]=1,["DCGUI++"]=1,["iDC++"]=1,["SoßeR++"]=1,["PeerWebDC"]=1,["Zion++"]=1,["R2++"]=1,["Goofy++"]=1}
+    local spec={["Sasser"]=1,["DC++k CDM"]=1,["DCDM++"]=1,["DC:PRO"]=1,["StrongDC++"]=1,["DCGUI++"]=1,["iDC++"]=1,["SoßeR++"]=1,["PeerWebDC"]=1,["Zion++"]=1,["R2++"]=1,["Goofy++"]=1, ["Xion++"]=1}
     if clienttype then
+-- 			local str=user.sTag or user.sMyInfoString
       local str=user.sTag; if user.bHasSuspiciousTag then str=user.sMyInfoString end
       local fakes=
-	{
-	  ["<.+:%s+%S+,.*>"]="Found spaces in the wrong place in the tag.",
-	  ["<.+%s+.*>,"]="Found spaces in the wrong place in the tag.",
-	  ["<.+,%s+.*>"]="Found spaces in the wrong place in the tag.",
-	  ["<.+[\"\\].*>"]="Found backslash or quotation mark in the tag.",
-          ["S%:%d+%:"]="Colon in the bad place in the tag.",
-          ["S%:%D+"]="Non-numeric or missing slots count.",
-	}
+				{
+					["<.+:%s+%S+,.*>"]="Found spaces in the wrong place in the tag.",
+					["<.+%s+.*>,"]="Found spaces in the wrong place in the tag.",
+					["<.+,%s+.*>"]="Found spaces in the wrong place in the tag.",
+					["<.+[\"\\].*>"]="Found backslash or quotation mark in the tag.",
+								["S%:%d+%:"]="Colon in the bad place in the tag.",
+								["S%:%D+"]="Non-numeric or missing slots count.",
+				}
       local bad
       for a,b in fakes do
-	if string.find(str,a) then
-	  bad=b
-	end
+				if string.find(str,a) then
+					bad=b
+				end
       end
       if bad then return Checks.Client.Killfaker(user,bad) end
       if clienttype=="DCGUI" then 
@@ -273,45 +279,45 @@ Checks.Client.Check=function(user)
 	      return Checks.Client.Killfaker(user,"Missing hubcount in tag, or hubcount contains invalid characters.")
 	    else
 	      if tonumber(version) >= 0.24 then
-		if tonumber(Hubs) then
-		  return Checks.Client.Killfaker(user,"Old-style hubcount with DC++ newer than 0.240.")
-		else
-                  if not string.find(Hubs,"%d+/%d+/%d+") then
-                    return Checks.Client.Killfaker(user,"Hubcount contains invalid characters.")
-                  end
-		  if string.find(Hubs,"^0/0/[^0]+$") and not user.bOperator then
-		    return Checks.Client.Killfaker(user,"0/0/x hubcount with not being op here.")
-		  elseif string.find(Hubs,"^0/[^0]/%d+$") and not user.bRegistered then
-		    return Checks.Client.Killfaker(user,"0/x/x hubcount with not being registered here.")
-		  end
-		end
+					if tonumber(Hubs) then
+						return Checks.Client.Killfaker(user,"Old-style hubcount with DC++ newer than 0.240.")
+					else
+						if not string.find(Hubs,"%d+/%d+/%d+") then
+							return Checks.Client.Killfaker(user,"Hubcount contains invalid characters.")
+						end
+						if string.find(Hubs,"^0/0/[^0]+$") and not user.bOperator then
+							return Checks.Client.Killfaker(user,"0/0/x hubcount with not being op here.")
+						elseif string.find(Hubs,"^0/[^0]/%d+$") and not user.bRegistered then
+							return Checks.Client.Killfaker(user,"0/x/x hubcount with not being registered here.")
+						end
+					end
 	      else
-		if not tonumber(Hubs) then
-		  return Checks.Client.Killfaker(user,"New-style (or non-numeric) hubcount with DC++ older than 0.240.")
-		else
-		  if Hubs=="0" and not user.bRegistered then
-		    return Checks.Client.Killfaker(user,"0 hubcount with not being registered here.")
-		  end
+					if not tonumber(Hubs) then
+						return Checks.Client.Killfaker(user,"New-style (or non-numeric) hubcount with DC++ older than 0.240.")
+					else
+					if Hubs=="0" and not user.bRegistered then
+						return Checks.Client.Killfaker(user,"0 hubcount with not being registered here.")
+					end
+				end
+			end
 		end
-	      end
-	    end
-	    if tonumber(version)<Checks.Client.DCppMinVersion then
-	      user:SendData("ClientCheck","You are using "..clienttype..", version "..version)
-	      user:SendData("ClientCheck","Too old DC++ version. Minimum version allowed is "..Checks.Client.DCppMinVersion)
-	      return Checks.Punish(user,"c",Checks.Client.BadClientToDo)
-	    end
+		if tonumber(version)<Checks.Client.DCppMinVersion then
+	    user:SendData("ClientCheck","You are using "..clienttype..", version "..version)
+	    user:SendData("ClientCheck","Too old DC++ version. Minimum version allowed is "..Checks.Client.DCppMinVersion)
+	    return Checks.Punish(user,"c",Checks.Client.BadClientToDo)
+	  end
 	  end
 	end
       end
     else
       if string.find(user.sMyInfoString, "dc-gui", 1, 1) or string.find(user.sMyInfoString, "dc.ketelhot.de", 1, 1) or string.find(user.sMyInfoString, "DCGUI", 1, 1) then 
-	if not user.bHasTag or not string.find(user.sTag, "<DCGUI V:", 1, true) then 
-	  user:SendData("ClientCheck", "You are hiding your DCGUI tag, you are now being disconnected!")
-	  return Checks.Punish(user,"c",Checks.Client.BadClientToDo)
-	end
+			if not user.bHasTag or not string.find(user.sTag, "<DCGUI V:", 1, true) then 
+				user:SendData("ClientCheck", "You are hiding your DCGUI tag, you are now being disconnected!")
+				return Checks.Punish(user,"c",Checks.Client.BadClientToDo)
+			end
       else
-	user:SendData("ClientCheck","Invalid, hidden or missing tag!!! Please get DC++ or an appropriate mod, or DC:PRO! Linux users get DCGUI...")
-	return Checks.Punish(user,"c",Checks.Client.BadClientToDo)
+				user:SendData("ClientCheck","Invalid, hidden or missing tag!!! Please get DC++ or an appropriate mod, or DC:PRO! Linux users get DCGUI...")
+				return Checks.Punish(user,"c",Checks.Client.BadClientToDo)
       end
     end
   end

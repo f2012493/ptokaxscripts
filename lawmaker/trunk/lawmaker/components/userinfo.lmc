@@ -1,4 +1,4 @@
-UserInfo={Levels={},Data={},IPTable={}}
+UserInfo={Levels={}}
 --[[
 Userinfo and regcleaner plugin for LawMaker by bastya_elvtars
 Features: IP logging, uptime logging, last seen time and MyINFO logging.
@@ -10,9 +10,29 @@ For other credits, see checking.lmc
 
 Run(path.."cfg/userinfo.ini")
 
+UserInfo.Data={} -- proxy table for:
+UserInfo._Data={} -- the table holding the actual userinfo data 
+UserInfo.IPTable={} -- table holding the IPs
+
+UserInfo.Helper={
+  __newindex=function(tbl,index,value) -- when new index added to a table
+		if UserInfo._Data[index]~=value then -- if this is an update/insert
+			UserInfo._Data[index]=value -- then we set in the underlying table
+			if value and UserInfo._Data[index].ip then -- if we haven't just deleted this index
+				local decip=UserInfo.CalcIP(UserInfo._Data[index].ip) -- we get the IP out
+				UserInfo.IPTable[decip] = UserInfo.IPTable[decip] or {} -- and update the IP table as well
+				UserInfo.IPTable[decip][UserInfo._Data[index].nick]=1
+			end
+		end
+	end,
+	__index=function(tbl, key) -- lookup
+		return UserInfo._Data[index] -- we return the real value
+	end
+}
+
 function UserInfo.UserInfo(user,data,env)
   local _,_,nick=string.find(data,"%b<>%s+%S+%s+(%S+)")
-  if nick then
+	if nick then
     local usr=GetItemByName(nick)
     local proftable={[0]="Superoperator",[1]="Operator",[2]="VIP",[3]="Registered User"}
     if usr then
@@ -78,7 +98,7 @@ function UserInfo.UserInfo(user,data,env)
     end
   else
     SendTxt(user,env,Bot.name,"Please specify a nick to get info on!")
-  end
+    end
 end
 
 function UserInfo.GetUserUpTime(nick)
@@ -364,8 +384,10 @@ function UserInfo.Clean()
     end
   end
   for k,v in pairs(UsersTable) do
-    UserInfo.Data[k]=UserInfo.Data[k] or {ip="0.0.0.0.0",seen=os.date("%Y. %m. %d. %X"),myinfo="$MyINFO $ALL "..k.." <++ V:0.674,M:A,H:0/1/0,S:10>$ $DSL$ $0$|",uptime=0}
-    Count2 = Count2 +1
+		if not UserInfo.Data[k] then
+			UserInfo.Data[k]={ip="0.0.0.0.0",seen=os.date("%Y. %m. %d. %X"),myinfo="$MyINFO $ALL "..k.." <++ V:0.674,M:A,H:0/1/0,S:10>$ $DSL$ $0$|",uptime=0}
+    	Count2 = Count2 +1
+		end
   end
   if Count2 > 0 then
     UserInfo.Save()
@@ -688,7 +710,7 @@ UserInfo.Main=function()
   UserInfo.Data={}
   UserInfo.Load()
   UserInfo.Save()
---   UserInfo.Clean()
+  UserInfo.Clean()
 end
 
 UserInfo.MyINFOArrival=function(user,data)

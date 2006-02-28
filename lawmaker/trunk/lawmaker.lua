@@ -136,6 +136,7 @@ function Main()
   local x=os.clock()
   os.execute("dir \""..frmHub: GetPtokaXLocation().."scripts/lawmaker/components\" /b /o:n > \""..frmHub: GetPtokaXLocation().."scripts/lawmaker/components.lst\"")
   local f=io.open("lawmaker/components.lst","r")
+--   local f=io.popen("dir \""..frmHub: GetPtokaXLocation().."scripts/lawmaker/components\" /b /o:n > \""..frmHub: GetPtokaXLocation().."scripts/lawmaker/components.lst\"","r")
   local count=0
   for line in f:lines() do
     if string.find(line,"%.lmc$") and string.sub(line,1,1)~="_" then
@@ -166,8 +167,8 @@ function Main()
   frmHub:SetHubBotIsAlias(1)
   SetTimer(1000)
   StartTimer()
-  for a,b in modules["main"] do
-    modules["main"][a]["func"](unpack(modules["main"][a]["parms"]))
+  for _,name in pairs(modules.main) do
+    name.func(unpack(name.parms))
   end
   -- this is to make sure hub perceives !help. :)
   RegCmd("help",help,{},1,"\t\t\t\t\t\tShows the text you are looking at.")
@@ -318,7 +319,7 @@ userlevels={ [-1] = 1, [0] = 5, [1] = 4, [2] = 3, [3] = 2 } -- rights management
 function parsecmds(user,data,env,cmd,bot)
   if env~="PM" then bot=Bot.name end
   local name=commandtable[cmd]
-  if commandtable[cmd] then -- if it exists
+  if name then -- if it exists
     if name.level~=0 then -- and enabled
       if userlevels[user.iProfile] >= name.level then -- and user has enough rights
         name.func(user,data,env,unpack(name.parms)) -- user,data,env and more params afterwards
