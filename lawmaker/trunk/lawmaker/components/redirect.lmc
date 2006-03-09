@@ -157,11 +157,6 @@ frmHub.SetRed=function(self,what,p)
   end
 end
 
--- GetNickLenRedir()
--- SetNickLenRedir(0/1)
--- GetNickLenRedirAddr()
--- SetNickLenRedirAddr(rediraddr)
-
 frmHub.GetRed=function(self,what)
   local FuncTable=
   {

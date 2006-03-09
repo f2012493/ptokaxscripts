@@ -74,10 +74,11 @@ end
 
 RegCmd("clrtempban",BanList.ClearBans,{"tempban"},BanList.Levels.ClearTempBan,"\t\t\t\t\tClears the temporary banlist.")
 RegCmd("clrpermban",BanList.ClearBans,{"permban"},BanList.Levels.ClearPermBan,"\t\t\t\t\tClears the permanent banlist.")
-RegCmd("searchbans",BanList.Search,{false},BanList.Levels.Search,"\t\t\t\t\tShows the temporary banlist.")
-RegCmd("searchtempbans",BanList.Search,{true},BanList.Levels.Search,"\t\t\t\t\tShows the permanent banlist.")
-
+RegCmd("searchbans",BanList.Search,{false},BanList.Levels.Search,"\t\t\t\t\tSearches for specified keywords inside the permanent banlist.")
+RegCmd("searchtempbans",BanList.Search,{true},BanList.Levels.Search,"\t\t\t\t\tSearches for specified keywords inside the temporary banlist.")
 RegRC(BanList.Levels.ClearTempBan,"1 3","Kick/Ban\\Ban List\\Clear\\Temp Bans","!clrtempban")
 RegRC(BanList.Levels.ClearPermBan,"1 3","Kick/Ban\\Ban List\\Clear\\Perm Bans","!clrpermban")
+RegRC(BanList.Levels.Search,"1 3","Kick/Ban\\Ban List\\Search\\Perm Bans","!searchbans %[line:Search string:]")
+RegRC(BanList.Levels.Search,"1 3","Kick/Ban\\Ban List\\Search\\Temp Bans","!searchtempbans %[line:Search string:]")
 -- RegRC(BanList.Levels.Get,"1 3","Kick/Ban\\Ban List\\Show\\Perm Bans","!getbanlist")
 -- RegRC(BanList.Levels.Get,"1 3","Kick/Ban\\Ban List\\Show\\Temp Bans","!gettempbanlist")

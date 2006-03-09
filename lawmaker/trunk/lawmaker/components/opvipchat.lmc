@@ -172,7 +172,7 @@ end
 
 function OpVipChat.Main()
   frmHub:RegBot(OpVipChat.OpChatBot.name,1,OpVipChat.OpChatBot.desc,OpVipChat.OpChatBot.email)
-  frmHub:SetOpChatData(OpVipChat.OpChatBot.name, OpVipChat.OpChatBot.desc, OpVipChat.OpChatBot.email)
+  --frmHub:SetOpChatData(OpVipChat.OpChatBot.name, OpVipChat.OpChatBot.desc, OpVipChat.OpChatBot.email)
   if OpVipChat.EnableVipChat==1 then
     frmHub:RegBot(OpVipChat.VipChatBot.name,1,OpVipChat.VipChatBot.desc,OpVipChat.VipChatBot.email)
   end

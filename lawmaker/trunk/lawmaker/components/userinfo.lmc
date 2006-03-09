@@ -710,7 +710,7 @@ UserInfo.Main=function()
   UserInfo.Data={}
   UserInfo.Load()
   UserInfo.Save()
-  UserInfo.Clean()
+--   UserInfo.Clean()
 end
 
 UserInfo.MyINFOArrival=function(user,data)

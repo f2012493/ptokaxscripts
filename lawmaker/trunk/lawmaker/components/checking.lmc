@@ -43,7 +43,7 @@ Checks.ScanMyINFO=function(user) ----------
 --   local _,_,Hubs,Slots,speed = string.find(myinfo, "H:([^,]+),S:(%d+).*>$ $([^$]+)[^$]%$")
 --   local Guest,Reg,OP,slots,hubs,ratio
   local Maxslotsforconn,Ratioforconn,Maxhubsforconn,minlimitforconn=Checks.SlotHubLimit.Rules[speed].max_slots,Checks.SlotHubLimit.Rules[speed].min_ratio,Checks.SlotHubLimit.Rules[speed].max_hubs,Checks.SlotHubLimit.Rules[speed].min_limit
-  local _,_,limit1=user.iLlimit or user.iBlimit--string.find(user.sMyInfoString,"[BLU]:(%d+)")
+  local limit1=user.iLlimit or user.iBlimit--string.find(user.sMyInfoString,"[BLU]:(%d+)")
   local _,_,limit2 = string.find(user.sMyInfoString,"F:%d+/(%d+)")
 -- if tonumber (Hubs) then
 --      if Hubs=="0" then
@@ -112,7 +112,7 @@ Checks.SlotHubLimit.CheckLimit=function(user)
       local hubs,slots,Guest,Reg,OP,Speed,limit,Maxslotsforconn,Ratioforconn,Maxhubsforconn,minlimitforconn,ratio,Share=Checks.ScanMyINFO(user)
       if limit then
         if Checks.Client.Determine(user)~="DCGUI" then
-          if minlimitforconn==0 then
+          if tonumber(minlimitforconn)==0 then
             user:SendData("BandwidthCheck","No bandwith limiting allowed for a(n) "..Speed.." connection!")
             return Checks.Punish(user,"l",Checks.SlotHubLimit.BadLimitToDo)
           elseif tonumber(limit)<tonumber(minlimitforconn) then
@@ -120,7 +120,7 @@ Checks.SlotHubLimit.CheckLimit=function(user)
             return Checks.Punish(user,"l",Checks.SlotHubLimit.BadLimitToDo)
           end
         else
-          if minlimitforconn==0 then
+          if tonumber(minlimitforconn)==0 then
             user:SendData("BandwidthCheck","No bandwith limiting allowed for a(n) "..Speed.." connection!")
             return Checks.Punish(user,"l",Checks.SlotHubLimit.BadLimitToDo)
           elseif (tonumber(limit)*slots)<tonumber(minlimitforconn) then
@@ -141,7 +141,7 @@ Checks.Punish=function(user,whatsbad,what2do)
             ["sl"]=frmHub:GetSlotsRedirAddr(),
             ["h"]=frmHub:GetMaxHubsRedirAddr(),
             ["r"]=frmHub:GetRatioRedirAddr(),
-	    ["c"]=frmHub:GetNoTagRedirAddr(),
+	    			["c"]=frmHub:GetNoTagRedirAddr(),
           }
   if what2do==1 then user:Disconnect()
   else user:Redirect(redtbl[whatsbad] or frmHub:GetRedirectAddress())
@@ -512,11 +512,11 @@ function Checks.MyINFOArrival(user,data)
   local torun
   if user.bConnected then
     torun=
-      {
-	Checks.Client.Check,
-	Checks.Share.Check,
-	Checks.SlotHubLimit.CheckHubsAndSlots,
-	Checks.SlotHubLimit.CheckLimit,
+				{
+		Checks.Client.Check,
+		Checks.Share.Check,
+		Checks.SlotHubLimit.CheckHubsAndSlots,
+		Checks.SlotHubLimit.CheckLimit,
       }
   else
     torun={Checks.Nick.Check,Checks.Clone.Check}
@@ -539,7 +539,7 @@ function Checks.NewUserConnected(user)
     if Checks.Client.WelcomeMessage==1 then table.insert(torun,Checks.Welcome) end
     for k,v in ipairs(torun) do
       if v(user)=="shit" then
-	return "shit"
+				return "shit"
       end
     end
 end

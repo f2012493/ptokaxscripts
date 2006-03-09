@@ -83,12 +83,12 @@ function Mute.ChatArrival(user,data)
     local _,_,cmd=string.find(data,"%b<>%s+[%!%+%#](%S+)")
     local ptxcmd=
       {
-	["op"]=5,
-	["startscript"]=5,
-	["stopscript"]=5,
-	["restartscript"]=5,
-	["reloadtxt"]=5,
-	["stat"]=1
+				["op"]=5,
+				["startscript"]=5,
+				["stopscript"]=5,
+				["restartscript"]=5,
+				["reloadtxt"]=5,
+				["stat"]=1
       }
     if not commandtable[cmd] and not ptxcmd[cmd] then
       user:SendData(Bot.name, "You are currently muted and unable to speak in main.")
