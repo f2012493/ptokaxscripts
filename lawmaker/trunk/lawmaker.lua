@@ -2,7 +2,10 @@
 LawMaker - a bot for PtokaX DC Hub
 Copyright (C) 2004-2005 bastya_elvtars (bastyaelvtars@gmail.com)
 
-Website: http://lawmaker.no-ip.org/
+=======================================================================
+Website & Forum: http://lawmaker.no-ip.org/
+Support questions, feedback, ideas etc. should be posted to the forum.
+=======================================================================
 
 The license does not apply for the sample text files included in the default package.
 Those files are not considered as part of the standard package, just examples.
@@ -22,44 +25,48 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ---------------------------------------------------------------------------------------------------
 CREDITS 
-Some ideas in LMCA by plop & NightLitch (however it was totally written from scratch).
-Please see the help file(s) included on cofiguring the bot.
+Some ideas in LMCA (LawMaker Componenta Architecture) by plop & NightLitch (however it was totally written from scratch).
+Please see the online help on cofiguring the bot.
 Thanks to: 
 ----------
   First of all:  my beautiful girlfriend.
   
   For PtokaX: Ptaczek/PPK/aMutex/frontline3k
   
-  LUA 5 (and later) Copyright © 1994-2005 Lua.org, PUC-Rio
+  LUA 5 (and later) Copyright ?? 1994-2005 Lua.org, PUC-Rio
   
   For inspiration:
   
-  plop (Artificial Insanity)
+  plop (Artificial Insanety)
   Nathanos (Channelbot)
   tezlo (RetroBot)
   OpiumVolage (ModBot)
+	[NL]Pur (ConsoleMoon)
   
-  For help:
+  For help/code chunks:
   
   plop, PPK, NightLitch, RabidWombat, Herodes, tezlo, jiten, Dessamator, BottledHate, Hawk, Optimus, GeceBekcisi,
-  TTB, Mutor, kepp, chilla, Nathanos, Skrollster, Sedulus, nErBoS, Skippy84, psf8500, Typhoon, yepyepyep4711
-  And yes, thx to others in LUA Hub, LUA Board(s) and DCDev (not a mistake) that I forgot now.
+  TTB, Mutor, kepp, chilla, Nathanos, Skrollster, Sedulus, nErBoS, [NL]Pur, Skippy84, psf8500, Typhoon, yepyepyep4711
+  
+	And yes, thanks to others in LUA Hub, LUA Board(s) and DCDev (not a mistake) that I forgot now.
   There are detailed credits in plugins.
   
-  For testing:
+  For testing (roughly chronological order):
   
   TiMeTrAVelleR, Psycho_Chihuahua
   Nidaros, Libbe, Darkstar and other Golden Angel ops,
   zinden, kaotkbliss and all the ops of PC Gamers,
   Mickey, Makavelli-2Pac, 6Marilyn6Manson6, LiqUiD~TrolL,
-  Bumbi, GrinSlaw, gander
+  Bumbi, GrinSlaw, gander, Stormbringer, Zen
   
   Special thanks to:
   
-  Neil Hodgson, creator of SciTE, a GREAT & FREE editor (http://www.scintilla.org)
-  OpiumVolage, the primary LUA board hoster (http://board.univ-angers.fr)
-  Matt, the secondary LUA board hoster (http://lua.uknnet.com)
-  Psycho_Chihuahua, host of PtokaX Wiki (http://ptxwiki.psycho-chihuahua.net/) and PtokaX Script Database (http://ptxscriptdb.psycho-chihuahua.net/)
+  Neil Hodgson, creator of SciTE, a GREAT & FREE editor - http://www.scintilla.org
+  OpiumVolage, the primary LUA board hoster - http://board.univ-angers.fr ---> this site is down, maybe permanently. :(
+	The LUA Board is @ http://luaboard.sytes.net
+	Corayzon, author of LUASlave - http://www.luaslave.pc-sanity.com.au/
+  Matt/kbeh273300, the secondary LUA board admins - http://lua.uknnet.com
+  Psycho_Chihuahua, host of PtokaX Wiki - http://ptxwiki.psycho-chihuahua.net - and PtokaX Resources' Site - http://ptxscriptdb.psycho-chihuahua.net
   [NL]Pur, who established the Moon5 project at Sourceforge.
   
 ----------------------------------------------------------------------------------------  
@@ -73,33 +80,28 @@ Thanks to:
 -- BASIC SETTINGS
 -- all should be easy ;)
 
--- Place any directories that contain setting scripts that your script uses between these tags
 --<SettingsDirectoriesStart>
 --\lawmaker\components\cfg
 --<SettingsDirectoriesEnd>
+--<LockVarTypes>
 --<SettingsStart>
 founder="bastya_elvtars" -- Hub founder's name, exact nick please!!!
 owner="U" -- Hub owner's name, exact nick please!!!
-
-Bot={ 
-      name="-LawMaker-",
+Bot={
+name="-LawMaker-",
       desc="Main Hub Bot",
       email="lawmaker@lawmaker.lua", -- equal to the hub's e-mail addy
 } -- Bot's data
-
 autoreg=1 -- 0 do disable, 1 to enable autoreg on various hublist servers
-
 complaint=2 -- Adress sent to perm/temp banned user. 0=nothing, 1=e-mail (the bot's mail address), 2=website
 hubwebsite="www.your-hubs-site.net" -- Replace with your hub's website. Will be sent on ban.
-complainttext="You may cry a river at: " -- text before the sent addyű
-
+complainttext="You may cry a river at: " -- text before the sent addy??
 debug_log=1 -- Logs debug messages. Please leave it enabled.
 debug_send=1 -- PMs specified users on error. See the next setting.
-debug_sendto={ 
-  "[TGA-OP]bastya_elvtars", 
+debug_sendto={
+"[TGA-OP]bastya_elvtars", 
   "bastya_elvtars",
 } -- Specify the usernames that you want the errormessages to be sent to.
-
 rightclick_menuname="-LawMaker-" -- Name of the parent menu for rightclick commands.
 --<SettingsEnd>
 -------------------------------------------------------------------------------------

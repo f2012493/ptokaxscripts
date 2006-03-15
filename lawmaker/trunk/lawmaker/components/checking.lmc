@@ -45,6 +45,7 @@ Checks.ScanMyINFO=function(user) ----------
   local Maxslotsforconn,Ratioforconn,Maxhubsforconn,minlimitforconn=Checks.SlotHubLimit.Rules[speed].max_slots,Checks.SlotHubLimit.Rules[speed].min_ratio,Checks.SlotHubLimit.Rules[speed].max_hubs,Checks.SlotHubLimit.Rules[speed].min_limit
   local limit1=user.iLlimit or user.iBlimit--string.find(user.sMyInfoString,"[BLU]:(%d+)")
   local _,_,limit2 = string.find(user.sMyInfoString,"F:%d+/(%d+)")
+	if limit1==0 then limit1=nil end
 -- if tonumber (Hubs) then
 --      if Hubs=="0" then
 --              Guest,Reg,OP= "0", "1" , "0"
