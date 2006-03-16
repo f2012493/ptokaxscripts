@@ -595,14 +595,15 @@ end
 
 function UserInfo.CalcIP(ip)
   local err
-  local c,decip=1,0
+  local c=256*256*256
+	local decip=0
   for bit in string.gfind(ip,"(%d+)") do
     if not tonumber(bit) or tonumber(bit) > 255 then
       err=true
       break
     else
       decip=decip+(tonumber(bit)*c)
-      c=c*256
+      c=c/256
     end
   end
   if not err then
@@ -632,69 +633,57 @@ function UserInfo.IPInfo(user,data,env,bool)
     if ip2 then
       local decip1,decip2=UserInfo.CalcIP(ip1),UserInfo.CalcIP(ip2)
       if decip1 and decip2 and decip1 < decip2 then
-        local threads={}
-	local msg="\r\nUsername(s) belonging to range "..ip1.."-"..ip2.." are:\r\n\r\n"
-	for i=decip1,decip2 do
-	  if UserInfo.IPTable[i] then
-            table.insert(threads,{coroutine.create(function(i)
-              msg=UserInfo.ReCalcIP(i).."\r\n"
-              for a,b in UserInfo.IPTable[i] do
-                msg=msg.."\t"..a.."\r\n"
-              end
-              msg=msg.."\t"..string.rep("-",45).."\r\n"
-              if GetBannedItemName(UserInfo.ReCalcIP(i)) then
-                msg=msg..string.rep("=",45).."\r\n\tIP is banned, with nick: "..GetBannedItemName(UserInfo.ReCalcIP(i)).."\r\n"
-              else
-                if GetTempBannedItemName(UserInfo.ReCalcIP(i)) then
-                  msg=msg..string.rep("=",45).."\r\n\tIP is timebanned, with nick: "..GetTempBannedItemName(UserInfo.ReCalcIP(i)).." and remaining time is "..GetTempBannedItemTime(UserInfo.ReCalcIP(i)).." minutes.\r\n"
-                end
-              end
-              return msg
-            end),i})
-          end
-	end
-        local function go()
-          local status,m,msg=nil,nil,""
-          while true do
-            if table.getn(threads)==0 then return msg end
-            for a=1,table.getn(threads) do
-              local b=threads[a]
-              status,m = coroutine.resume(b[1],b[2])
-              if not status then    -- thread finished its task?
-                table.remove(threads,a)
-                break
-              else
-                msg=msg..m
-              end
-            end
-          end
-        end
-        msg=msg..go ()..string.rep("=",45).."\r\n\r\n"
-	user:SendPM(Bot.name,(msg))
+				if decip2-decip1 > 256*256 then
+					SendTxt(user,env,Bot.name,"You can only check for a class B (x.x.*.*) or smaller range!")
+					return
+				end
+				local msg="\r\nUsername(s) belonging to range "..ip1.."-"..ip2.." are:\r\n\r\n"
+				local cnt=0
+				for i=decip1,decip2 do
+					if UserInfo.IPTable[i] then
+						cnt=cnt+1
+						msg=msg..UserInfo.ReCalcIP(i).."\r\n"
+						for a,b in UserInfo.IPTable[i] do
+							msg=msg.."\t"..a.."\r\n"
+						end
+						msg=msg.."\t"..string.rep("-",45).."\r\n"
+						if GetBannedItemName(UserInfo.ReCalcIP(i)) then
+							msg=msg..string.rep("=",45).."\r\n\tIP is banned, with nick: "..GetBannedItemName(UserInfo.ReCalcIP(i)).."\r\n"
+						elseif GetTempBannedItemName(UserInfo.ReCalcIP(i)) then
+							msg=msg..string.rep("=",45).."\r\n\tIP is timebanned, with nick: "..GetTempBannedItemName(UserInfo.ReCalcIP(i)).." and remaining time is "..GetTempBannedItemTime(UserInfo.ReCalcIP(i)).." minutes.\r\n"
+						end
+					end
+				end
+        msg=msg..string.rep("=",45)
+				if cnt > 0 then
+					user:SendPM(Bot.name,(msg))
+				else
+					SendTxt(user,env,Bot.name,"No users found within the given range.")
+				end
       else
-	SendTxt(user,env,Bot.name,"Some or both IPs, or the range are invalid, please check!")
+				SendTxt(user,env,Bot.name,"Some or both IPs, or the range are invalid, please check!")
       end
     else
       local msg="\r\nUsername(s) belonging to IP "..ip1.." are:\r\n\r\n"
       local decip=UserInfo.CalcIP(ip1)
       if decip then
-	if UserInfo.IPTable[decip] then
-	  for a,b in UserInfo.IPTable[decip] do
-	    msg=msg..a.."\r\n"
-	  end
-	  if GetBannedItemName(ip1) then
-	    msg=msg.."\r\nIP is banned, with nick: "..GetBannedItemName(ip1)
-	  else
-	    if GetTempBannedItemName(ip1) then
-	      msg=msg.."\r\nIP is timebanned, with nick: "..GetTempBannedItemName(ip1).." and remaining time is "..GetTempBannedItemTime(ip1).." minutes."
-	    end
-	  end
-	  user:SendPM(Bot.name,(msg))
-	else
-	  SendTxt(user,env,Bot.name,"Unknown IP: "..ip1)
-	end
+				if UserInfo.IPTable[decip] then
+					for a,b in UserInfo.IPTable[decip] do
+						msg=msg..a.."\r\n"
+					end
+					if GetBannedItemName(ip1) then
+						msg=msg.."\r\nIP is banned, with nick: "..GetBannedItemName(ip1)
+					else
+						if GetTempBannedItemName(ip1) then
+							msg=msg.."\r\nIP is timebanned, with nick: "..GetTempBannedItemName(ip1).." and remaining time is "..GetTempBannedItemTime(ip1).." minutes."
+						end
+					end
+					user:SendPM(Bot.name,(msg))
+				else
+					SendTxt(user,env,Bot.name,"Unknown IP: "..ip1)
+				end
       else
-	SendTxt(user,env,Bot.name,"Invalid IP!")
+				SendTxt(user,env,Bot.name,"Invalid IP!")
       end
     end
   else

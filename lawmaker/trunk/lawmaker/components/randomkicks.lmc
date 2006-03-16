@@ -80,9 +80,9 @@ function RandomKicks.OnOff(user,data,env) -- ugly, but not important to optimize
 end
 
 function RandomKicks.Show(user,data,env)
-  local msg="\r\nRandom kick messages:\r\n=============================\r\n\r\n"
+  local msg="\r\nRandom kick messages (they are autocompleted to look human :-D):\r\n=============================\r\n\r\n"
   for u=1,table.getn(RandomKicks.List) do
-    msg=msg..u.." ---> ["..user.sName.."] "..RandomKicks.List[u].." [---===Victim===--- because: this is a test message]\r\n"
+    msg=msg..u.." ---> ["..user.sName.."] "..RandomKicks.List[u].." <user> because: this is a test message\r\n" --"..user.sName.."
   end
   msg=msg.."\r\n============================="
   user:SendPM(Bot.name,msg)

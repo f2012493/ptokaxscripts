@@ -24,10 +24,10 @@ function KickBanTBan.Kick(user,data,env,bool)
 				if userlevels[usr.iProfile] < userlevels[user.iProfile] then
 					local kickrand,kicktoall,kicktoops,kicktime,kicktouser
 					kicktoall=user.sName
-					kicktouser="You are being kicked "
+					kicktouser="You are being kicked"
 					kicktoops=usr.sName.." with IP "..usr.sIP.." has been kicked by "..user.sName.."."
 					if RandomKicks and RandomKicks.OnOff==1 then
-						kicktoall=kicktoall.." "..math.random(1,table.getn(RandomKicks.List)).." "..usr.sName
+						kicktoall=kicktoall.." "..RandomKicks.List[math.random(1,table.getn(RandomKicks.List))].." "..usr.sName
 					else
 						kicktoall=kicktoall.." has kicked "..usr.sName
 					end
@@ -84,7 +84,7 @@ function KickBanTBan.Ban(user,data,env,meth,bFull)
     _,_,nick=string.find(data,"%b<>%s+%S+%s+(%S+)")
     _,_,reason=string.find(data,"%b<>%s+%S+%s+%S+%s+(.+)")
   else
-    _,_,nick,amount,unit=string.find(data,"%b<>%s+%S+%s+(%S+)%s+(%d+)([mhDW])")
+    _,_,nick,amount,unit=string.find(data,"%b<>%s+%S+%s+(%S+)%s+(%d+)([mMhHdDwW])")
     _,_,reason=string.find(data,"%b<>%s+%S+%s+%S+%s+%d+[mhDW]%s+(.+)")
   end
   local mult=
