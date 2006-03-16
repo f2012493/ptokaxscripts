@@ -107,7 +107,7 @@ rightclick_menuname="-LawMaker-" -- Name of the parent menu for rightclick comma
 -------------------------------------------------------------------------------------
 -- END OF BASIC SETTINGS, NO EDITING NEEDED BELOW THIS POINT UNLESS YOU FIND A BUG --
 -------------------------------------------------------------------------------------
-
+Bot.version="LawMaker 1.0 beta 1" 
 -- If there is an error with a plugin, the error will be sent to ops, script won't crash.
 
 -- Functions related to Ptokax events
@@ -156,7 +156,6 @@ function Main()
   end
   os.remove(frmHub: GetPtokaXLocation().."scripts/lawmaker/components.lst")
   assert((count > 0),"Fatal error, no components found.")
-  Bot.version="LawMaker 1.0 alpha (LMCA) by bastya_elvtars (the rock n' roll doctor)" 
   frmHub:SetOpChat(0)
   frmHub:SetHubBot(1)
   frmHub:SetAutoRegister(autoreg)
@@ -181,7 +180,7 @@ function Main()
   RegRC(1,"1 3","Lagtest\\Disable","!lagtest off")
   RegRC(1,"1 3","License agreement (GPL)","+license")
   CreateRightClicks()
-  SendToOps(Bot.name,"Bootup finished, took "..os.clock()-x.." seconds, "..count.." plugins have been loaded.")
+  SendToOps(Bot.name,Bot.version.." loaded, took "..os.clock()-x.." seconds, "..count.." plugins have been fired.")
 end
 
 function OnTimer()
@@ -208,7 +207,7 @@ function NewUserConnected(user)
       user:SendData(table.concat(rctosend[user.iProfile],"|"))
       user:SendData(Bot.name,"You just got "..(table.getn(rctosend[user.iProfile])).." rightclick commands, come on, unleash my full power! :)")
     end
-    user:SendData(Bot.name,Bot.version..". Licensed under the GNU GPL, type +license for details.")
+    user:SendData(Bot.name,";\r\n"..Bot.version.." by bastya_elvtars (the rock n' roll doctor) - http://lawmaker.no-ip.org\r\nLicensed under the GNU GPL, type +license for details.")
   end
 end
 
