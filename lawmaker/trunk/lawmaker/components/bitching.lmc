@@ -76,6 +76,7 @@ That's relativity."
    - Albert Einstein]],
                   "When I die, I want to die peacefully in my sleep, like my grandfather. Not like his passengers.",
                   "I can fart out loud in an internet cafe because everyone is wearing headphones!",
+									"A bus station is where a bus stops. A train station is where a train stops. On my desk, I have a work station.",
 		}
         math.randomseed(os.clock())
 	if env then

@@ -29,7 +29,7 @@ function HubStats.HubInfo(user,data,env)
     msg=msg.."\r\n\r\nCurrent topic: \""..frmHub:GetHubTopic().."\""
   end
   local v,u=bytestoh(frmHub:GetCurrentShareAmount())
-  msg=msg.."\r\n\r\nCurrent Share Amuont: "..string.format("%0.4f",v).." "..u
+  msg=msg.."\r\n\r\nCurrent Share Amount: "..string.format("%0.4f",v).." "..u
   v,u=bytestoh(Stats.Share)
   msg=msg.."\r\n\r\nAlltime Peak Share Amount: "..string.format("%0.4f",(v)).." "..u
   msg=msg.."\r\n\r\nCurrent User Count: "..frmHub:GetUsersCount()

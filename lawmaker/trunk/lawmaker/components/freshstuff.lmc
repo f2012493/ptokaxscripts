@@ -221,13 +221,14 @@ function FreshStuff.ShowRelNum(what,num) -- to show numbers of categories
   num=tonumber(num)
   local Msg="\r\n"
   local cunt=0
-  local target=FreshStuff.Count-num
+  local target=FreshStuff.Count+1
   local cat,who,when,title
-  if num > FreshStuff.Count then target=1 end
-  for i=FreshStuff.Count,target,-1 do
-    if FreshStuff.AllStuff[i] then
-      cat,who,when,title=unpack(FreshStuff.AllStuff[i])
-      Msg = Msg.."ID: "..i.."\t"..title.." // (Added by "..who.." at "..when..")\r\n"
+  if num > FreshStuff.Count then num=FreshStuff.Count end
+  for t=1,num do
+	target=target-1
+    if FreshStuff.AllStuff[target] then
+      cat,who,when,title=unpack(FreshStuff.AllStuff[target])
+      Msg = Msg.."ID: "..target.."\t"..title.." // (Added by "..who.." at "..when..")\r\n"
       cunt=cunt+1
     else
       break
@@ -393,20 +394,36 @@ function FreshStuff.PruneRel(user,data,env)
 end
 
 function FreshStuff.ShowTopAdders(user,data,env)
-  local tmp,numtbl,msg={},{},"\r\nThe top "..FreshStuff.TopAddersCount.." release-addders are:\r\n"..string.rep("-",33).."\r\n"
-  for a,b in FreshStuff.TopAdders do
-    table.insert(numtbl,b)
-    tmp[b] = tmp[b] or {}
-    table.insert(tmp[b],a)
+	local num=FreshStuff.TopAddersCount
+  local tmp={}
+	local adderz=0
+  for name,number in pairs(FreshStuff.TopAdders) do
+-- 		SendToAll(name,number)
+--     table.insert(numtbl,b)
+    tmp[number] = tmp[number] or {}
+    table.insert(tmp[number],name)
   end
-  table.sort(numtbl)
-  local e
-  if table.getn(numtbl) <= FreshStuff.TopAddersCount then e=1 else e=table.getn(numtbl)-FreshStuff.TopAddersCount end
-  for k=table.getn(numtbl),e,-1 do
-    for n,c in tmp[numtbl[k]] do
-      msg=msg..c..": "..numtbl[k].."\r\n"
-    end
-  end
+	local weird_but_works={}
+	for num,ppl in pairs(tmp) do local _suck={}; _suck.N=num; _suck.P=table.concat(ppl,", "); table.insert(weird_but_works,_suck); adderz=adderz+1; end
+--   table.sort(numtbl)
+--   local e
+--   if table.getn(numtbl) <= FreshStuff.TopAddersCount then e=1 else e=table.getn(numtbl)-FreshStuff.TopAddersCount end
+--   for k=table.getn(numtbl),e,-1 do
+--     for n,c in tmp[numtbl[k]] do
+--       msg=msg..c..": "..numtbl[k].."\r\n"
+--     end
+--   end
+	table.sort(weird_but_works,function(a,b) return a.P > b.P end)
+	if FreshStuff.TopAddersCount > adderz then num = adderz end
+	local msg="\r\nThe top "..num.." release-addders sorted by the number of releases are:\r\n"..string.rep("-",33).."\r\n"
+-- 	local x=0
+-- 	for num,ppl in pairs(tmp) do
+-- 		if x > num then break end
+-- 		x=x+1
+-- 		msg=msg
+	for nm=num,1,-1 do
+		msg=msg..weird_but_works[nm].N..": "..weird_but_works[nm].P.."\r\n"
+	end
   user:SendPM(Bot.name,msg)
 end
 

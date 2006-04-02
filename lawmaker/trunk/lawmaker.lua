@@ -340,11 +340,12 @@ function CreateRightClicks()
     for item,level in pairs(rightclick) do -- run thru the rightclick table
       if userlevels[idx] >= level then -- if user is allowed to use
         table.insert(rctosend[idx],item) -- then put to the array
+				table.sort(rctosend[idx])
       end
     end
-    for _,arr in pairs(rctosend) do -- and we alphabetize (sometimes eyecandy is also necessary)
-      table.sort(arr) -- sort the array
-    end
+--     for idx,arr in pairs(rctosend) do -- and we alphabetize (sometimes eyecandy is also necessary)
+--       rctosend[idx]=table.sort(arr) -- sort the array
+--     end
   end
 end
 

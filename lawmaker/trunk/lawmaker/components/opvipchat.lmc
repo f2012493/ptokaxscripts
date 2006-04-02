@@ -202,8 +202,7 @@ end
 function OpVipChat.NewUserConnected(user)
   if user.bOperator then
     if not OpVipChat.OpChat[user.sName] then OpVipChat.OpChat[user.sName]=1 end
-    user:SendData("$UserCommand 1 3 "..rightclick_menuname.."\\OpChat\\History (last "..OpVipChat.LastLines.." lines)$<%[mynick]> !opchathistory&#124;")
-    user:SendData("$UserCommand 1 3 "..rightclick_menuname.."\\VipChat\\History (last "..OpVipChat.LastLines.." lines)$<%[mynick]> !vipchathistory&#124;")
+
   end
   if user.iProfile==2 then
     if not OpVipChat.VipChat[user.sName] then OpVipChat.VipChat[user.sName]=1 end
@@ -227,3 +226,5 @@ RegFunc("nuc","sending opchat/vipchat history rightclk",OpVipChat.NewUserConnect
 RegRC(OpVipChat.Levels.Invite,"1 2","OpChat\\Invite USER to opchat for one session","!invite %[nick]")
 RegRC(OpVipChat.Levels.PermInvite,"1 2","OpChat\\Invite USER to opchat","!perminvite %[nick]")
 RegRC(OpVipChat.Levels.Remove,"1 2","OpChat\\Remove USER from opchat","!remove %[nick]")
+RegRC(4,"1 3","OpChat\\History (last "..OpVipChat.LastLines.." lines)"," !opchathistory")
+RegRC(3,"1 3","VipChat\\History (last "..OpVipChat.LastLines.." lines)","!vipchathistory")
