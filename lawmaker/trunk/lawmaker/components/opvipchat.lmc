@@ -100,8 +100,8 @@ function OpVipChat.Last(user,data,env,bVip)
   user:SendPM(name,"Last "..OpVipChat.LastLines.." lines spoken in here:\r\n"..string.rep("-",100).."\r\n"
   ..table.concat(tbl,"\r\n").."\r\n"..string.rep("-",100))
 end
-  
-  
+
+
 function OpVipChat.Invite(user, data, env,sess)
   local _,_,args=string.find(data,"%b<>%s+%S+%s+(.+)")
   if args then
@@ -142,7 +142,7 @@ function OpVipChat.Remove(user, data, env,sess)
   if args then
     string.gsub(args, "(%S+)", function(nick)
       local id,tmp = OpVipChat.OpChat[nick],GetItemByName(nick)
-      if tmp then  
+      if tmp then
         if id then
           if not tmp.bOperator then
             OpVipChat.OpChat[nick]=nil
@@ -212,7 +212,7 @@ end
 
 ------------------------------------------------------------------
 ------------------------------------------------------------------
-RegCmd("invite",invite,{"temp"},OpVipChat.Levels.Invite,"\t\t\t\t\tInvite a user to opchat for one session. You can enter many nicks separated by spaces.")
+RegCmd("invite",OpVipChat.Invite,{"temp"},OpVipChat.Levels.Invite,"\t\t\t\t\tInvite a user to opchat for one session. You can enter many nicks separated by spaces.")
 RegCmd("perminvite",OpVipChat.Invite,{"perm"},OpVipChat.Levels.PermInvite,"\t\t\t\t\tInvite a VIP to opchat until removal. You can enter many nicks separated by spaces.")
 RegCmd("remove",OpVipChat.Remove,{},OpVipChat.Levels.Remove,"\t\t\t\t\tRemove a(n) perm/temp invited user from opchat. You can enter many nicks separated by spaces.")
 RegCmd("opchathistory",OpVipChat.Last,{false},1,"\t\t\t\t\tShows last "..OpVipChat.LastLines.." lines os opchat.")

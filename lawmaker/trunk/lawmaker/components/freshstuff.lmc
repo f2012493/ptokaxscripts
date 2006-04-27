@@ -12,7 +12,7 @@ FreshStuff.AllStuff = {};FreshStuff.NewestStuff = {};FreshStuff.TopAdders={}
 
 FreshStuff.Timer=0
 
-function FreshStuff.Main() 
+function FreshStuff.Main()
   if loadfile("lawmaker/components/metafiles/fresh_categories.dat") then
     dofile("lawmaker/components/metafiles/fresh_categories.dat")
   else
@@ -92,7 +92,7 @@ function FreshStuff.AddCrap (user,data,env)
       FreshStuff.AllStuff[FreshStuff.Count]={cat,user.sName,os.date("%m/%d/%Y"),tune}
       FreshStuff.SaveRel()
       FreshStuff.ReloadRel()
-    else 
+    else
       SendTxt(user,env,Bot.name, "Unknown category: "..cat)
     end
   else
@@ -124,8 +124,8 @@ function FreshStuff.OpenRel()
     f:close()
   end
   if FreshStuff.Count > FreshStuff.MaxNew then
-    local tmp = FreshStuff.Count - FreshStuff.MaxNew + 1
-    FreshStuff.Count2=FreshStuff.Count - FreshStuff.MaxNew + 1
+    local tmp = FreshStuff.Count - FreshStuff.MaxNew
+    FreshStuff.Count2=FreshStuff.Count - FreshStuff.MaxNew
     for i = tmp, FreshStuff.Count do
       FreshStuff.Count2=FreshStuff.Count2 + 1
       if FreshStuff.AllStuff[FreshStuff.Count2] then
@@ -189,7 +189,7 @@ function FreshStuff.ShowRel(tab)
       end
       for a,b in pairs (tmptbl) do
 	Msg=Msg.."\r\n"..a.."\r\n"..string.rep("-",33).."\r\n"..table.concat(b).."\r\n"
-      end      
+      end
       FreshStuff.MsgAll = "\r\n\r\r\n".." --------- All The Releases -------- "..Msg.."\r\n --------- All The Releases -------- \r\n"..FreshStuff.MsgHelp .."\r\n"
     end
   end
@@ -238,7 +238,7 @@ function FreshStuff.ShowRelNum(what,num) -- to show numbers of categories
   local MsgType = "\r\n\r\n".." --------- The Latest "..num.." "..FreshStuff.Types[what].." -------- \r\n\r\n"..Msg.."\r\n\r\n --------- The Latest "..num.." "..FreshStuff.Types[what].." -------- \r\n\r\n"
   return MsgType
 end
-  
+
 function FreshStuff.DelCrap(user, data,env)
   local _,_,what=string.find(data,"%b<>%s+%S+%s+(.+)")
   if what then
@@ -398,29 +398,14 @@ function FreshStuff.ShowTopAdders(user,data,env)
   local tmp={}
 	local adderz=0
   for name,number in pairs(FreshStuff.TopAdders) do
--- 		SendToAll(name,number)
---     table.insert(numtbl,b)
     tmp[number] = tmp[number] or {}
     table.insert(tmp[number],name)
   end
 	local weird_but_works={}
 	for num,ppl in pairs(tmp) do local _suck={}; _suck.N=num; _suck.P=table.concat(ppl,", "); table.insert(weird_but_works,_suck); adderz=adderz+1; end
---   table.sort(numtbl)
---   local e
---   if table.getn(numtbl) <= FreshStuff.TopAddersCount then e=1 else e=table.getn(numtbl)-FreshStuff.TopAddersCount end
---   for k=table.getn(numtbl),e,-1 do
---     for n,c in tmp[numtbl[k]] do
---       msg=msg..c..": "..numtbl[k].."\r\n"
---     end
---   end
 	table.sort(weird_but_works,function(a,b) return a.P > b.P end)
 	if FreshStuff.TopAddersCount > adderz then num = adderz end
 	local msg="\r\nThe top "..num.." release-addders sorted by the number of releases are:\r\n"..string.rep("-",33).."\r\n"
--- 	local x=0
--- 	for num,ppl in pairs(tmp) do
--- 		if x > num then break end
--- 		x=x+1
--- 		msg=msg
 	for nm=num,1,-1 do
 		msg=msg..weird_but_works[nm].N..": "..weird_but_works[nm].P.."\r\n"
 	end
