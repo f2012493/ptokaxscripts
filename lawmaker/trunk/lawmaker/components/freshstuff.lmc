@@ -158,7 +158,7 @@ function FreshStuff.ShowRel(tab)
 	    if FreshStuff.Types[cat] then cat=FreshStuff.Types[cat] end
 	    if not tmptbl[cat] then tmptbl[cat]={} end
 	    table.insert(tmptbl[cat],Msg.."ID: "..i.."\t"..title.." // (Added by "..who.." at "..when..")")
-            cunt=cunt+1
+      cunt=cunt+1
 	  end
 	end
       end
@@ -173,7 +173,7 @@ function FreshStuff.ShowRel(tab)
       FreshStuff.MsgAll = "\r\n\r\r\n".." --------- All The Releases -------- \r\n\r\n  No releases on the list yet\r\n\r\n --------- All The Releases -------- \r\n\r\n"
     else
       FreshStuff.MsgHelp  = "  use "..FreshStuff.Commands.Show.." <new>"
-      for a,b in FreshStuff.Types do
+      for a,b in pairs(FreshStuff.Types) do
 	FreshStuff.MsgHelp  = FreshStuff.MsgHelp .."/"..a
       end
       FreshStuff.MsgHelp  = FreshStuff.MsgHelp .."> to see only the selected types"
@@ -292,24 +292,24 @@ function FreshStuff.SearchRel(user,data,env)
   if what then
     local res,rest=0,{}
     local msg="\r\n---------- You searched for keyword \""..what.."\". The results: ----------\r\n\r\n"
-    for a,b in FreshStuff.AllStuff do
+    for a,b in ipairs(FreshStuff.AllStuff) do
       if string.find(string.lower(b[4]),string.lower(what),1,true) then
 	table.insert(rest,{b[1],b[2],b[3],b[4]})
       end
     end
     if table.getn(rest)~=0 then
-      for i=1,table.getn(rest) do
-	local type,who,when,title=unpack(rest[i])
+      for idx,tab in ipairs(rest) do
+	local type,who,when,title=unpack(tab)
 	res= res + 1
 	msg = msg.."ID: "..i.."\t"..title.." // (Added by "..who.." at "..when..")\r\n"
       end
-      msg=msg..string.rep("-",20).."\r\n"..res.." results."
+      msg=msg.."\r\n"..string.rep("-",20).."\r\n"..res.." results."
     else
       msg=msg.."\r\nSearch string "..what.." was not found in releases database."
     end
     user:SendPM(Bot.name,msg)
   else
-    SendTxt(user,env,Bot.name, "yea right, like i know what you got 2 search when you don't tell me!|")
+    SendTxt(user,env,Bot.name, "yea right, like i know what you got 2 search when you don't tell me!")
   end
 end
 
@@ -352,7 +352,7 @@ end
 
 function FreshStuff.ShowCatgries(user,data,env)
   local msg="\r\n======================\r\nAvilable categories:\r\n======================\r\n"
-  for a,b in FreshStuff.Types do
+  for a,b in pairs(FreshStuff.Types) do
     msg=msg.."\r\n"..a
   end
   user:SendPM(Bot.name,msg)
@@ -403,11 +403,11 @@ function FreshStuff.ShowTopAdders(user,data,env)
   end
 	local weird_but_works={}
 	for num,ppl in pairs(tmp) do local _suck={}; _suck.N=num; _suck.P=table.concat(ppl,", "); table.insert(weird_but_works,_suck); adderz=adderz+1; end
-	table.sort(weird_but_works,function(a,b) return a.P > b.P end)
+	table.sort(weird_but_works,function(a,b) return a.N < b.N end)
 	if FreshStuff.TopAddersCount > adderz then num = adderz end
 	local msg="\r\nThe top "..num.." release-addders sorted by the number of releases are:\r\n"..string.rep("-",33).."\r\n"
 	for nm=num,1,-1 do
-		msg=msg..weird_but_works[nm].N..": "..weird_but_works[nm].P.."\r\n"
+		msg=msg..weird_but_works[nm].P..": "..weird_but_works[nm].N.." items added\r\n"
 	end
   user:SendPM(Bot.name,msg)
 end

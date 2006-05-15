@@ -1,78 +1,6 @@
---[[About
-LawMaker - a bot for PtokaX DC Hub
-Copyright (C) 2004-2005 bastya_elvtars (bastyaelvtars@gmail.com)
-
-=======================================================================
-Website & Forum: http://lawmaker.no-ip.org/
-Support questions, feedback, ideas etc. should be posted to the forum.
-=======================================================================
-
-The license does not apply for the sample text files included in the default package.
-Those files are not considered as part of the standard package, just examples.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
----------------------------------------------------------------------------------------------------
-CREDITS 
-Some ideas in LMCA (LawMaker Componenta Architecture) by plop & NightLitch (however it was totally written from scratch).
-Please see the online help on cofiguring the bot.
-Thanks to: 
-----------
-  First of all:  my beautiful girlfriend.
-  
-  For PtokaX: Ptaczek/PPK/aMutex/frontline3k
-  
-  LUA 5 (and later) Copyright ?? 1994-2005 Lua.org, PUC-Rio
-  
-  For inspiration:
-  
-  plop (Artificial Insanety)
-  Nathanos (Channelbot)
-  tezlo (RetroBot)
-  OpiumVolage (ModBot)
-	[NL]Pur (ConsoleMoon)
-  
-  For help/code chunks:
-  
-  plop, PPK, NightLitch, RabidWombat, Herodes, tezlo, jiten, Dessamator, BottledHate, Hawk, Optimus, GeceBekcisi,
-  TTB, Mutor, kepp, chilla, Nathanos, Skrollster, Sedulus, nErBoS, [NL]Pur, Skippy84, psf8500, Typhoon, yepyepyep4711
-  
-	And yes, thanks to others in LUA Hub, LUA Board(s) and DCDev (not a mistake) that I forgot now.
-  There are detailed credits in plugins.
-  
-  For testing (roughly chronological order):
-  
-  TiMeTrAVelleR, Psycho_Chihuahua
-  Nidaros, Libbe, Darkstar and other Golden Angel ops,
-  zinden, kaotkbliss and all the ops of PC Gamers,
-  Mickey, Makavelli-2Pac, 6Marilyn6Manson6, LiqUiD~TrolL,
-  Bumbi, GrinSlaw, gander, Stormbringer, Zen
-  
-  Special thanks to:
-  
-  Neil Hodgson, creator of SciTE, a GREAT & FREE editor - http://www.scintilla.org
-  OpiumVolage, the primary LUA board hoster - http://board.univ-angers.fr ---> this site is down, maybe permanently. :(
-	The LUA Board is @ http://luaboard.sytes.net
-	Corayzon, author of LUASlave - http://www.luaslave.pc-sanity.com.au/
-  Matt/kbeh273300, the secondary LUA board admins - http://lua.uknnet.com
-  Psycho_Chihuahua, host of PtokaX Wiki - http://ptxwiki.psycho-chihuahua.net - and PtokaX Resources' Site - http://ptxscriptdb.psycho-chihuahua.net
-  [NL]Pur, who established the Moon5 project at Sourceforge.
-  
-----------------------------------------------------------------------------------------  
-----------------------------------------------------------------------------------------  
-----------------------------------------------------------------------------------------  
-----------------------------------------------------------------------------------------  
+--[[
+LawMaker core
+Loads plugins, declares common functions & variables.
 ]]
 --====================
 --== SETTINGS
@@ -99,7 +27,7 @@ complainttext="You may cry a river at: " -- text before the sent addy??
 debug_log=1 -- Logs debug messages. Please leave it enabled.
 debug_send=1 -- PMs specified users on error. See the next setting.
 debug_sendto={
-"[TGA-OP]bastya_elvtars", 
+"[TGA-OP]bastya_elvtars",
   "bastya_elvtars",
 } -- Specify the usernames that you want the errormessages to be sent to.
 rightclick_menuname="-LawMaker-" -- Name of the parent menu for rightclick commands.
@@ -107,7 +35,7 @@ rightclick_menuname="-LawMaker-" -- Name of the parent menu for rightclick comma
 -------------------------------------------------------------------------------------
 -- END OF BASIC SETTINGS, NO EDITING NEEDED BELOW THIS POINT UNLESS YOU FIND A BUG --
 -------------------------------------------------------------------------------------
-Bot.version="LawMaker 1.0 beta 1" 
+Bot.version="LawMaker 1.0 RC1"
 -- If there is an error with a plugin, the error will be sent to ops, script won't crash.
 
 -- Functions related to Ptokax events
@@ -127,12 +55,21 @@ tNUCOrder= -- order of funcs to be called on NewUser(Op)Connected
   }
 
 rightclick={}
-rctosend={}
+rctosend={{}, {}, {}, {}, {}}
 commandtable={}
 lagtest={}
 modules={}
 
 path="lawmaker/components/"
+
+_rightclick=
+	 {
+			__newindex=function(tbl,raw,level)
+				 for strength,tbl in ipairs(rctosend) do
+						if strength>=level then table.insert(rctosend[strength],raw) end
+				 end
+			end
+	 }
 
 function Main()
   local x=os.clock()
@@ -160,7 +97,7 @@ function Main()
   frmHub:SetHubBot(1)
   frmHub:SetAutoRegister(autoreg)
   frmHub:SetPrefixes("!+#?-")
-  if not string.find(frmHub:GetHubDescr()," %- powered by LawMaker") then
+  if not string.find(frmHub:GetHubDescr()," - powered by LawMaker",1,true) then
     frmHub:SetHubDescr(frmHub:GetHubDescr().." - powered by LawMaker")
     -- I know many will remove this, but I still won't compile the bot. :)
   end
@@ -168,6 +105,7 @@ function Main()
   frmHub:SetHubBotIsAlias(1)
   SetTimer(1000)
   StartTimer()
+	for idx,tbl in ipairs(rctosend) do table.sort(rctosend[idx]) end
   for _,name in pairs(modules.main) do
     name.func(unpack(name.parms))
   end
@@ -179,7 +117,7 @@ function Main()
   RegRC(1,"1 3","Lagtest\\Enable","!lagtest on")
   RegRC(1,"1 3","Lagtest\\Disable","!lagtest off")
   RegRC(1,"1 3","License agreement (GPL)","+license")
-  CreateRightClicks()
+--   CreateRightClicks()
   SendToOps(Bot.name,Bot.version.." loaded, took "..os.clock()-x.." seconds, "..count.." plugins have been fired.")
 end
 
@@ -204,10 +142,11 @@ function NewUserConnected(user)
     user:SendData(Bot.name,"Welcome to "..frmHub:GetHubName()..", enjoy your stay, happy chatting and downloading!")
     user:SendData(Bot.name,"Type !help in mainchat or in PM session with me to see the commands you can use.")
     if  user.bUserCommand then -- if login is successful, and usercommands can be sent
-      user:SendData(table.concat(rctosend[user.iProfile],"|"))
-      user:SendData(Bot.name,"You just got "..(table.getn(rctosend[user.iProfile])).." rightclick commands, come on, unleash my full power! :)")
+			local tbl=rctosend[userlevels[user.iProfile]]
+      user:SendData(table.concat(tbl,"|"))
+      user:SendData(Bot.name,"You just got "..table.getn(tbl).." rightclick commands, come on, unleash my full power! :)")
     end
-    user:SendData(Bot.name,";\r\n"..Bot.version.." by bastya_elvtars (the rock n' roll doctor) - http://lawmaker.no-ip.org\r\nLicensed under the GNU GPL, type +license for details.")
+    user:SendData(Bot.name,"\r\n"..Bot.version.." by bastya_elvtars (the rock n' roll doctor) - http://lawmaker.no-ip.org\r\nLicensed under the GNU GPL, type +license for details.")
   end
 end
 
@@ -282,36 +221,36 @@ function OnError( err ) -- traceback is unnecessary
   if (debug_log==1 and Logging) then Logging.Write( "lawmaker/debug.log", os.date("%Y. %m. %d. %X").."\r\n"..err.."\n-------------------------------");end;
 end
 
-function SupportsArrival(User, Data)
-end
-function KeyArrival(User, Data)
-end
-function ValidateNickArrival(User, Data)
-end
-function PasswordArrival(User, Data)
-end
-function VersionArrival(User, Data)
-end
-function GetNickListArrival(User, Data)
-end
-function GetINFOArrival(User, Data)
-end
-function SearchArrival(User, Data)
-end
-function ConnectToMeArrival(User, Data)
-end
-function MultiConnectToMeArrival(User, Data)
-end
-function RevConnectToMeArrival(User, Data)
-end
-function SRArrival(User, Data)
-end
-function UserIPArrival(User, Data)
-end
-function UnknownArrival(User, Data)
-end
-function BotINFOArrival(User, Data)	
-end	
+-- function SupportsArrival(User, Data)
+-- end
+-- function KeyArrival(User, Data)
+-- end
+-- function ValidateNickArrival(User, Data)
+-- end
+-- function PasswordArrival(User, Data)
+-- end
+-- function VersionArrival(User, Data)
+-- end
+-- function GetNickListArrival(User, Data)
+-- end
+-- function GetINFOArrival(User, Data)
+-- end
+-- function SearchArrival(User, Data)
+-- end
+-- function ConnectToMeArrival(User, Data)
+-- end
+-- function MultiConnectToMeArrival(User, Data)
+-- end
+-- function RevConnectToMeArrival(User, Data)
+-- end
+-- function SRArrival(User, Data)
+-- end
+-- function UserIPArrival(User, Data)
+-- end
+-- function UnknownArrival(User, Data)
+-- end
+-- function BotINFOArrival(User, Data)
+-- end
 
 -- Module registration and command parsing
 
@@ -334,20 +273,17 @@ function parsecmds(user,data,env,cmd,bot)
   end
 end
 
-function CreateRightClicks()
-  for _,idx in {-1,0,1,2,3} do -- usual profiles
-    rctosend[idx]=rctosend[idx] or {} -- create if not exist (but this is not SQL :-P)
-    for item,level in pairs(rightclick) do -- run thru the rightclick table
-      if userlevels[idx] >= level then -- if user is allowed to use
-        table.insert(rctosend[idx],item) -- then put to the array
-				table.sort(rctosend[idx])
-      end
-    end
---     for idx,arr in pairs(rctosend) do -- and we alphabetize (sometimes eyecandy is also necessary)
---       rctosend[idx]=table.sort(arr) -- sort the array
+-- function CreateRightClicks()
+--   for _,idx in {-1,0,1,2,3} do -- usual profiles
+--     rctosend[idx]=rctosend[idx] or {} -- create if not exist (but this is not SQL :-P)
+--     for item,level in pairs(rightclick) do -- run thru the rightclick table
+--       if userlevels[idx] >= level then -- if user is allowed to use
+--         table.insert(rctosend[idx],item) -- then put to the array
+-- 				table.sort(rctosend[idx])
+--       end
 --     end
-  end
-end
+--   end
+-- end
 
 -- I know function calls introduce some overhead, but these are left for future experiments with Lua 5.1.
 ----
@@ -361,7 +297,8 @@ function RegCmd(cmnd,func,parms,level,help) -- Regs a command, parsed on ToArriv
 end
 
 function RegRC(level,context,name,command,PM)
-  if level==0 then return 1 end
+  if level==0 or level==nil then return end
+	setmetatable(rightclick,_rightclick) -- this is the trick, I use rightclick as a slave table
   if not PM then
     rightclick["$UserCommand "..context.." "..rightclick_menuname.."\\"..name.."$<%[mynick]> "..command.."&#124;"]=level
   else
@@ -382,7 +319,7 @@ function maketable(file,separator) -- opens a file and adds its contents to a ta
 	tbl[x]=tonumber(y) or y
       end
     end
-  end 
+  end
   return tbl
 end
 
@@ -419,11 +356,6 @@ function SendTxt(user,env,bot,text) -- sends message according to environment (m
   local to={["PM"]=user.SendPM}
   local todo=to[env] or user.SendData
   todo(user, bot, text)
---   if env=="PM" then
---     user:SendPM(bot,text)
---   else
---     user:SendData(bot,text)
---   end
 end
 
 function Clear() -- cleanup
@@ -441,7 +373,7 @@ function aah() -- MUHAHA (returns complaint text + hubwebsite/mail/nothing)
   end
 end
 
-function SplitTimeString(TimeString) 
+function SplitTimeString(TimeString)
 -- Splits a time format to components, originally written by RabidWombat.
 -- Supports 2 time formats: MM/DD/YYYY HH:MM and YYYY. MM. DD. HH:MM
   local D,M,Y,HR,MN,SC
@@ -471,7 +403,7 @@ function JulianDate(DAY, MONTH, YEAR, HOUR, MINUTE, SECOND) -- Written by RabidW
   if(YEAR < 0 ) then
     YEAR = YEAR + 1;
   end
-  if( MONTH > 2) then 
+  if( MONTH > 2) then
     jy = YEAR;
     jm = MONTH + 1;
   else
@@ -504,7 +436,7 @@ function frac(num) -- returns fraction of a number (RabidWombat)
   return num - math.floor(num);
 end
 
-function minutestoh(minutes) -- gets minutes as arguments, returns a string with formatted time and 4 numbers as units 
+function minutestoh(minutes) -- gets minutes as arguments, returns a string with formatted time and 4 numbers as units
 if frac(minutes) > 0.5 then minutes=math.ceil(minutes) else minutes=math.floor(minutes) end
 local weeks,days,hours,mins
 local msg=""
@@ -628,4 +560,4 @@ TODO:
 - document settings
 - document LMCA
 - document features
-]] 
+]]
