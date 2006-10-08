@@ -1,0 +1,67 @@
+Immune={Levels={}} -- do not touch
+--[[
+Immune module for LawMaker by bastya-elvtars
+Immune against nick check (except bad chars), clone, share, limit check
+Option to immune against kick. (idea by Zinden).
+]]
+
+Run(path.."cfg/immune.ini")
+
+function Immune.Main() Immune.List=maketable("lawmaker/components/metafiles/immune.dat") end
+
+function Immune.Immune(user,data,env)
+  local _,_,nick=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  if not nick then
+    SendTxt(user,env,Bot.name,"Please! Tell me the nick! Users without nick can't connect. :P")
+  else
+    if not Immune.List[nick] then
+      Immune.List[nick]=1
+      SendTxt(user,env,Bot.name,nick.." added to immune list, his/her share, slots, hubs, limit & client won't be checked on connection.")
+      savefile(Immune.List,"lawmaker/components/metafiles/immune.dat")
+    else 
+      SendTxt(user,env,Bot.name,nick.." is already on immune list.")
+    end
+  end
+end
+
+function Immune.DeImmune(user,data,env)
+  local _,_,nick=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  if not nick then
+    SendTxt(user,env,Bot.name,"This nick () is not in my list. ;)")
+  else
+    if not Immune.List[nick] then
+      SendTxt(user,env,Bot.name,nick.." was not immuned...")
+    else 
+      SendTxt(user,env,Bot.name,nick.." is removed from immune list.")
+      Immune.List[nick]=nil
+      savefile(Immune.List,"lawmaker/components/metafiles/immune.dat")
+    end
+  end
+end
+
+function Immune.ShowImmuned(user,env)
+  local arrrrrrrr={}
+  for a,b in Immune.List do
+    table.insert(arrrrrrrr,a)
+  end
+  local mess="\r\hHere are the immuned users:\r\n======================\r\n\r\n"
+  if table.getn (arrrrrrrr)==0 then
+    mess=mess.."Nobody."
+  else
+    for a=1,table.getn (arrrrrrrr) do
+      mess=mess..arrrrrrrr[a].."\r\n"
+    end
+  end
+  mess=mess.."\r\n======================"
+  user:SendPM(Bot.name,mess)
+end
+
+RegCmd("immune",Immune.Immune,{},Immune.Levels.Immune,"<nick>\t\t\t\t\tImmunise a user against ALL on-connect checking, done by script.")
+RegCmd("deimmune",Immune.DeImmune,{},Immune.Levels.Deimmune,"<nick>\t\t\t\t\tDelete the user from the immune list, so he/she will be checked again on next reconnect.")
+RegCmd("showimmuned",Immune.ShowImmuned,{},Immune.Levels.ShowImmuned,"\t\t\t\t\tShows all immunised users.")
+RegFunc("main","loading Immune.List",Immune.Main,{})
+RegRC(Immune.Levels.Immune,"1 2","Immune\\Immune USER","!immune %[nick]")
+RegRC(Immune.Levels.Immune,"1 3","Immune\\Immune...\\","!immune %[line:Nick to immune:]")
+RegRC(Immune.Levels.Deimmune,"1 2","Immune\\Deimmune USER","!deimmune %[nick]")
+RegRC(Immune.Levels.Deimmune,"1 3","Immune\\Deimmune...","!deimmune %[line:Nick to deimmune:]")
+RegRC(Immune.Levels.ShowImmuned,"1 3","Immune\\Show immuned users","!showimmuned")

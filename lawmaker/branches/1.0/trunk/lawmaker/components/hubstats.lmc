@@ -1,0 +1,134 @@
+HubStats={Levels={}}
+--[[
+Uptime/stats/hubinfo module for LawMaker by bastya_elvtars
+Based on appropriate part of DarkMind by Tuben.
+Creates stats file if it does not exist.
+Should add resetting of stats.
+Thx to RabidWombat for the original uptime calculation routine.
+]]
+
+Run(path.."/cfg/hubstats.ini")
+----------------
+-- END OF CONFIG
+----------------
+
+HubStats.Timer=0
+
+function HubStats.HubInfo(user,data,env)
+  HubStats.Parse()
+  local msg="\r\n\t\INFORMATION ON "..frmHub:GetHubName().."\r\n"..string.rep("-=-",40).."\r\n"..
+  "\r\nHub Address: "..frmHub:GetHubAddress()..
+  "\r\n\r\nHub Founder: "..founder..
+  "\r\n\r\nHub Owner: "..owner
+  if Checks and Checks.Share and Checks.Share.MinShare then
+    msg=msg.."\r\n\r\nMin. Share: "..Checks.Share.MinShare.." GB"
+  else
+    msg=msg.."\r\n\r\nMin. Share: "..(frmHub:GetMinShare()/1024^3).." GB"
+  end
+  if frmHub:GetHubTopic() then
+    msg=msg.."\r\n\r\nCurrent topic: \""..frmHub:GetHubTopic().."\""
+  end
+  local v,u=bytestoh(frmHub:GetCurrentShareAmount())
+  msg=msg.."\r\n\r\nCurrent Share Amount: "..string.format("%0.4f",v).." "..u
+  v,u=bytestoh(Stats.Share)
+  msg=msg.."\r\n\r\nAlltime Peak Share Amount: "..string.format("%0.4f",(v)).." "..u
+  msg=msg.."\r\n\r\nCurrent User Count: "..frmHub:GetUsersCount()
+  msg=msg.."\r\n\r\nAlltime Peak User Count: "..Stats.Peak
+  msg=msg.."\r\n\r\nUp Time: "..minutestoh(frmHub:GetUpTime()/60).."."
+  msg=msg.."\r\n\r\nThe uptime record is: "..minutestoh(Stats.HubUptime).."."
+  if user.bOperator then
+    local v,u=bytestoh(gcinfo())
+    local v1,u1=bytestoh(Stats.Memory)
+    msg=msg.."\r\n\r\nMemory Usage: "..string.format("%0.4f",v).." "..u.."\r\n\r\nPeak Memory Usage: "..string.format("%0.4f",v1).." "..u1
+  end
+  msg=msg.."\r\n"..string.rep("-=-",40)
+  user:SendPM(Bot.name,msg)
+end
+
+function HubStats.ShowUpTime(user,data,env)
+  SendTxt(user,env,Bot.name,"Current hub uptime is: "..minutestoh(frmHub:GetUpTime()/60)..".")
+end
+
+function HubStats.Parse()
+  local upt=frmHub:GetUpTime()
+  local hubuptime
+  if frac(upt/60) > 0.5 then hubuptime=math.ceil(upt/60) else hubuptime=math.floor(upt/60) end
+  if Stats.Share < frmHub:GetCurrentShareAmount() then
+    local v,u=bytestoh(frmHub:GetCurrentShareAmount())
+    Stats.Share=frmHub:GetCurrentShareAmount()
+    Stats.ShareDate = "Time: "..os.date("%A").." the "..os.date("%d").."th of "..os.date("%B")..", "..os.date("%T").." Year "..os.date("%Y")
+    SendToAll(Bot.name,"Alltime peak share total is now ("..string.format("%0.4f",v).." "..u..").")
+  end
+  if Stats.Peak < frmHub:GetUsersCount() then
+    Stats.Peak=frmHub:GetUsersCount() 
+    Stats.PeakDate = "Time: "..os.date("%A").." the "..os.date("%d").."th of "..os.date("%B")..", "..os.date("%T").." Year "..os.date("%Y")
+    SendToAll(Bot.name,"Alltime peak users is now ("..Stats.Peak..").")
+  end
+  if Stats.Memory < gcinfo() then
+    Stats.Memory=gcinfo()
+    local v,u=bytestoh(Stats.Memory)
+    Stats.MemoryDate = "Time: "..os.date("%A").." the "..os.date("%d").."th of "..os.date("%B")..", "..os.date("%T").." Year "..os.date("%Y")	
+    SendToOps(Bot.name,"Alltime peak memory use is now ("..string.format("%0.4f",v).." "..u..").")
+  end	
+  if Stats.HubUptime < hubuptime  then
+    Stats.HubUptime = hubuptime
+  end
+  HubStats.Write()
+end
+
+function HubStats.Write()
+  local f=io.open("lawmaker/components/metafiles/hubstats.dat","w+")
+  local Temp = "Stats = {\n\tPeak="..Stats.Peak..",\n\tPeakDate=\""..
+  Stats.PeakDate.."\",\n\tShare="..Stats.Share..",\n\tShareDate=\""..
+  Stats.ShareDate.."\",\n\tMemory="..Stats.Memory..",\n\tMemoryDate=\""..
+  Stats.MemoryDate.."\",\n\tHubUptime="..Stats.HubUptime..
+  "\n\t}\n -- For heaven's sake, do not change this!"
+  f:write(Temp)
+  f:close()
+end
+
+function HubStats.Show(user,data,env)
+  HubStats.Parse()
+  local msg="\r\n\r\n\t\t\t\t\t\t\tHUB STATISTICS\r\n=================================================================================================================================\r\n\r\n"
+  local v,u=bytestoh(Stats.Share)
+  msg=msg.."Alltime peak share total : "..string.format("%0.4f",v).." "..u..". ("..Stats.ShareDate..")\r\n\r\n"..
+  "Alltime peak user count : "..Stats.Peak.." users. ("..Stats.PeakDate..")\r\n\r\n"
+  msg=msg.."The uptime record is: "..minutestoh(Stats.HubUptime)..".\r\n"
+  if user.bOperator then
+    local v,u=bytestoh(Stats.Memory)
+    msg=msg.."\r\nAlltime peak memory use was : "..string.format("%0.4f",v).." "..u..". ("..Stats.MemoryDate..")\r\n"
+  end
+  msg=msg.."\r\n================================================================================================================================="
+  user:SendPM(Bot.name,msg)
+end
+
+function HubStats.OnTimer()
+  if HubStats.Timer<HubStats.ParseInterval*60 then
+    HubStats.Timer=HubStats.Timer+1
+  else
+    HubStats.Parse()
+    HubStats.Timer=0
+    Clear()
+  end
+end
+
+function HubStats.Main()
+  if loadfile("lawmaker/components/metafiles/hubstats.dat") then
+    dofile("lawmaker/components/metafiles/hubstats.dat")
+  else
+    SendToOps(Bot.name,"Creating new hubstats file, as the old one is corrupt or does not exist.")
+    Stats={}
+    local d= "Time: "..os.date("%A").." the "..os.date("%d").."th of "..os.date("%B")..", "..os.date("%T").." Year "..os.date("%Y")
+    Stats.Share,Stats.Peak,Stats.Memory,Stats.HubUptime=-1,-1,-1,-1
+    HubStats.Parse()
+  end
+end
+
+RegFunc("main","hubstats loading",HubStats.Main,{})
+RegFunc("ont","hubstats hourly parsing",HubStats.OnTimer,{})
+RegCmd("hubinfo",HubStats.HubInfo,{},HubStats.Levels.HubInfo,"\t\t\t\t\t\tShows information on the hub.")
+RegCmd("uptime",HubStats.ShowUpTime,{},HubStats.Levels.UpTime,"\t\t\t\t\t\tShows the uptime of PtokaX.")
+RegCmd("hubstats",HubStats.Show,{},HubStats.Levels.Show,"\t\t\t\t\t\tShows the hub statistics.")
+RegRC(HubStats.Levels.Show,"1 3","Info\\Hub info\\Show hub statistics","!hubstats")
+RegRC(HubStats.Levels.HubInfo,"1 3","Info\\Hub info\\Show detailed hub info","!hubinfo")
+RegRC(HubStats.Levels.UpTime,"1 3","Info\\Hub info\\Show hub uptime","!uptime")
