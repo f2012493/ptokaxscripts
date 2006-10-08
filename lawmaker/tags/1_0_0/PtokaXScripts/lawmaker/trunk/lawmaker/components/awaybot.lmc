@@ -1,0 +1,145 @@
+AwayBot={Levels={}}  -- please leave this line intect
+--[[
+Awaybot 1.0 by bastya_elvtars
+Sends away message.
+No tag and other things like this. (Can eat bandwidth and confuse some clients.)
+You can see others' away messages w/o PMing them if you want.
+Enjoy.
+--------------------------------------------------------------
+LMCA version by bastya_elvtars
+For config: lawmaker/components/cfg/awaybot.ini
+]]
+
+Run(path.."cfg/awaybot.ini")
+
+AwayBot.AFK={}
+
+function AwayBot.AwayfromKeyBoard(user,data,env)
+  if not AwayBot.AFK[user.sName] then
+    local _,_,why=string.find(data,"%b<>%s+%S+%s+(.+)")
+    AwayBot.StoreAFK(user,data,env,why)
+  else
+    SendToAll(Bot.name,"User "..user.sName.." has come back now.")
+    AwayBot.StoreAFK(user,data,env,why)
+  end
+end
+
+function AwayBot.StoreAFK(user,data,env,why)
+  local _,_,why=string.find(data,"%b<>%s+%S+%s+(.+)")
+  if not why then
+    SendTxt(user,env,Bot.name,"You have been set to away.")
+    SendToAll(Bot.name,"User "..user.sName.." went away.")
+    AwayBot.AFK[user.sName]=os.date("%A, %c")
+    AwayBot.SaveAway()
+  else
+    if string.len(why) > AwayBot.MaxAwayMessLength then SendTxt(user,env,Bot.name,"The away message can be a maximum length of "..AwayBot.MaxAwayMessLength.." characters.") return end
+    SendTxt(user,env,Bot.name,"You have been set to away. Reason: "..why)
+    SendToAll(Bot.name,"User "..user.sName.." went away, because: \""..why.."\".")
+    AwayBot.AFK[user.sName]=why.."|"..os.date("%A, %c")
+    AwayBot.SaveAway()
+  end
+end
+
+function AwayBot.BackToKeyBoard(user,data,env)
+  if AwayBot.AFK[user.sName] then
+    SendTxt(user,env,Bot.name,"You are no longer away and have been set back to normal.")
+    SendToAll(Bot.name,"User "..user.sName.." is back now.")
+    AwayBot.AFK[user.sName]=nil
+    AwayBot.SaveAway()
+  else
+    SendTxt(user,env,Bot.name,"You weren't away, baby.")
+  end
+end
+
+function AwayBot.AwayMSG(user,whoTo)
+  local _,_,why,dat=string.find(AwayBot.AFK[whoTo],"(.+)%|(.+)")
+  why=why or "N/A"; dat=dat or AwayBot.AFK[whoTo]
+    user:SendPM(whoTo,"I went away on "..dat..". Reason: "..why..".")
+end
+
+function AwayBot.AmIAway(user,env)
+  if AwayBot.AFK[user.sName] then
+    local _,_,why,dat=string.find(AwayBot.AFK[user.sName],"(.+)%|(.+)")
+    why=why or "N/A"
+    SendTxt(user,env,Bot.name,"You went away on "..dat..". Reason: "..why..".")
+  else
+    SendTxt(user,env,Bot.name,"You are not away.")
+  end
+end
+
+function AwayBot.ShowAway(user,data,env)
+  awayarray={}
+  local _,_,nick=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  if nick then
+    if AwayBot.AFK[nick] then
+      if not string.find(AwayBot.AFK[nick],"%|") then
+        user:SendPM(Bot.name,nick.." went away at "..AwayBot.AFK[nick].." and left no message.")
+      else
+        local _,_,why,dat=string.find(AwayBot.AFK[nick],"(.+)|(.+)")
+        user:SendPM(Bot.name,nick.." went away at "..dat.." and left this away message: "..why)
+      end
+    else
+      SendTxt(user,env,Bot.name,nick.." is not away.")
+    end
+  else
+    local msg="\r\n\r\n\t\t\t\t\t\tALL USERS' AWAY MESSAGES\r\n=================================================================================================================================\r\n\r\n"
+    for a,b in AwayBot.AFK do
+      table.insert(awayarray,a)
+      table.sort(awayarray)
+    end
+      if table.getn(awayarray)==0 then
+        msg=msg.."Nobody is away.\r\n\r\n"
+      else
+        for a=1,table.getn(awayarray) do
+        if not string.find(AwayBot.AFK[awayarray[a]],"%|") then
+          msg=msg..awayarray[a].." went away at "..AwayBot.AFK[awayarray[a]].." and left no message.\r\n\r\n"
+	else
+          local _,_,why,dat=string.find(AwayBot.AFK[awayarray[a]],"(.+)|(.+)")
+          msg=msg..awayarray[a].." went away at "..dat.." and left this away message: "..why.."\r\n\r\n"
+	end
+      end
+    end
+    msg=msg.."================================================================================================================================="
+  user:SendPM(Bot.name,msg)
+  end; awayarray=nil; collectgarbage(); io.flush()
+end
+
+function AwayBot.SaveAway()
+  local f=io.open("lawmaker/components/metafiles/away.dat","w+")
+  for a,b in AwayBot.AFK do
+    f:write(a.."|"..b.."\n")
+  end
+  f:close()
+end
+
+function AwayBot.LoadAway()
+  local f=io.open("lawmaker/components/metafiles/away.dat","r")
+  if f then
+    for line in f:lines() do
+      local _,_,nick,msg=string.find(line,"^(%S+)|(.+)$")
+      AwayBot.AFK[nick]=msg
+    end
+    f:close()
+  end
+end
+
+function AwayBot.ToArrival(user,data)
+  local _,_,whoTo = string.find(data,"$To:%s+(%S+)")
+  if AwayBot.AFK[whoTo] then
+    AwayBot.AwayMSG(user,whoTo)
+  end
+end
+
+RegFunc("main","loading away data",AwayBot.LoadAway,{})
+RegFunc("onexit","saving away data",AwayBot.SaveAway,{})
+RegFunc("toarr","replying with awaymess",AwayBot.ToArrival,{})
+RegCmd("afk",AwayBot.AwayfromKeyBoard,{},AwayBot.Levels.AFK,"<reason>\t\t\t\tSets you away, with an away message sent to users PMing you. Reason is optional.")
+RegCmd("away",AwayBot.AwayfromKeyBoard,{},AwayBot.Levels.AFK,"<reason>\t\t\t\tSets you away, with an away message sent to users PMing you. Reason is optional.")
+RegCmd("back",AwayBot.BackToKeyBoard,{},AwayBot.Levels.AFK,"\t\t\t\t\t\tSets you back to normal, if you are away.")
+RegCmd("amiaway",AwayBot.AmIAway,{},AwayBot.Levels.AmIAway,"\t\t\t\t\t\tShows if you are away, and if so, the time when you went away.")
+RegCmd("showaway",AwayBot.ShowAway,{},AwayBot.Levels.ShowAway,"<nick>\t\t\t\t\tShows a user's away message if exists. If no nick specified, shows all users' away messages.")
+RegRC(AwayBot.Levels.AFK,"1 3","Away\\Go away","!afk %[line:Reason (optional):]")
+RegRC(AwayBot.Levels.AFK,"1 3","Away\\Come back if away","!back")
+RegRC(AwayBot.Levels.AmIAway,"1 3","Away\\See your away status","!amiaway")
+RegRC(AwayBot.Levels.ShowAway,"1 3","Away\\Show away message of a user...","!showaway %[line:Nick (Enter for all users):]")
+RegRC(AwayBot.Levels.ShowAway,"1 2","Away\\Show away message of USER","!showaway %[nick]")

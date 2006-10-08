@@ -1,0 +1,172 @@
+RangeFucker={Levels={}} -- don't touch this line
+----------------------------------------------------------------------------------------
+-- range fucker by bastya_elvtars (the rock n' roll doctor)
+-- it was standalone, but got into lawmaker as well.
+-- some code from easyranger by tezlo
+-- checks if ips are valid and if ranges are really ranges :D
+-- thx go out to Herodes for IP validation, Typhoon for paying attention, and plop for finding the bug i couldn't
+-- also thx to NightLitch, i always wanna make same scripts as him but much bettter ones :D
+-- and to nerbos for his ranger ;-)
+-- enjoy
+
+-- LMCA version made by bastya_elvtars 2005. 05. 30.
+-- some useless shit was removed.
+
+-- Changelog
+--v1.0: released
+--v1.1: fixed some shit ;)
+--v1.2: converted to lua5
+--v 1.3RC: small fixes and optimizations
+-----------------------
+--v 2.0: the big return
+-----------------------
+  -- rewritten cmpletely for use with PtokaX 0.3.4.0 range management
+  -- added CIDR support (RFC 1518)
+  -- removed listing of range bans, added searching instead
+  -- separate temp. and perm. ban management
+
+Run(path.."cfg/rangefucker.ini")
+
+function RangeFucker.RangeBan(user,data,env,bTemp)
+  local ip,cidr,amount,unit,reason
+  local mult=
+    {
+      ["m"]={"minutes",1},
+      ["h"]={"hours",60},
+      ["D"]={"days",1440},
+      ["W"]={"weeks",1440*7},
+    }
+  if bTemp then
+    _,_,ip,cidr,amount,unit=string.find(data,"%b<>%s+%S+%s+(%d+%.%d+%.%d+%.%d+)%/(%d+)%s+(%d+)([smhDW])")
+    _,_,reason=string.find(data,"%b<>%s+%S+%s+%S+%s+%d+[mhDW]%s+(.+)")
+  else
+    _,_,ip,cidr=string.find(data,"%b<>%s+%S+%s+(%d+%.%d+%.%d+%.%d+)%/(%d+)")
+    _,_,reason=string.find(data,"%b<>%s+%S+%s+%S+%s+(.+)")
+  end
+  if cidr then
+    if tonumber(cidr) < 1 or tonumber(cidr) > 32 then
+      SendTxt(user,env,Bot.name,"Invalid CIDR notation, can only be 1-32!")
+      return
+    elseif not ip or RangeFucker.Validate(ip)=="shit" then
+      SendTxt(user,env,Bot.name,"Invalid IP! Please check and retry! ;)")
+    else
+      -- We are RFC-1518 compliant! :)
+      local sIP=RangeFucker.Calculate(ip)+1
+      local eIP=RangeFucker.Calculate(ip)+2^(32-cidr)-1 -- as long as we cannot bitshift
+      local endIP=RangeFucker.ReCalcIP(eIP)
+      if not bTemp then
+        local tail; if reason then tail=reason else tail="unspecified"; reason="" end
+        RangeBan(ip, endIP, reason, user.sName, RangeFucker.FullBanRanges)
+        SendTxt(user,env,Bot.name,"Range "..ip.."/"..cidr.." banned. Reason: "..tail)
+      else
+        local u,minz=unpack(mult[unit])
+        local tail; if reason then tail=reason else tail="unspecified"; reason="" end
+        RangeTempBan(ip, endIP, minz, reason, user.sName, RangeFucker.FullBanRanges)
+        SendTxt(user,env,Bot.name,"Range "..ip.."/"..cidr.." banned for "..amount.." "..u..". Reason: "..tail)
+      end
+    end
+  else
+    local ip1,ip2,amount,unit,reason
+    if bTemp then
+      _,_,ip1,ip2,amount,unit=string.find(data,"%b<>%s+%S+%s+(%d+%.%d+%.%d+%.%d+)%-(%d+%.%d+%.%d+%.%d+)%s+(%d+)([smhDW])")
+      _,_,reason=string.find(data,"%b<>%s+%S+%s+%S+%-%S+%s+%S+%s+(.+)")
+    else
+      _,_,ip1,ip2=string.find(data,"%b<>%s+%S+%s+(%d+%.%d+%.%d+%.%d+)%-(%d+%.%d+%.%d+%.%d+)")
+      _,_,reason=string.find(data,"%b<>%s+%S+%s+%S+%-%S+%s+(.+)")
+    end
+    if ip1 and ip2 and RangeFucker.Validate(ip1)~="shit" and RangeFucker.Validate(ip1)~="shit" then
+      if RangeFucker.Calculate(ip1) < RangeFucker.Calculate(ip2) then
+        if not bTemp then
+          local tail; if reason then tail=reason else tail="unspecified"; reason="" end
+          RangeBan(ip1, ip2, reason, user.sName, RangeFucker.FullBanRanges)
+          SendTxt(user,env,Bot.name,"Range "..ip1.."-"..ip2.." banned. Reason: "..tail)
+        else
+          local u,minz=unpack(mult[unit])
+          local tail; if reason then tail=reason else tail="unspecified"; reason="" end
+          RangeTempBan(ip1, ip2, minz, reason, user.sName, RangeFucker.FullBanRanges)
+          SendTxt(user,env,Bot.name,"Range "..ip1.."-"..ip2.." banned for "..amount.." "..u..". Reason: "..tail)
+        end
+      else
+        SendTxt(user,env,Bot.name,"Invalid range! "..ip1.."-"..ip2)
+      end
+    else
+      SendTxt(user,env,Bot.name,"Incorrect usage! Use !banrange xxx.xxx.xxx.xxx-yyy.yyy.yyy.yyy and you need to specify valid IPs!")
+    end
+  end
+end
+
+function RangeFucker.Calculate(ip)
+  local _,_,pt1,pt2,pt3,pt4=string.find(ip,"(%d+)%.(%d+)%.(%d+)%.(%d+)")
+  return (tonumber(pt1)*16777216+tonumber(pt2)*65536+tonumber(pt3)*256+tonumber(pt4))
+end
+
+function RangeFucker.ReCalcIP(ip)
+  local tmp
+  pt1=math.floor((ip)/16777216)
+  tmp=math.mod((ip),16777216)
+  pt2=math.floor((tmp)/65536)
+  tmp=math.mod(tmp,65536)
+  pt3=math.floor((tmp)/256)
+  pt4=math.mod(tmp,256)
+  return (pt1.."."..pt2.."."..pt3.."."..pt4)
+end
+
+function RangeFucker.Validate(ip)
+  local tIP = {}
+  _,_,tIP.a,tIP.b,tIP.c,tIP.d= string.find(ip, "(%d+)%.(%d+)%.(%d+)%.(%d+)")
+  for a,b in tIP do 
+    if tonumber(b)<0 or tonumber(b)> 255 then
+      return "shit"
+    end
+  end
+  tIP=nil
+  collectgarbage()
+  io.flush()
+end
+
+function RangeFucker.UnBanRange(user,data,env,bTemp)
+  local _,_,ip1,ip2=string.find(data,"%b<>%s+%S+%s+(%d+%.%d+%.%d+%.%d+)%-(%d+%.%d+%.%d+%.%d+)")
+  if ip1 and ip2 then
+    if bTemp then
+      RangeTempUnban(ip1, ip2)
+    else
+      RangeUnban(ip1, ip2)
+    end
+    SendTxt(user,env,Bot.name,"Range "..ip1.."-"..ip2.." unbanned.")
+  else
+    SendTxt(user,env,Bot.name,"Incorrect usage! Use: !unbanrange xxx.xxx.xxx.xxx-yyy.yyy.yyy.yyy")
+  end
+end
+
+function RangeFucker.Search(user,data,env,bTemp)
+  local list=frmHub:GetPermRangeBans() if bTemp then list=frmHub:GetTempRangeBans() end
+  local _,_,srchstring=string.find(data,"%b<>%s+%S+%s+(.+)")
+  local msg=""
+  if srchstring then
+    for _,obj in ipairs(list) do
+      for _,thingy in ipairs({obj.sBy, obj.sIPFrom, obj.sIPTo, obj.sReason}) do
+        if string.find(thingy,srchstring,1,true) then
+          msg=msg.."\r\n========================\r\nFound: "..obj.sIPFrom.."-"..obj.sIPTo
+          if obj.sReason then msg=msg.." - Reason: "..obj.sReason end
+          if obj.iTime then msg=msg.." - Time remaining: "..minutestoh(math.ceil(obj.iTime/60)) end
+          msg=msg.."\r\n========================"
+        end
+      end
+    end
+    if msg~="" then user:SendPM(Bot.name,msg) else SendTxt(user,env,Bot.name,"No matches found for "..srchstring) end
+  else
+    SendTxt(user,env,Bot.name,"Need a search string too! :P")
+  end
+end
+
+
+RegCmd("banrange",RangeFucker.RangeBan,{false},RangeFucker.Levels.RangeBan,"<IP1-IP2>\t\t\t\tBans an IP range from IP1 to IP2.")
+RegCmd("tbanrange",RangeFucker.RangeBan,{true},RangeFucker.Levels.RangeTBan,"<IP1-IP2>\t\t\t\tTemp. bans an IP range from IP1 to IP2.")
+RegCmd("searchranges",RangeFucker.Search,{false},RangeFucker.Levels.SearchPerm,"\t\t\t\tShows a list of banned IP ranges.")
+RegCmd("searchtranges",RangeFucker.Search,{true},RangeFucker.Levels.SearchTemp,"\t\t\t\tShows a list of banned IP ranges.")
+RegCmd("unbanrange",RangeFucker.UnBanRange,{false},RangeFucker.Levels.RangeUnBan,"<IP1-IP2>\t\t\t\tUnbans a banned IP range.")
+RegCmd("untbanrange",RangeFucker.UnBanRange,{true},RangeFucker.Levels.RangeTUnBan,"<IP1-IP2>\t\t\t\tUnbans a banned IP range.")
+
+RegRC(RangeFucker.Levels.RangeBan,"1 3","RangeFucker\\Ban a range...","!banrange %[line:Start IP:] %[line:End IP:]")
+RegRC(RangeFucker.Levels.UnBanRange,"1 3","RangeFucker\\UnBan a range...","!unbanrange %[line:Start IP:] %[line:End IP:]")
+RegRC(RangeFucker.Levels.ShowBannedRanges,"1 3","RangeFucker\\Show all banned IP ranges","!showbannedranges")

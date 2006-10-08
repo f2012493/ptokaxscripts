@@ -1,0 +1,7 @@
+This is the rock n' roll doctor's ward. Welcome!
+
+This is a testhub. There is little sharing and unstable environment, however downloading is not forbidden. You are not encouraged to share anything.
+Initiate file transfers on your own responsility.
+The hub owner is not responsible for the files users have shared.
+Actual slot/hub/limit rules can always be retrieved by the !slothublimit comand.
+Type !help in mainchat to see the commands you can use.

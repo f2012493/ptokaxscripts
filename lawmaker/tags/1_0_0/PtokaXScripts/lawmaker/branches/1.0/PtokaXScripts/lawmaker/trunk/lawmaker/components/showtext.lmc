@@ -1,0 +1,44 @@
+ShowText={Commands={},HubAD={}}
+--[[
+Showtext plugin for LawMaker by bastya_elvtars
+Some code from Texter by plop & chilla
+Text files MUST reside in scripts/lawmaker/text folder!!!
+]]
+
+Run(path.."cfg/showtext.ini")
+
+ShowText.Timer=0
+
+function  ShowText.ShowTextFile(user,data,env,file)
+  local f=io.open("lawmaker/text/"..file,"r")
+  if f then
+    local contents = string.gsub(f:read("*a"),string.char(10), "\r\n")
+    user:SendPM(Bot.name,"\r\n"..contents.."\r\n")
+    f:close()
+  else
+    SendTxt(user,env,Bot.name,"The file \""..file.."\"does not exist. Please speak to an operator.") 
+  end
+end
+
+function ShowText.OnTimer()
+  local now=os.date("%H:%M")
+  if ShowText.Timer~=60 then
+    ShowText.Timer=ShowText.Timer+1
+  else
+    if ShowText.HubAD[now] then
+      local f=io.open("lawmaker/text/"..ShowText.HubAD[now],"r")
+      if f then
+	local contents = string.gsub(f:read("*a"),string.char(10), "\r\n")
+	SendToAll(Bot.name,"\r\n"..contents.."\r\n")
+        f:close()
+      end
+    end
+    ShowText.Timer=0
+  end
+end
+
+for a,b in ShowText.Commands do
+  RegCmd(a,ShowText.ShowTextFile,{b.File},b.Level,"\t\t\t\t\t\t"..b.Help)
+  RegRC(b.Level,"1 3","Info\\"..b.Help,"!"..a)
+end
+RegFunc("ont","textshowing timer",ShowText.OnTimer,{})

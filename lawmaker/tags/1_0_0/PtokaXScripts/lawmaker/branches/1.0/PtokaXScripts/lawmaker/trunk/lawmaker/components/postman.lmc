@@ -1,0 +1,188 @@
+PostMan={Levels={}}
+--[[
+PostMan Bot 0.6 by bastya_elvtars (the rock n' roll doctor)
+Herodes optimized it and made encryption for messages.
+Skippy84 fixed many bugs.
+
+... and then bastya_elvtars fixed the most critical. :P
+
+Ported to LMCA by bastya_elvtars - back where it belongs :)
+]]--
+Run(path.."cfg/postman.ini")
+
+-------------------------------------- Command Functions
+
+UserInfo=UserInfo or {Data={}}
+
+PostMan.Messages={}
+
+--- post msg
+function PostMan.Send( user, data, env )
+  local _,_,nick,msg = string.find(data,"%b<>%s+%S+%s+(%S+)%s+(.*)")
+  if nick then
+    if not GetItemByName(nick) then
+      if UserInfo.Data[nick] then
+	local function GetOfflineUserLevel(nick)
+	  for _,obj in frmHub:GetRegisteredUsers() do
+	    if obj.sName==nick then
+	      return userlevels[obj.iProfile]
+	    else
+	      return userlevels[-1]
+	    end
+	  end
+	end
+	if GetOfflineUserLevel(nick) >= PostMan.Levels.Get then
+	  local function checksize(n) local cnt = 0; for a,b in PostMan.Messages[n] do cnt = cnt + 1; end return cnt; end
+	  if not PostMan.Messages[nick] then PostMan.Messages[nick] = {}; end
+	  if (checksize(nick) < PostMan.InBoxSize) then
+	    table.insert( PostMan.Messages[nick], { ["message"] = msg, ["who"] = user.sName, ["when"] = os.date("%Y. %m. %d. %X"), ["read"] = 0, } )
+	    SendTxt( user,env,Bot.name, "Successfully sent the message!")
+	    PostMan.SaveMsg()
+	  else
+	    SendTxt( user,env,Bot.name, "Sorry, but "..nick.." has a full inbox. Try again later.")
+	  end
+	else
+	  SendTxt( user,env,Bot.name,"User has no rights to have inbox.")
+	end
+      else
+        SendTxt( user,env,Bot.name, "User "..nick.." has never been in the hub." )
+      end
+    else
+      SendTxt( user,env,Bot.name, nick.." is online! PM would be more simple in this case...")
+    end
+  else
+    SendTxt( user,env,Bot.name, "Bad syntax! Usage: !postmsg <nick> <message>" )
+  end
+  Clear()
+end
+
+function PostMan.Delete( user, data, env )
+  if PostMan.Messages[user.sName] then
+  local _,_,args = string.find(data,"%b<>%s+%S+%s+(.+)")
+  if args then
+    local function checksize(n) local cnt = 0; for a,b in PostMan.Messages[n] do cnt = cnt + 1; end return cnt; end
+    local function resort(t) local r ={}; for i,v in t do table.insert(r, v); end; return r; end
+    local tmp={} -- sorry, Herodes, this is 1000% safe, users will delete what they want. (BE) :)
+    for num in string.gfind( args, "(%d+)" ) do 
+      table.insert(tmp,tonumber(num))
+    end
+    table.sort(tmp)
+    for m=table.getn(tmp),1,-1 do
+      if PostMan.Messages[user.sName][tmp[m]] then
+	PostMan.Messages[user.sName][tmp[m]] = nil
+	SendTxt( user,env,Bot.name, "Message #"..tmp[m].." has been successfully deleted!")
+      else
+	SendTxt( user,env,Bot.name, "Message #"..tmp[m].." does not exist!")
+      end
+    end
+    PostMan.Messages[user.sName] = resort(PostMan.Messages[user.sName]);
+    if checksize(user.sName) == 0 then PostMan.Messages[user.sName] = nil; end
+      PostMan.SaveMsg()
+    else
+      SendTxt( user,env,Bot.name, "Bad syntax! Usage: !delmsg <msgnumber>. Multiple numbers can be added separated by spaces." )
+    end
+  else
+    SendTxt(user,env,Bot.name, "Your inbox is empty.")
+  end
+  tmp=nil
+  Clear(); 
+end
+
+function PostMan.ShowInBox( user, data, env )
+  local sep, msg = string.rep( "=", 75 ), "\r\n\r\n\t\t\tHere is your inbox:\r\n"
+  msg = msg..sep.."\r\n Msg#\tSender\t\t\tTime of sending\t\tRead\r\n"..sep
+  if PostMan.Messages[user.sName] then
+    local function numess ( r ) if r == 0 then return "no"; end return "yes"; end
+    local function checksize ( n ) local cnt = 0; for a,b in PostMan.Messages[n] do cnt = cnt + 1; end return cnt; end
+    local function dcode ( s ) if (string.sub(s,1,3) == "-n#") then s=string.sub(s,4,-1); local res = ""; for num in string.gfind( s, "#?(%d+)") do res = res..string.char(tonumber(num));end;return res;end;return s;end
+    for num, t in PostMan.Messages[user.sName] do
+      msg=msg.."\r\n "..num.."\t"..dcode(t.who).."\t"..t.when.."\t"..numess(t.read).."\r\n"..sep
+    end
+    SendTxt( user,"PM",Bot.name, msg)
+    SendTxt( user,env,Bot.name, "Type !showmsg <number> too see an individual message. Multiple numbers can be added separated by spaces." )
+    if checksize(user.sName) >= PostMan.InBoxSize then SendTxt( user,env,Bot.name, "Alert: Your inbox is full!"); end
+  else
+    SendTxt( user,env,Bot.name, "You have no messages.")
+  end
+  Clear() 
+end
+
+
+--- read msg(s)
+
+function PostMan.ReadMsg( user, data, env )
+  if PostMan.Messages[user.sName] then
+    local _,_,args=string.find(data,"%b<>%s+%S+%s+(.+)")
+    if args then
+      local function dcode(s) if (string.sub(s,1,3) == "-n#") then s = string.sub(s,4,-1);local res = ""; for num in string.gfind( s, "#?(%d+)") do res = res..string.char(tonumber(num));end;return res;end;return s;end
+      for num in string.gfind( args, "%s-(%d+)%s-" ) do
+	if num then num = tonumber(num) end
+	if num and PostMan.Messages[user.sName][num] then
+	  local t = PostMan.Messages[user.sName][num]
+	  local msg, sep,set = "\r\n\r\n\t\t\t\t\t\t\tMessage #"..num.."\r\n", string.rep( "=", 100 ), string.rep("- ", 85)
+	  msg = msg..sep.."\r\n\r\nFrom: "..dcode(t.who).." (Time: "..t.when..")\t\tMessage follows\r\n"..set.."[Message start]\r\n"..dcode(t.message).."\r\n"..set.."[Message end]\r\n"..sep
+	  SendTxt( user,"PM",Bot.name, msg)
+	  if t.read == 0 then t.read = 1; PostMan.SaveMsg(); end
+	else
+	  SendTxt( user,env,Bot.name, "Message #"..num.." does not exist!")
+	end
+      end
+    else
+      SendTxt( user,env,Bot.name, "Bad syntax! Usage: !showmsg <msgnumber>. Multiple numbers can be added separated by spaces.")
+    end
+  else
+    SendTxt( user,env,Bot.name, "Your inbox is empty.")
+  end
+  Clear(); 
+end
+
+
+
+function PostMan.SaveMsg()
+  local function parse(tbl)
+  local str, tab ="", string.rep( "\t", 9)
+  local function fquot(s) return string.format( "%q", s) end
+  local function ncode( s ) if (s ~= "") and (string.sub(s,1,3) ~= "-n#") then local t = {}; for i = 1, string.len(s) do t[i] = string.byte(string.sub(s,i,i)); end; return "-n#"..table.concat(t, "#"); end; return s; end
+    for a, t in tbl do
+      str = str.."\t\t{ ["..fquot("read").."] = "..t.read..", ["..fquot("who").."] = "..fquot(ncode(t.who))..", ["..fquot("when").."] = "..fquot(t.when)..",\n\t\t["..fquot("message").."] = "..fquot(ncode(t.message)).." },\n"
+    end
+    return str
+  end
+  local f = io.open ( "lawmaker/components/metafiles/postman.dat", "w+" )
+  local s = "PostMan.Messages = {"
+  for name, t in PostMan.Messages do
+    s = s.."\n\t["..string.format( "%q", string.gsub( name, "\"", "\"")).."] = {\n"..parse(t).."\t},"
+  end;
+  f:write(s.."\n}")
+  f:close()
+end
+
+function PostMan.NewUserConnected(user)
+  if PostMan.Messages[user.sName] then
+    local cnt=0
+    for a,b in PostMan.Messages[user.sName] do if (b.read == 0) then cnt = cnt+1; end end
+    if (cnt > 0) then SendTxt( user,"PM",Bot.name, "You have "..cnt.." new message(s). Type !inbox to see your inbox!"); end
+  end
+end
+ 
+function PostMan.Main()
+  if loadfile("lawmaker/components/metafiles/postman.dat") then
+    dofile("lawmaker/components/metafiles/postman.dat")
+  else
+    local f=io.open("lawmaker/components/metafiles/postman.dat","w+")
+    f:write("")
+    f:close()
+  end
+end
+
+RegCmd("postmsg",PostMan.Send,{},PostMan.Levels.Send,"<nick> <message>\t\t\t\tPosts a message to an offline user, who has already been here.")
+RegCmd("showmsg",PostMan.ReadMsg,{},PostMan.Levels.Get,"<number>\t\t\t\t\tDisplays the message with the given number. Multiple numbers can be added, separated by spaces.")
+RegCmd("inbox",PostMan.ShowInBox,{},PostMan.Levels.Get,"\t\t\t\t\t\tShows your inbox.")
+RegCmd("delmsg",PostMan.Delete,{},PostMan.Levels.Get,"<number>\t\t\t\t\tDeletes the message with the given number. Multiple numbers can be added, separated by spaces.")
+RegFunc("onexit","offline messages' save",PostMan.SaveMsg,{})
+RegFunc("nuc","new message warning on connect",PostMan.NewUserConnected,{})
+RegFunc("main","loading postman messages",PostMan.Main,{})
+RegRC(PostMan.Levels.Send,"1 3","PostMan\\Send a message to an offline user","!postmsg %[line:Nick:] %[line:Message:]")
+RegRC(PostMan.Levels.Get,"1 3","PostMan\\Show a message","!showmsg %[line:Message numbers:]")
+RegRC(PostMan.Levels.Get,"1 3","PostMan\\Display your inbox","!inbox")
+RegRC(PostMan.Levels.Get,"1 3","PostMan\\Delete (a) message(s)","!showmsg %[line:Message number(s):]")

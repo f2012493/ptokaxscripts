@@ -1,0 +1,101 @@
+AddDelShow={}
+--[[
+Guestbook-like plugin for LawMaker by bastya_elvtars
+See lawmaker/components/cfg/add_del_remove.ini for config, nothing should be edited here
+]]
+Run(path.."cfg/add_del_show.ini")
+
+function AddDelShow.AddShit(user,data,env,wtf,file)
+  local container=AddDelShow.LoadShit(file)
+  number=number+1
+  local _,_,entry=string.find(data,"%b<>%s+%S+%s+(.*)")
+  if entry then
+    if string.len(entry) <= AddDelShow.MaxEntryLen then
+      container[number]=os.date("%x").."|"..user.sName.."|"..entry
+      AddDelShow.SaveShit(container,file)
+      SendTxt(user,env,Bot.name,"Your entry has been successfully added to the "..wtf)
+    else
+      SendTxt(user,env,Bot.name,"Maximum entry length: "..AddDelShow.MaxEntryLen.." chars.")
+    end
+  else
+    SendTxt(user,env,Bot.name,"Please add an entry, too.")
+  end
+  container=nil
+  Clear()
+end
+
+function AddDelShow.LoadShit(file)
+  local shit={}
+  number=0
+  local f=io.open("lawmaker/components/metafiles/"..file,"r")
+  if f then
+    for line in f:lines() do
+      number = number +1
+      shit[number]=line
+    end
+    f:close()
+  end
+  return shit
+end
+
+function AddDelShow.SaveShit(container,file)
+  local f=io.open("lawmaker/components/metafiles/"..file,"w+")
+  for i=1,number do
+    if container[i] then
+      f:write(container[i].."\n")
+    end
+  end
+  f:close()
+  Clear()
+end
+
+function AddDelShow.ShowShit(user,data,env,wtf,file)
+  local container=AddDelShow.LoadShit(file)
+  local msg="\r\nHere you go, the "..wtf..":\r\n\r\n"
+  if number>0 then
+    for i=1,number do
+      local _,_,who,when,entry=string.find(container[i], "(.+)|(.+)|(.+)")
+      msg=msg..i..".\t"..who.." - "..when.." ---> "..entry.."\r\n"
+    end
+  else
+    msg=msg.."No entries in "..wtf.."."
+  end
+  user:SendPM(Bot.name,msg)
+  container=nil
+  Clear()
+end
+
+function AddDelShow.DelShit(user,data,env,wtf,file)
+  local container=AddDelShow.LoadShit(file)
+  local _,_,args=string.find(data,"%b<>%s+%S+%s+(.+)")
+  if args then
+    string.gsub(args,"(%d+)",
+      function (what)
+        what = tonumber(what)
+	if what then 
+          if container[what] then
+           SendTxt(user,env,Bot.name,"Entry #"..what.." is deleted from the "..wtf..".")
+           container[what]=nil
+           AddDelShow.SaveShit(container,file)
+          else
+           SendTxt(user,env,Bot.name,"Entry #"..what.." wasn't found in the "..wtf..".")
+          end
+	else
+         SendTxt(user,env,Bot.name, "I need the ID number to delete an entry.")
+	end
+      end)
+  else
+    SendTxt(user,env,Bot.name, "I need at least one ID number to work! ;).")
+  end
+  container=nil
+  Clear()
+end
+
+for a,b in pairs(AddDelShow.Containers) do -- Now got it. :DDDDDD
+  RegCmd(b.ShowCmd,AddDelShow.ShowShit,{a,b.File},b.ShowLevel,"\t\t\t\t\tShows the "..a..".")
+  RegCmd(b.AddCmd,AddDelShow.AddShit,{a,b.File},b.AddLevel,"<entry>\t\t\t\tAdds an entry to the "..a..".")
+  RegCmd(b.DelCmd,AddDelShow.DelShit,{a,b.File},b.DelLevel,"<ID_number>\t\t\t\tDeletes an entry from the "..a.." by ID number.")
+	RegRC(b.ShowLevel,"1 3",a.."\\Show the "..a,"!"..b.ShowCmd)
+	RegRC(b.AddLevel,"1 3",a.."\\Add an entry to the "..a,"!"..b.AddCmd.." %[line:Entry to add:]")
+	RegRC(b.DelLevel,"1 3",a.."\\Delete an entry from the "..a.." by ID number","!"..b.DelCmd.." %[line:ID to delete:]")
+end
