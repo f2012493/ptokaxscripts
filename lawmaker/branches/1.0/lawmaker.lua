@@ -50,7 +50,6 @@ tNUCOrder= -- order of funcs to be called on NewUser(Op)Connected
     "random welcome message",
     "showing motd",
     "new message warning on connect",
-    "announcing new releases",
     "sending opchat/vipchat history rightclk",
   }
 
@@ -133,8 +132,8 @@ function NewUserConnected(user)
     local name=modules.nuc[todo]
     if modules.nuc[todo] then
       if name.func(user,unpack(name.parms))=="shit" then
-	bad=true
-	return 1
+      bad=true
+      return 1
       end
     end
   end
