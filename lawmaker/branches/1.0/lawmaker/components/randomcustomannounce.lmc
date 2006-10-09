@@ -12,7 +12,7 @@ RandomCustomAnnounce.welcome,RandomCustomAnnounce.leave={},{}
 
 function RandomCustomAnnounce.Add(user,data,env,what)
   if what=="welcome" then
-    local _,_,pt1,pt2=string.find(data,"%b<>%s+%S+%s+(.+)%s:%s(.+)")
+    local pt1,pt2=string.match(data,"%b<>%s+%S+%s+(.+)%s:%s(.+)")
     if pt1 and pt2 then
       if not RandomCustomAnnounce.welcome[user.sName] then RandomCustomAnnounce.welcome[user.sName]={} end
       table.insert(RandomCustomAnnounce.welcome[user.sName],pt1.." "..user.sName.." "..pt2)
@@ -22,7 +22,7 @@ function RandomCustomAnnounce.Add(user,data,env,what)
       SendTxt(user,env,Bot.name,"Incorrect usage! It's !addwelcome <pt1> : <pt2>.")
     end
   else
-    local _,_,mess=string.find(data,"%b<>%s+%S+%s+(.+)")
+    local mess=string.match(data,"%b<>%s+%S+%s+(.+)")
     if mess then
       if not RandomCustomAnnounce.leave[user.sName] then RandomCustomAnnounce.leave[user.sName]={} end
       table.insert(RandomCustomAnnounce.leave[user.sName],user.sName.." "..mess)
@@ -37,13 +37,13 @@ end
 function RandomCustomAnnounce.Show (user,data,env,what)
   local tbl
   if what=="welcome messages" then tbl=RandomCustomAnnounce.welcome else tbl=RandomCustomAnnounce.leave end
-  local _,_,param=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  local param=string.match(data,"%b<>%s+%S+%s+(%S+)")
   param=param or user.sName
   if tbl[param] then
-    if table.getn(tbl[param]) > 0 then
+    if #tbl[param] > 0 then
       local msg="Here you go, "..what.." of "..param..":\r\n==============================\r\n"
-      for a=1,table.getn(tbl[param]) do
-        msg=msg..a..". "..tbl[param][a].."\r\n"
+      for a,b in ipairs(tbl[param]) do
+        msg=msg..a..". "..b.."\r\n"
       end
       msg=msg.."=============================="
       user:SendPM(Bot.name,msg)
@@ -62,12 +62,12 @@ function RandomCustomAnnounce.Save()
   end
   local f=io.open("lawmaker/components/metafiles/randomcustomannounce.dat","w+")
   local msg="RandomCustomAnnounce.welcome={\n"
-  for a,b in RandomCustomAnnounce.welcome do
+  for a,b in pairs(RandomCustomAnnounce.welcome) do
     msg=msg..string.format("[%q]",a).."={"..parsing(b).."},\n"
   end
   msg=msg.."}\n"
   msg=msg.."RandomCustomAnnounce.leave={\n"
-  for a,b in RandomCustomAnnounce.leave do
+  for a,b in pairs(RandomCustomAnnounce.leave) do
     msg=msg..string.format("[%q]",a).."={"..parsing(b).."},\n"
   end
   msg=msg.."}"
@@ -76,7 +76,7 @@ function RandomCustomAnnounce.Save()
 end
 
 function RandomCustomAnnounce.NoAnnounce (user,data,env)
-  local _,_,switch=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  local switch=string.match(data,"%b<>%s+%S+%s+(%S+)")
   if switch=="on" then
     if not RandomCustomAnnounce.NoAnnounceList[user.sName] then
       RandomCustomAnnounce.NoAnnounceList[user.sName]=1
@@ -101,7 +101,7 @@ end
 function RandomCustomAnnounce.Delete(user,data,env,what)
   local tbl
   if what=="welcome" then tbl=RandomCustomAnnounce.welcome else tbl=RandomCustomAnnounce.leave end
-  local _,_,arg=string.find(data,"%b<>%s+%S+%s+(.+)")
+  local arg=string.match(data,"%b<>%s+%S+%s+(.+)")
 --[[   I faced a problem here. If an array consists of n elements, then if you remove the 3rd one,
   the ones following it will have 1 subtracted from their index number.
   (Lua always calls table.setn after table.remove occurs.)
@@ -111,7 +111,7 @@ function RandomCustomAnnounce.Delete(user,data,env,what)
     -- First we create an array.
     local parmtbl={}
     -- While we find digits in the args,...
-    for n in string.gfind(arg,"(%d+)") do
+    for n in string.gmatch(arg,"(%d+)") do
       -- ... we insert them to that array.
       table.insert(parmtbl,n)
     end
@@ -120,12 +120,12 @@ function RandomCustomAnnounce.Delete(user,data,env,what)
     -- And we go through the elements of it, in a reverse order.
     -- Thus, we always remove from BEFORE the last removed element.
     -- No longer shifting in index numbers.
-    for k=table.getn(parmtbl),1,-1 do
+    for k=#parmtbl,1,-1 do
       local id=tonumber(parmtbl[k])
       if tbl[user.sName][id] then
         SendTxt(user,env,Bot.name,"Message #"..id.." deleted!")
-	table.remove(tbl[user.sName],id)
-        if table.getn(tbl[user.sName])==0 then tbl[user.sName]=nil end
+	      table.remove(tbl[user.sName],id)
+        if #tbl[user.sName]==0 then tbl[user.sName]=nil end
         RandomCustomAnnounce.Save()
       else
         SendTxt(user,env,Bot.name,"Message #"..id.." not found!")
@@ -138,13 +138,13 @@ end
 
 function RandomCustomAnnounce.NewUserConnected(user)
   if RandomCustomAnnounce.welcome[user.sName] and not RandomCustomAnnounce.NoAnnounceList[user.sName] then
-    SendToAll(Bot.name,RandomCustomAnnounce.welcome[user.sName][math.random(table.getn(RandomCustomAnnounce.welcome[user.sName]))])
+    SendToAll(Bot.name,RandomCustomAnnounce.welcome[user.sName][math.random(#RandomCustomAnnounce.welcome[user.sName])])
   end
 end
 
 function RandomCustomAnnounce.UserDisconnected(user)
   if RandomCustomAnnounce.leave[user.sName] and not RandomCustomAnnounce.NoAnnounceList[user.sName] then
-    SendToAll(Bot.name,RandomCustomAnnounce.leave[user.sName][math.random(table.getn(RandomCustomAnnounce.leave[user.sName]))])
+    SendToAll(Bot.name,RandomCustomAnnounce.leave[user.sName][math.random(#RandomCustomAnnounce.leave[user.sName])])
   end
 end
 

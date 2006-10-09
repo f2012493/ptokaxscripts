@@ -23,7 +23,7 @@ function ChatStats.Main()
 end
 
 function ChatStats.ChatArrival(user,data)
-  local _,_,cmd=string.find(data,"%b<>%s+[%!%+%#](%S+)")
+  local cmd=string.match(data,"%b<>%s+[%!%+%#](%S+)")
   local ptxcmd=
       {
 	["op"]=5,
@@ -34,7 +34,7 @@ function ChatStats.ChatArrival(user,data)
 	["stat"]=1
       }
   if not commandtable[cmd] and not ptxcmd[cmd] then
-    local _,_,txt=string.find(data,"%b<>%s+(.+)")
+    local txt=string.match(data,"%b<>%s+(.+)")
     if txt then
       ChatStats.ChatTbl[user.sName]=ChatStats.ChatTbl[user.sName] or {words=0,smilies=0,lines=0,chars=0}
       ChatStats.ChatTbl[user.sName].lines=ChatStats.ChatTbl[user.sName].lines+1
@@ -51,19 +51,19 @@ function ChatStats.ChatArrival(user,data)
 end
 
 function ChatStats.Show(user,data,env,you)
-  local _,_,args=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  local args=string.match(data,"%b<>%s+%S+%s+(%S+)")
   if you then
     if not args then
       if ChatStats.ChatTbl[user.sName] then
-	SendTxt(user,env,Bot.name,"Your chat stats are: "..ChatStats.ChatTbl[user.sName].lines.." lines,  "..ChatStats.ChatTbl[user.sName].words.." words, "..ChatStats.ChatTbl[user.sName].chars.." characters and "..ChatStats.ChatTbl[user.sName].smilies.." smilies.")
+	      SendTxt(user,env,Bot.name,"Your chat stats are: "..ChatStats.ChatTbl[user.sName].lines.." lines,  "..ChatStats.ChatTbl[user.sName].words.." words, "..ChatStats.ChatTbl[user.sName].chars.." characters and "..ChatStats.ChatTbl[user.sName].smilies.." smilies.")
       else
-	SendTxt(user,env,Bot.name,"You are not in my chat stats.")
+	      SendTxt(user,env,Bot.name,"You are not in my chat stats.")
       end
     else
       if ChatStats.ChatTbl[args] then
-	SendTxt(user,env,Bot.name,"Chat stats of "..args.." are: "..ChatStats.ChatTbl[args].lines.." lines,  "..ChatStats.ChatTbl[args].words.." words, "..ChatStats.ChatTbl[args].chars.." characters and "..ChatStats.ChatTbl[args].smilies.." smilies.")
+        SendTxt(user,env,Bot.name,"Chat stats of "..args.." are: "..ChatStats.ChatTbl[args].lines.." lines,  "..ChatStats.ChatTbl[args].words.." words, "..ChatStats.ChatTbl[args].chars.." characters and "..ChatStats.ChatTbl[args].smilies.." smilies.")
       else
-	SendTxt(user,env,Bot.name,args.." is not in my chat stats.")
+	      SendTxt(user,env,Bot.name,args.." is not in my chat stats.")
       end
     end
   else
@@ -72,23 +72,23 @@ function ChatStats.Show(user,data,env,you)
       local msg="\r\n"..string.rep("=",25).."\r\nTop "..args.." chatters:\r\n"..string.rep("=",25).."\r\n"
       local tmp,numtbl={},{}
       for a,b in pairs(ChatStats.ChatTbl) do
-	-- points are: #lines + #words + #smilies + #chars
-	local sum=b.chars+b.lines+b.words+b.smilies
-	if not tmp[sum] then
-	  tmp[sum]={}
-	  table.insert(numtbl,sum)
-	end
-	if not tmp[sum][a] then
-	  tmp[sum][a]=1
-	end
+        -- points are: #lines + #words + #smilies + #chars
+        local sum=b.chars+b.lines+b.words+b.smilies
+        if not tmp[sum] then
+          tmp[sum]={}
+          table.insert(numtbl,sum)
+        end
+        if not tmp[sum][a] then
+          tmp[sum][a]=1
+        end
       end
       table.sort(numtbl)
       local c
-      if table.getn(numtbl) <= args then c=1 else c=table.getn(numtbl)-args end
+      if #numtbl <= args then c=1 else c=table.getn(numtbl)-args end
       for k=table.getn(numtbl),c,-1 do
-	for i,v in pairs(tmp[numtbl[k]]) do
-	  msg=msg..i..": "..ChatStats.ChatTbl[i].lines.." lines,  "..ChatStats.ChatTbl[i].words.." words, "..ChatStats.ChatTbl[i].chars.." characters and "..ChatStats.ChatTbl[i].smilies.." smilies.".."\r\n"
-	end
+	      for i,v in pairs(tmp[numtbl[k]]) do
+          msg=msg..i..": "..ChatStats.ChatTbl[i].lines.." lines,  "..ChatStats.ChatTbl[i].words.." words, "..ChatStats.ChatTbl[i].chars.." characters and "..ChatStats.ChatTbl[i].smilies.." smilies.".."\r\n"
+        end
       end
       user:SendPM(Bot.name,msg)
       tmp,numtbl=nil,nil; Clear()
@@ -99,7 +99,7 @@ end
 function ChatStats.OnExit()
   local msg=""
   local f=io.open ("lawmaker/components/metafiles/chatstats.dat","w+")
-  for a,b in ChatStats.ChatTbl do
+  for a,b in pairs(ChatStats.ChatTbl) do
     msg=msg..string.format("[%q]",a).."={words="..b.words..",smilies="..b.smilies..",lines="..b.lines..",chars="..b.chars.."},\r\n"
   end
   f:write("ChatStats.ChatTbl={\n",msg,"}")

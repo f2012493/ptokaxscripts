@@ -10,7 +10,7 @@ Run(path.."cfg/immune.ini")
 function Immune.Main() Immune.List=maketable("lawmaker/components/metafiles/immune.dat") end
 
 function Immune.Immune(user,data,env)
-  local _,_,nick=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  local nick=string.match(data,"%b<>%s+%S+%s+(%S+)")
   if not nick then
     SendTxt(user,env,Bot.name,"Please! Tell me the nick! Users without nick can't connect. :P")
   else
@@ -25,7 +25,7 @@ function Immune.Immune(user,data,env)
 end
 
 function Immune.DeImmune(user,data,env)
-  local _,_,nick=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  local nick=string.match(data,"%b<>%s+%S+%s+(%S+)")
   if not nick then
     SendTxt(user,env,Bot.name,"This nick () is not in my list. ;)")
   else
@@ -41,15 +41,15 @@ end
 
 function Immune.ShowImmuned(user,env)
   local arrrrrrrr={}
-  for a,b in Immune.List do
+  for a,b in pairs(Immune.List) do
     table.insert(arrrrrrrr,a)
   end
   local mess="\r\hHere are the immuned users:\r\n======================\r\n\r\n"
-  if table.getn (arrrrrrrr)==0 then
+  if #arrrrrrrr==0 then
     mess=mess.."Nobody."
   else
-    for a=1,table.getn (arrrrrrrr) do
-      mess=mess..arrrrrrrr[a].."\r\n"
+    for _,nick in ipairs(arrrrrrrr) do
+      mess=mess..nick.."\r\n"
     end
   end
   mess=mess.."\r\n======================"

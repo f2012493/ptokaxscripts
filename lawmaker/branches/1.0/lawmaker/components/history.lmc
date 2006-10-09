@@ -11,9 +11,9 @@ Run(path.."cfg/history.ini")
 ChatHistory.Lines={}
 
 function ChatHistory.Display(user,data,env)
-	local k=table.getn(ChatHistory.Lines)
+	local k=#ChatHistory.Lines
   if k==0 then SendTxt(user,env,Bot.name,"History buffer is empty. :(") return end
-  local _,_,no=string.find(data,"%b<>%s+%S+%s+(%d+)")
+  local no=string.match(data,"%b<>%s+%S+%s+(%d+)")
   local msg,hey="\r\n\r\n"..string.rep("=",15).." Start of chat history "..string.rep("=",13).."\r\n\r\n",""
   if not no then no=ChatHistory.LinesToDisplay end
   if tonumber(no) >= k then
@@ -29,7 +29,7 @@ function ChatHistory.Display(user,data,env)
 end
 
 function ChatHistory.ChatArrival(user,data)
-  local _,_,cmd=string.find(data,"%b<>%s+[%!%+%#](%S+)")
+  local cmd=string.match(data,"%b<>%s+[%!%+%#](%S+)")
   local ptxcmd=
     {
       ["op"]=5,
@@ -41,9 +41,9 @@ function ChatHistory.ChatArrival(user,data)
     }
   if not commandtable[cmd] and not ptxcmd[cmd] then
     local datetbl={"%H:%M","%I:%M %p","%Y. %m. %d. HH:MM","%c"}
-    if ChatHistory.DateFormat==0 or ChatHistory.DateFormat > table.getn(datetbl) then dt="" else dt="["..os.date(datetbl[ChatHistory.DateFormat]).."]" end
+    if ChatHistory.DateFormat==0 or ChatHistory.DateFormat > #datetbl then dt="" else dt="["..os.date(datetbl[ChatHistory.DateFormat]).."]" end
     table.insert(ChatHistory.Lines,dt.." "..data)
-		if table.getn(ChatHistory.Lines) >= ChatHistory.LinesToStore then table.remove(ChatHistory.Lines,1) end
+		if #ChatHistory.Lines >= ChatHistory.LinesToStore then table.remove(ChatHistory.Lines,1) end
   end
 end
 

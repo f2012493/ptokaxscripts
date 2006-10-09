@@ -16,7 +16,7 @@ AwayBot.AFK={}
 
 function AwayBot.AwayfromKeyBoard(user,data,env)
   if not AwayBot.AFK[user.sName] then
-    local _,_,why=string.find(data,"%b<>%s+%S+%s+(.+)")
+    local why=string.match(data,"%b<>%s+%S+%s+(.+)")
     AwayBot.StoreAFK(user,data,env,why)
   else
     SendToAll(Bot.name,"User "..user.sName.." has come back now.")
@@ -25,7 +25,7 @@ function AwayBot.AwayfromKeyBoard(user,data,env)
 end
 
 function AwayBot.StoreAFK(user,data,env,why)
-  local _,_,why=string.find(data,"%b<>%s+%S+%s+(.+)")
+  local why=string.match(data,"%b<>%s+%S+%s+(.+)")
   if not why then
     SendTxt(user,env,Bot.name,"You have been set to away.")
     SendToAll(Bot.name,"User "..user.sName.." went away.")
@@ -52,14 +52,14 @@ function AwayBot.BackToKeyBoard(user,data,env)
 end
 
 function AwayBot.AwayMSG(user,whoTo)
-  local _,_,why,dat=string.find(AwayBot.AFK[whoTo],"(.+)%|(.+)")
+  local why,dat=string.match(AwayBot.AFK[whoTo],"(.+)%|(.+)")
   why=why or "N/A"; dat=dat or AwayBot.AFK[whoTo]
     user:SendPM(whoTo,"I went away on "..dat..". Reason: "..why..".")
 end
 
 function AwayBot.AmIAway(user,env)
   if AwayBot.AFK[user.sName] then
-    local _,_,why,dat=string.find(AwayBot.AFK[user.sName],"(.+)%|(.+)")
+    local why,dat=string.match(AwayBot.AFK[user.sName],"(.+)%|(.+)")
     why=why or "N/A"
     SendTxt(user,env,Bot.name,"You went away on "..dat..". Reason: "..why..".")
   else
@@ -69,13 +69,13 @@ end
 
 function AwayBot.ShowAway(user,data,env)
   awayarray={}
-  local _,_,nick=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  local nick=string.match(data,"%b<>%s+%S+%s+(%S+)")
   if nick then
     if AwayBot.AFK[nick] then
       if not string.find(AwayBot.AFK[nick],"%|") then
         user:SendPM(Bot.name,nick.." went away at "..AwayBot.AFK[nick].." and left no message.")
       else
-        local _,_,why,dat=string.find(AwayBot.AFK[nick],"(.+)|(.+)")
+        local why,dat=string.match(AwayBot.AFK[nick],"(.+)|(.+)")
         user:SendPM(Bot.name,nick.." went away at "..dat.." and left this away message: "..why)
       end
     else
@@ -83,19 +83,19 @@ function AwayBot.ShowAway(user,data,env)
     end
   else
     local msg="\r\n\r\n\t\t\t\t\t\tALL USERS' AWAY MESSAGES\r\n=================================================================================================================================\r\n\r\n"
-    for a,b in AwayBot.AFK do
+    for a,b in pairs(AwayBot.AFK) do
       table.insert(awayarray,a)
       table.sort(awayarray)
     end
-      if table.getn(awayarray)==0 then
+      if #awayarray==0 then
         msg=msg.."Nobody is away.\r\n\r\n"
       else
-        for a=1,table.getn(awayarray) do
-        if not string.find(AwayBot.AFK[awayarray[a]],"%|") then
-          msg=msg..awayarray[a].." went away at "..AwayBot.AFK[awayarray[a]].." and left no message.\r\n\r\n"
+        for i,v in ipairs(awayarray) do
+        if not string.find(AwayBot.AFK[v],"%|") then
+          msg=msg..v.." went away at "..AwayBot.AFK[v].." and left no message.\r\n\r\n"
 	else
-          local _,_,why,dat=string.find(AwayBot.AFK[awayarray[a]],"(.+)|(.+)")
-          msg=msg..awayarray[a].." went away at "..dat.." and left this away message: "..why.."\r\n\r\n"
+          local why,dat=string.match(AwayBot.AFK[v],"(.+)|(.+)")
+          msg=msg..v.." went away at "..dat.." and left this away message: "..why.."\r\n\r\n"
 	end
       end
     end
@@ -106,7 +106,7 @@ end
 
 function AwayBot.SaveAway()
   local f=io.open("lawmaker/components/metafiles/away.dat","w+")
-  for a,b in AwayBot.AFK do
+  for a,b in pairs(AwayBot.AFK) do
     f:write(a.."|"..b.."\n")
   end
   f:close()
@@ -116,7 +116,7 @@ function AwayBot.LoadAway()
   local f=io.open("lawmaker/components/metafiles/away.dat","r")
   if f then
     for line in f:lines() do
-      local _,_,nick,msg=string.find(line,"^(%S+)|(.+)$")
+      local nick,msg=string.match(line,"^(%S+)|(.+)$")
       AwayBot.AFK[nick]=msg
     end
     f:close()
@@ -124,7 +124,7 @@ function AwayBot.LoadAway()
 end
 
 function AwayBot.ToArrival(user,data)
-  local _,_,whoTo = string.find(data,"$To:%s+(%S+)")
+  local whoTo = string.match(data,"$To:%s+(%S+)")
   if AwayBot.AFK[whoTo] then
     AwayBot.AwayMSG(user,whoTo)
   end

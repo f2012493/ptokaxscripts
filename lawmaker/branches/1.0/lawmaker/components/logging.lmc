@@ -14,24 +14,24 @@ end
 
 function Logging.SearchLog(user,data,env)
   local msg=""
-  local _,_,parm=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  local parm=string.match(data,"%b<>%s+%S+%s+(%S+)")
   if parm then
     local logs=Logging.MakeLogList()
-    for i=1,table.getn(logs) do
-      local f=io.open("lawmaker/logs/"..logs[i],"r")
+    for _,log in ipairs(logs) do
+      local f=io.open("lawmaker/logs/"..log,"r")
       if f then
-	for line in f:lines() do
-	  local u
-	  if string.find(parm,"%d+%.%d+%.%d+%.%d+") then
-	    _,_,u=string.find(line,"(%d+%.%d+%.%d+%.%d+)")
-	  else
-	    _,_,u=string.find(line,"^(%S+)")
-	  end
-	  if u==username then
-	    msg=msg.."\r\n"..logs[i].." ---> "..line
-	  end
-	end
-	f:close()
+        for line in f:lines() do
+          local u
+          if string.find(parm,"%d+%.%d+%.%d+%.%d+") then
+            u=string.match(line,"(%d+%.%d+%.%d+%.%d+)")
+          else
+            u=string.match(line,"^(%S+)")
+          end
+          if u==username then
+            msg=msg.."\r\n"..logs[i].." ---> "..line
+          end
+        end
+	      f:close()
       end
     end
     if msg~="" then
@@ -58,7 +58,7 @@ function Logging.MakeLogList()
 end
 
 function Logging.CleanLogs(user,data,env)
-  local _,_,logage=string.find(data,"%b<>%s+%S+%s+(%d+)")
+  local logage=string.match(data,"%b<>%s+%S+%s+(%d+)")
   if not logage then logage=Logging.MaxAge end
   local juliannow = JulianDate(SplitTimeString(os.date("%Y. %m. %d. %X")))
   local oldest = logage*7*1440
@@ -66,16 +66,16 @@ function Logging.CleanLogs(user,data,env)
   local x=os.clock()
   local count,count2=0,0
   local logs=Logging.MakeLogList()
-  for i=1,table.getn(logs) do
+  for _,log in ipairs(logs) do
     count=count+1
-    local _,_,logdate=string.find(logs[i],"([^%_]+)")
-    local _,_,Y,M,D=string.find(logdate,"([^%-]+).([^%-]+).(%S+)")
+    local logdate=string.find(log,"([^%_]+)")
+    local Y,M,D=string.match(logdate,"([^%-]+).([^%-]+).(%S+)")
     local julianl=JulianDate(SplitTimeString(Y..". "..M..". "..D.." "..os.date("%X")))  -- here cant remember of the conversion
     local diff=juliannow-julianl
     local hours, mins= math.floor(diff) * 24 + math.floor(frac(diff) * 24), math.floor(frac(frac(diff)*24)*60)
     local logtime=hours*60+mins
     if logtime > oldest then
-      local success,err=os.remove(frmHub: GetPtokaXLocation().."scripts/lawmaker/logs/"..logs[i])
+      local success,err=os.remove(frmHub: GetPtokaXLocation().."scripts/lawmaker/logs/"..log)
       if success then
         count2=count2+1
       else

@@ -237,26 +237,26 @@ end
   
 
 function Redirect.RedirectAllNow(user,data,env)
-  local _,_,addy=string.find(data,"%b<>%s+%S+%s+(%S+)")
-  local _,_,reason=string.find(data,"%b<>%s+%S+%s+%S+%s+(.+)")
+  local addy=string.match(data,"%b<>%s+%S+%s+(%S+)")
+  local reason=string.match(data,"%b<>%s+%S+%s+%S+%s+(.+)")
   reason=reason or "No reason specified."
   if not addy then
     SendToOps(Bot, user.sName.." is redirecting all users to: "..frmHub:GetRedirectAddress()..".")
     SendTxt(user,env,Bot.name,"You are redirecting all users to: "..frmHub:GetRedirectAddress()..".")
-      for _,obj in frmHub:GetOnlineNonOperators() do
+      for _,obj in ipairs(frmHub:GetOnlineNonOperators()) do
         obj:Redirect(frmHub:GetRedirectAddress(),reason)
       end
   else
     SendToOps(Bot, user.sName.." is redirecting all users to: "..addy..".")
     SendTxt(user,env,Bot.name,"You are redirecting all users to: "..addy..".")
-    for _,obj in frmHub:GetOnlineNonOperators() do
+    for _,obj in ipairs(frmHub:GetOnlineNonOperators()) do
       obj:Redirect(addy,reason)
     end
   end
 end
 
 function Redirect.SetRedirectAddressAndOnOff(user,data,env)
-  local _,_,what,onoffadd=string.find(data,"%b<>%s+%S+%s+(%S+)%s+(.+)")
+  local what,onoffadd=string.match(data,"%b<>%s+%S+%s+(%S+)%s+(.+)")
   if what then
     if Redirect.WTFItIs[what] then
       if onoffadd=="on" or onoffadd=="off" then
@@ -282,19 +282,19 @@ function Redirect.SetRedirectAddressAndOnOff(user,data,env)
 	  end
 	end
       else
-	SendToOps(Bot.name,user.sName.." has set the redirect address for "..Redirect.WTFItIs[what].." to "..onoffadd..".")
-	SendTxt(user,env,Bot.name,"Redirect address for "..Redirect.WTFItIs[what].." is now set to "..onoffadd..".")
-	frmHub:SetRedAddy(what,onoffadd)
+        SendToOps(Bot.name,user.sName.." has set the redirect address for "..Redirect.WTFItIs[what].." to "..onoffadd..".")
+        SendTxt(user,env,Bot.name,"Redirect address for "..Redirect.WTFItIs[what].." is now set to "..onoffadd..".")
+        frmHub:SetRedAddy(what,onoffadd)
       end
     elseif what=="all" then
       if onoffadd ~="on" and onoffadd~="off" then
-	SendToOps(Bot.name,user.sName.." has set ALL redirect addresses to "..onoffadd..".")
-	SendTxt(user,env,Bot.name,"Every redirect address is now set to "..onoffadd..".")
-	for a,b in Redirect.WTFItIs do
-	  frmHub:SetRedAddy(a,onoffadd)
-	end
+        SendToOps(Bot.name,user.sName.." has set ALL redirect addresses to "..onoffadd..".")
+        SendTxt(user,env,Bot.name,"Every redirect address is now set to "..onoffadd..".")
+        for a,b in pairs(Redirect.WTFItIs) do
+          frmHub:SetRedAddy(a,onoffadd)
+        end
       else
-	SendTxt(user,env,Bot.name,[[The "all" option works for setting addresses only, not on/off bits.]])
+	      SendTxt(user,env,Bot.name,[[The "all" option works for setting addresses only, not on/off bits.]])
       end
     else
       SendTxt(user,env,Bot.name,"Redirect address for "..what.." is unsupported or does not exist.")
@@ -305,8 +305,8 @@ function Redirect.SetRedirectAddressAndOnOff(user,data,env)
 end
 
 function Redirect.RedirectUser(user,data,env)
-  local _,_,nick=string.find(data,"%b<>%s+%S+%s+(%S+)")
-  local _,_,raddy=string.find(data,"%b<>%s+%S+%s+%S+%s+(%S+)")
+  local nick=string.match(data,"%b<>%s+%S+%s+(%S+)")
+  local raddy=string.match(data,"%b<>%s+%S+%s+%S+%s+(%S+)")
   if nick then
     local usr=GetItemByName(nick)
     if usr then
@@ -330,7 +330,7 @@ function Redirect.KillBuiltinRed(user,data)
 end
 
 function Redirect.ShowRedirect(user,data,env)
-  local _,_,what=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  local what=string.match(data,"%b<>%s+%S+%s+(%S+)")
   if what then
     if Redirect.WTFItIs[what] then
       local msg
@@ -362,7 +362,7 @@ function Redirect.ShowRedirect(user,data,env)
     end
   else
     local msg="\r\nThe redirect addresses are:\r\n==============================\r\n"
-    for a,b in Redirect.WTFItIs do
+    for a,b in pairs(Redirect.WTFItIs) do
       if frmHub:GetRedAddy(a)~=-1 then
 	if frmHub:GetRedAddy(a) and frmHub:GetRedAddy(a)~="<Redirect address>" then
 	  msg=msg.."\r\n"..Redirect.WTFItIs[a].." ---> "..frmHub:GetRedAddy(a)
@@ -398,7 +398,7 @@ RegCmd("showredirect",Redirect.ShowRedirect,{},Redirect.Levels.ShowRedirect,"<sh
 RegFunc("forcemovearr","disabling builtin redirect",Redirect.KillBuiltinRed,{})
 
 -- Now registering rightclick commands. 
-for a,b in Redirect.WTFItIs do
+for a,b in pairs(Redirect.WTFItIs) do
   if frmHub:SetRedAddy(a) and a~="default" then
     RegRC(Redirect.Levels.SetRedirect,"1 3","Redirect\\Set redirect address for\\"..b,"!setredirect "..a.." %[line:Address:]")
   end

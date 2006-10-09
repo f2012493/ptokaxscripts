@@ -28,7 +28,7 @@ Checks.ScanMyINFO=function(user) ----------
   local speed,hubs,slots,Guest,Reg,OP
 	if not user.sConnection then return "noconn" end
   if string.find(user.sConnection,"%(.+%/.+%)") then -- dirty workaround for R2++ et al. :-)
-    _,_,speed=string.find(user.sConnection,"(.+)%(.+%/.+%)")
+    speed=string.match(user.sConnection,"(.+)%(.+%/.+%)")
   end
   speed=speed or user.sConnection
   if not user.iRegHubs then
@@ -44,7 +44,7 @@ Checks.ScanMyINFO=function(user) ----------
 --   local Guest,Reg,OP,slots,hubs,ratio
   local Maxslotsforconn,Ratioforconn,Maxhubsforconn,minlimitforconn=Checks.SlotHubLimit.Rules[speed].max_slots,Checks.SlotHubLimit.Rules[speed].min_ratio,Checks.SlotHubLimit.Rules[speed].max_hubs,Checks.SlotHubLimit.Rules[speed].min_limit
   local limit1=user.iLlimit or user.iBlimit--string.find(user.sMyInfoString,"[BLU]:(%d+)")
-  local _,_,limit2 = string.find(user.sMyInfoString,"F:%d+/(%d+)")
+  local _,_,limit2 = string.match(user.sMyInfoString,"F:%d+/(%d+)")
 	if limit1==0 then limit1=nil end
 -- if tonumber (Hubs) then
 --      if Hubs=="0" then
@@ -79,7 +79,7 @@ Checks.SlotHubLimit.CheckHubsAndSlots=function(user)
 		local bad
     local conn=user.sConnection
     if conn and string.find(conn,"%(.+%/.+%)") then -- dirty workaround for R2++ et al. :-)
-      _,_,conn=string.find(conn,"(.+)%(.+%/.+%)")
+      conn=string.match(conn,"(.+)%(.+%/.+%)")
     end
 		if not conn or conn=="" then user:SendData("ConnectionCheck","Your connection type could not be determined.") bad=true end
     if not Checks.SlotHubLimit.Rules[conn] then user:SendData("ConnectionCheck","Your connection type is unknown.") bad=true end
@@ -158,7 +158,7 @@ Checks.Share.Check=function(user) -- from channelbot
       local minshare=Checks.Share.MinShare*gb
       local maxshare=Checks.Share.MaxShare*gb*1024
       if not temp then
-        user:SendData("ShareCheck","I could not determine your share!  Disconnecting ... |")
+        user:SendData("ShareCheck","I could not determine your share!  Disconnecting ...")
         user:Disconnect() return "shit"
       end
       local Share = string.format("%0.2f", tonumber(temp)/gb)
@@ -166,7 +166,7 @@ Checks.Share.Check=function(user) -- from channelbot
         user:SendData("ShareCheck","You do not meet the share minimum ("..Checks.Share.MinShare.." GB)!")
         return(Checks.Punish(user,"sh",Checks.Share.BadShareTodo))
       elseif tonumber(temp) > maxshare then
-	user:SendData("ShareCheck","Do you really think that I believe that you are sharing "..string.format("%0.2f", tonumber(temp)/(gb*1024)).." TBytes of data??? |")
+	user:SendData("ShareCheck","Do you really think that I believe that you are sharing "..string.format("%0.2f", tonumber(temp)/(gb*1024)).." TBytes of data???")
 	user:Disconnect() return "shit"
       end
     end
@@ -211,19 +211,19 @@ Checks.Client.Determine=function(user)
   local clienttype, version
   if string.find(user.sMyInfoString,"<DCGUI") then 
     clienttype="DCGUI"
-    _,_, version = string.find(user.sMyInfoString,"V:0.(%d+.%d+)")
+    version = string.match(user.sMyInfoString,"V:0.(%d+.%d+)")
   else
 		local str=user.sTag; if user.bHasSuspiciousTag then str=user.sMyInfoString end
   --string.find(user.sMyInfoString,"<++") or string.find(user.sMyInfoString,"<oDC") or string.find(user.sMyInfoString,"<StrgDC++") or string.find(user.sMyInfoString,"<RMDC++") or string.find (user.sMyInfoString,"<DC:PRO") then
 		if str then
-			for a,b in Checks.Client.Patterns do
+			for a,b in pairs(Checks.Client.Patterns) do
 				if string.find(str,a) then
 					clienttype=b[1]
-					_,_,version=string.find(str,b[2])
+					version=string.match(str,b[2])
 					break
 				else
 					clienttype = "DC++" 
-					_,_,version=string.find(str,"V:(0.%d+)")
+					version=string.match(str,"V:(0.%d+)")
 				end
 			end
 		end
@@ -244,11 +244,11 @@ Checks.Client.Check=function(user)
 					["<.+%s+.*>,"]="Found spaces in the wrong place in the tag.",
 					["<.+,%s+.*>"]="Found spaces in the wrong place in the tag.",
 					["<.+[\"\\].*>"]="Found backslash or quotation mark in the tag.",
-								["S%:%d+%:"]="Colon in the bad place in the tag.",
-								["S%:%D+"]="Non-numeric or missing slots count.",
+          ["S%:%d+%:"]="Colon in the bad place in the tag.",
+          ["S%:%D+"]="Non-numeric or missing slots count.",
 				}
       local bad
-      for a,b in fakes do
+      for a,b in pairs(fakes) do
 				if string.find(str,a) then
 					bad=b
 				end
@@ -275,7 +275,7 @@ Checks.Client.Check=function(user)
 	    elseif not string.find(str,"M:[APS5]") then
               return Checks.Client.Killfaker(user,"No connection mode found in tag.")
             end
-	    local _,_,Hubs = string.find(user.sTag, "H:([^,]+),")
+	    local Hubs = string.match(user.sTag, "H:([^,]+),")
 	    if not Hubs then
 	      return Checks.Client.Killfaker(user,"Missing hubcount in tag, or hubcount contains invalid characters.")
 	    else
@@ -326,7 +326,7 @@ end
 
 function Checks.Client.Killfaker(user,why)
   -- $MyINFO $ALL bastya_fak0r none<++ V:0.4032,M:P,H:"1/0/0",S:8>$ $Satellite$szakalgergo@hotmail.com$1337889395673$|
-  local _,_,taggy=string.find(user.sMyInfoString,"(%b<>)%$%s+%$")
+  local taggy=string.match(user.sMyInfoString,"(%b<>)%$%s+%$")
   local tag=taggy or user.sTag or ""
   user:SendData("ClientCheck","Your tag is faked! ("..why.."). Your tag is: "..tag)
   if Checks.Client.BanFakeTag==1 then
@@ -376,12 +376,12 @@ Checks.Welcome=function(user)
     if minlimitforconn~=0 then
       if limit then
         if user.sClient=="Valknut" then
-          wmess=wmess.."<BandwidthCheck> Your upload limit is set to "..tonumber(limit)*slots.." kB/s, the minimum allowed for your class is "..minlimitforconn.." kB/s.|"
+          wmess=wmess.."<BandwidthCheck> Your upload limit is set to "..tonumber(limit)*slots.." kB/s, the minimum allowed for your class is "..minlimitforconn.." kB/s."
         else
-          wmess=wmess.."<BandwidthCheck> Your upload limit is set to "..limit.." kB/s, the minimum allowed for your class is "..minlimitforconn.." kB/s.|"
+          wmess=wmess.."<BandwidthCheck> Your upload limit is set to "..limit.." kB/s, the minimum allowed for your class is "..minlimitforconn.." kB/s."
         end
       else
-        wmess=wmess.."<BandwidthCheck> You aren't limiting your upload, the minimum limit allowed for your connection is "..minlimitforconn.." kB/s.|"
+        wmess=wmess.."<BandwidthCheck> You aren't limiting your upload, the minimum limit allowed for your connection is "..minlimitforconn.." kB/s."
       end
     else
       wmess=wmess.."<BandwidthCheck> Bandwidth limiting is not allowed for your connection type.|"
@@ -394,7 +394,7 @@ end
 
 function Checks.Clone.Check(user,data)
   if Immune and not Immune.List[user.sName] or not Immune then
-    for _,obj in frmHub:GetOnlineUsers() do
+    for _,obj in ipairs(frmHub:GetOnlineUsers()) do
       if user.sIP==obj.sIP and Checks.Clone.Level > userlevels[user.iProfile] and Checks.Clone.Level > userlevels[obj.iProfile] and not Immune.List[obj.sName] then
         if user.iShareSize==obj.iShareSize then
           user:SendData(Bot.name,"This hub does not allow the use of clones. Hit the bricks, ya leecher!")
@@ -441,7 +441,7 @@ function Checks.Nick.Check(user)
     end
   end
   if Immune and not Immune.List[user.sName] or not Immune then
-    local _,_,prefix = string.find(user.sName, "^([%[%{%(]%S-[%)%}%]])%S+")
+    local prefix = string.match(user.sName, "^([%[%{%(]%S-[%)%}%]])%S+")
     if prefix and Checks.Nick.Prefixes.Bad[prefix] and not user.bRegistered then
       user:SendData("NickNameCheck", prefix.." - This prefix is not allowed for you to use.")
       user:Disconnect() return "shit"
@@ -475,7 +475,7 @@ end
 function Checks.SlotHubLimit.Show(user,data,env)
   local array={}
   local msg="\r\nThese are the slot/hub/limit rules:\r\n\r\n========================================================================================\r\nConnection type\t#\tMax. slots\t\t    Ratio\t\tMax. hubs\tMin.limit\r\n========================================================================================\r\n"
-  for a,b in Checks.SlotHubLimit.Rules do
+  for a,b in pairs(Checks.SlotHubLimit.Rules) do
     if b.max_slots==0 then
       c=a.."\t\t#\t\t\tCONNECTION TYPE NOT ALLOWED"
     else
@@ -486,13 +486,13 @@ function Checks.SlotHubLimit.Show(user,data,env)
     table.insert(array,c)
     table.sort(array)
   end
-  for s=1,table.getn(array) do
-    msg=msg..array[s].."\r\n========================================================================================\r\n"
+  for _,s in ipairs(array) do
+    msg=msg..s.."\r\n========================================================================================\r\n"
   end
   user:SendPM(Bot.name,msg)--.."\r\nNote: \t0 max. slots means that connection is not allowed in this hub.\r\n \t0 min. limit means that no limiting allowed for that connection type.")
   local speed = user.sConnection
   if string.find(user.sConnection,"%(.+%/.+%)") then -- dirty workaround for R2++ et al. :-)
-    _,_,speed=string.find(user.sConnection,"(.+)%(.+%/.+%)")
+    speed=string.match(user.sConnection,"(.+)%(.+%/.+%)")
   end
   local Rulz=Checks.SlotHubLimit.Rules[speed]
   local msg="\r\nRules for your connection type ("..speed..")  are:\r\n====================================\r\n\r\n"

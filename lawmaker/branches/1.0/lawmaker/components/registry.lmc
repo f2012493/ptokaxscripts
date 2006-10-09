@@ -76,21 +76,21 @@ function RegManagement.Do(user,data,env,neededlevel)
   local tmp={[0]="Superoperator",[1]="Operator",[2]="VIP",[3]="Registered User"}
   local cat=tmp[neededlevel]
   local userarray={}
-  for _,obj in frmHub:GetRegisteredUsers() do
+  for _,obj in ipairs(frmHub:GetRegisteredUsers()) do
     if obj.iProfile==neededlevel then
       table.insert(userarray,obj.sNick)
     end
   end
   local mess="\r\r\nHere you are, the "..cat.."s :\r\n\r\n===============================\r\n\r\n"
-  if table.getn(userarray)==0 then
+  if #userarray==0 then
     mess=mess.."List empty.\r\n"
   else
     table.sort(userarray)
-    for i=1,table.getn(userarray) do
-      if not GetItemByName(userarray[i]) then
-	mess=mess..userarray[i].."\r\n"
+    for _,nick in ipairs(userarray) do
+      if not GetItemByName(nick) then
+	      mess=mess..nick.."\r\n"
       else
-	mess=mess..userarray[i].." ===> ONLINE\r\n"
+	      mess=mess..nick.." ===> ONLINE\r\n"
       end
     end
   end
@@ -102,18 +102,18 @@ end
 
 function RegManagement.Register(user,data,env,level,bool)
   if env=="PM" then
-    local _,_,nick = string.find(data,"%b<>%s+%S+%s+(%S+)")
-    local _,_,pass = string.find(data,"%b<>%s+%S+%s+%S+%s+(%S+)")
+    local nick = string.match(data,"%b<>%s+%S+%s+(%S+)")
+    local pass = string.match(data,"%b<>%s+%S+%s+%S+%s+(%S+)")
     pass=pass or RegManagement.GeneratePass()
     local regusers={}
-    for _,obj in frmHub:GetRegisteredUsers() do
+    for _,obj in ipairs(frmHub:GetRegisteredUsers()) do
       regusers[obj.sNick]=obj.iProfile
     end
     local tmp={[0]="Superoperator",[1]="Operator",[2]="VIP",[3]="Registered User"}
     if bool then
       if not user.bRegistered then
         local passwd=nick
-	if passwd then -- local passwd=nick or RegManagement.GeneratePass()
+	      if passwd then -- local passwd=nick or RegManagement.GeneratePass()
           if string.len(passwd)<4 or string.find(passwd,"([^A-Za-z0-9]+)") then
             SendTxt(user,env,Bot.name,"Your password is too short, or contains non-alphanumeric characters!")
             return 1
@@ -128,14 +128,14 @@ function RegManagement.Register(user,data,env,level,bool)
         else
           AddRegUser(user.sName,passwd,3)
         end
-	SendTxt(user,env,Bot.name,mesg)
+	      SendTxt(user,env,Bot.name,mesg)
         RegManagement.Onreg(user,nil,nil,bool)
       else
-	SendTxt(user,env,Bot.name,"You are already a(n) "..tmp[user.iProfile]..", "..RegManagement.BitchList[math.random(table.getn(RegManagement.BitchList))])
+	      SendTxt(user,env,Bot.name,"You are already a(n) "..tmp[user.iProfile]..", "..RegManagement.BitchList[math.random(#RegManagement.BitchList)])
       end
     else
       if nick then
-	if not regusers[nick] then
+        if not regusers[nick] then
           if string.len(pass)<4 or string.find(pass,"([^A-Za-z0-9]+)") then
             SendTxt(user,env,Bot.name,"Password must be at least 4 characters long, it should only contain alphanumeric characters!")
             return 1
@@ -145,10 +145,10 @@ function RegManagement.Register(user,data,env,level,bool)
           SendPmToNick(nick,Bot.name,user.sName.." has made you a "..tmp[level]..". Your password is: "..pass)
           RegManagement.Onreg(user,nick,tmp[level],bool)
         else
-          SendTxt(user,env,Bot.name,nick.." is alredy a(n) "..tmp[level]..", "..RegManagement.BitchList[math.random(table.getn(RegManagement.BitchList))])
-	end
+          SendTxt(user,env,Bot.name,nick.." is alredy a(n) "..tmp[level]..", "..RegManagement.BitchList[math.random(#RegManagement.BitchList)])
+        end
       else
-	SendTxt(user,env,Bot.name,"Please specify a nick to register!")
+        SendTxt(user,env,Bot.name,"Please specify a nick to register!")
       end
     end
     regusers=nil; Clear()
@@ -158,20 +158,20 @@ function RegManagement.Register(user,data,env,level,bool)
 end
 
 function RegManagement.Unregister(user,data,env,level)
-  local _,_,nick = string.find(data,"%b<>%s+%S+%s+(%S+)")
+  local nick = string.match(data,"%b<>%s+%S+%s+(%S+)")
   local tmp={[0]="Superoperator",[1]="Operator",[2]="VIP",[3]="Registered User"}
   local regusers={}
-  for _,obj in frmHub:GetRegisteredUsers() do
+  for _,obj in ipairs(frmHub:GetRegisteredUsers()) do
     regusers[obj.sNick]=obj.iProfile
   end
   if nick then
     if regusers[nick] then
       if regusers[nick]==level then
-	DelRegUser(nick,pass,level)
-	SendTxt(user,env,Bot.name,"You have unregistered the following "..tmp[level]..": "..nick.." .")
-	SendPmToNick(nick,Bot.name,user.sName.." has revoked your "..tmp[level].." status, you are now unregistered.")
+        DelRegUser(nick,pass,level)
+        SendTxt(user,env,Bot.name,"You have unregistered the following "..tmp[level]..": "..nick.." .")
+        SendPmToNick(nick,Bot.name,user.sName.." has revoked your "..tmp[level].." status, you are now unregistered.")
       else
-	SendTxt(user,env,Bot.name,nick.." is a(n) "..tmp[level]..", "..RegManagement.BitchList[math.random(table.getn(RegManagement.BitchList))])
+	      SendTxt(user,env,Bot.name,nick.." is a(n) "..tmp[level]..", "..RegManagement.BitchList[math.random(#RegManagement.BitchList)])
       end
     else
       SendTxt(user,env,Bot.name,nick.." is an unregistered user.")
@@ -187,7 +187,7 @@ function RegManagement.ChangePass(user,data,env)
     SendTxt(user,env,Bot.name,"You aren't registered, why change your password?") return 1
   else
     if env=="PM" then
-      local _,_,pass = string.find(data,"%b<>%s+%S+%s+(%S+)")
+      local pass = string.match(data,"%b<>%s+%S+%s+(%S+)")
       pass=pass or RegManagement.GeneratePass()
       AddRegUser(user.sName, pass, user.iProfile)
       SendTxt(user,env,Bot.name,"Your password has been changed to: "..pass)
@@ -198,12 +198,12 @@ function RegManagement.ChangePass(user,data,env)
 end
 
 function RegManagement.UpDownGrade(user,data,env,level,bool)
-  local _,_,nick=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  local nick=string.match(data,"%b<>%s+%S+%s+(%S+)")
   if nick then
     if frmHub:isNickRegged(nick) then
       local regusers={}
-      for _,obj in frmHub:GetRegisteredUsers() do
-	regusers[obj.sNick]=obj.iProfile
+      for _,obj in ipairs(frmHub:GetRegisteredUsers()) do
+	      regusers[obj.sNick]=obj.iProfile
       end
       local tmp={[0]="Superoperator",[1]="Operator",[2]="VIP",[3]="Registered User"} -- Of course unregs cannot be upgraded, there is registering for this.
       if bool then -- downgrade
@@ -212,7 +212,7 @@ function RegManagement.UpDownGrade(user,data,env,level,bool)
 	  SendPmToNick(nick,Bot.name,user.sName.." has downgraded your profile to "..tmp[level]..".")
 	  SendTxt(user,env,Bot.name,"You have upgraded "..nick.."'s profile to: "..tmp[level]..".")
 	else
-	  SendTxt(user,env,Bot.name,nick.." is alredy a(n) "..tmp[level]..", "..RegManagement.BitchList[math.random(table.getn(RegManagement.BitchList))])
+	  SendTxt(user,env,Bot.name,nick.." is alredy a(n) "..tmp[level]..", "..RegManagement.BitchList[math.random(#RegManagement.BitchList)])
 	end
       else -- upgrade
 	if userlevels[regusers[nick]] < userlevels[level] then
@@ -220,7 +220,7 @@ function RegManagement.UpDownGrade(user,data,env,level,bool)
 	  SendPmToNick(nick,Bot.name,user.sName.." has upgraded your profile to "..tmp[level]..".")
 	  SendTxt(user,env,Bot.name,"You have upgraded "..nick.."'s profile to: "..tmp[level]..".")
 	else
-	  SendTxt(user,env,Bot.name,nick.." is alredy a(n) "..tmp[level]..", "..RegManagement.BitchList[math.random(table.getn(RegManagement.BitchList))])
+	  SendTxt(user,env,Bot.name,nick.." is alredy a(n) "..tmp[level]..", "..RegManagement.BitchList[math.random(#RegManagement.BitchList)])
 	end
       end
       regusers=nil; Clear()
@@ -233,7 +233,7 @@ function RegManagement.UpDownGrade(user,data,env,level,bool)
 end
 
 function RegManagement.GetPass(user,data,env)
-  local _,_,nick=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  local nick=string.match(data,"%b<>%s+%S+%s+(%S+)")
   if nick then
     if frmHub:isNickRegged(nick) then
       SendTxt(user,env,Bot.name,nick.." is registered with password "..frmHub:GetUserPassword(nick))

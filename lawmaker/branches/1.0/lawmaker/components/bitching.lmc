@@ -81,10 +81,10 @@ That's relativity."
         math.randomseed(os.clock())
 	if env then
 		SendTxt(user,env,Bot.name,"I am "..Bot.version..".")
-		SendTxt(user,env,Bot.name,bitcharray[math.random (1,table.getn(bitcharray))])
+		SendTxt(user,env,Bot.name,bitcharray[math.random (#bitcharray)])
 	else
 		SendToAll(Bot.name,"I am "..Bot.version..". ")
-		SendToAll(Bot.name,bitcharray[math.random (table.getn(bitcharray))])
+		SendToAll(Bot.name,bitcharray[math.random (#bitcharray)])
 	end
 	bitcharray=nil
 	Clear()
@@ -93,7 +93,7 @@ end
 function Bitching.OnTimer()
   Bitching.Timer=Bitching.Timer+1
   if Bitching.Timer==60 then
-    if math.mod(tonumber((os.date("%H"))),2)==0 and os.date("%M")=="00" then
+    if math.fmod(tonumber((os.date("%H"))),2)==0 and os.date("%M")=="00" then
       Bitching.BotVersion(nil,"MAIN",nil); Bitching.Timer=0
     end
     Bitching.Timer=0

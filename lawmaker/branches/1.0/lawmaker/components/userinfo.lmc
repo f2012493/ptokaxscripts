@@ -31,7 +31,7 @@ UserInfo.Helper={
 }
 
 function UserInfo.UserInfo(user,data,env)
-  local _,_,nick=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  local nick=string.match(data,"%b<>%s+%S+%s+(%S+)")
 	if nick then
     local usr=GetItemByName(nick)
     local proftable={[0]="Superoperator",[1]="Operator",[2]="VIP",[3]="Registered User"}
@@ -41,57 +41,57 @@ function UserInfo.UserInfo(user,data,env)
       msg=msg.."Profile: "..pr.."\r\n" 
       if user.bOperator then
         msg=msg.."IP address: "..usr.sIP.."\r\n"
-	if GetBannedItemIp(nick) then
-	  msg=msg.."This nick is banned\r\n"
-	else
-	  if GetTempBannedItemIp(nick) then
-	    msg=msg.."Nick is timebanned\r\n"
-	  end
-	end
-	if GetBannedItemName(usr.sIP) then
-	    msg=msg.."User's IP is banned, with nick: "..GetBannedItemName(usr.sIP).."\r\n"
-	else
-	  if GetTempBannedItemName(usr.sIP) then
-	    msg=msg.."User's IP is timebanned, with nick: "..GetTempBannedItemName(usr.sIP).." and remaining time is "..minutestoh(GetTempBannedItemTime(usr.sIP))..".\r\n"
-	  end
-	end
+        if GetBannedItemIp(nick) then
+          msg=msg.."This nick is banned\r\n"
+        else
+          if GetTempBannedItemIp(nick) then
+            msg=msg.."Nick is timebanned\r\n"
+          end
+	      end
+        if GetBannedItemName(usr.sIP) then
+            msg=msg.."User's IP is banned, with nick: "..GetBannedItemName(usr.sIP).."\r\n"
+        else
+          if GetTempBannedItemName(usr.sIP) then
+            msg=msg.."User's IP is timebanned, with nick: "..GetTempBannedItemName(usr.sIP).." and remaining time is "..minutestoh(GetTempBannedItemTime(usr.sIP))..".\r\n"
+          end
+        end
       end
       msg=msg..UserInfo.ScanMyINFO(usr.sMyInfoString).."\r\n====================================="
       user:SendPM(Bot.name,msg)
     else
       if UserInfo.Data[nick] then
-	local myinfo=UserInfo.Data[nick].myinfo
-	local ip=UserInfo.Data[nick].ip
-	local msg="\r\n\r\nInformation on "..nick.." (offline)\r\n=====================================\r\n\r\n"..UserInfo.GetUserUpTime(nick).."User was last seen: "..UserInfo.Data[nick].seen.."\r\n"
-	local function GetOfflineProfile()
-	  for _,obj in frmHub:GetRegisteredUsers() do
-	    if obj.sName==nick then
-	      return proftable[obj.iProfile].."\r\n"
-	    else
-	      return "Guest".."\r\n"
+        local myinfo=UserInfo.Data[nick].myinfo
+        local ip=UserInfo.Data[nick].ip
+        local msg="\r\n\r\nInformation on "..nick.." (offline)\r\n=====================================\r\n\r\n"..UserInfo.GetUserUpTime(nick).."User was last seen: "..UserInfo.Data[nick].seen.."\r\n"
+        local function GetOfflineProfile()
+        for _,obj in ipairs(frmHub:GetRegisteredUsers()) do
+          if obj.sName==nick then
+            return proftable[obj.iProfile].."\r\n"
+          else
+            return "Guest".."\r\n"
+          end
+        end
 	    end
-	  end
-	end
-	msg=msg.."Profile: "..GetOfflineProfile()
-	if user.bOperator then
-	  msg=msg.."IP address: "..ip.."\r\n"
-	  if GetBannedItemIp(nick) then
-	    msg=msg.."This nick is banned.\r\n"
-	  else
-	    if GetTempBannedItemIp(nick) then
-	      msg=msg.."Nick is timebanned.\r\n"
-	    end
-	  end
-	  if GetBannedItemName(ip) then
-	      msg=msg.."User's IP is banned, with nick: "..GetBannedItemName(ip).."\r\n"
-	  else
-	    if GetTempBannedItemName(ip) then
-	      msg=msg.."User's IP is timebanned, with nick: "..GetTempBannedItemName(ip).." and remaining time is "..minutestoh(GetTempBannedItemTime(ip))..".\r\n"
-	    end
-	  end
-	end
-	msg=msg..UserInfo.ScanMyINFO(myinfo).."\r\n====================================="
-	user:SendPM(Bot.name,msg)
+        msg=msg.."Profile: "..GetOfflineProfile()
+        if user.bOperator then
+          msg=msg.."IP address: "..ip.."\r\n"
+          if GetBannedItemIp(nick) then
+            msg=msg.."This nick is banned.\r\n"
+          else
+            if GetTempBannedItemIp(nick) then
+              msg=msg.."Nick is timebanned.\r\n"
+            end
+          end
+          if GetBannedItemName(ip) then
+              msg=msg.."User's IP is banned, with nick: "..GetBannedItemName(ip).."\r\n"
+          else
+            if GetTempBannedItemName(ip) then
+              msg=msg.."User's IP is timebanned, with nick: "..GetTempBannedItemName(ip).." and remaining time is "..minutestoh(GetTempBannedItemTime(ip))..".\r\n"
+            end
+          end
+        end
+        msg=msg..UserInfo.ScanMyINFO(myinfo).."\r\n====================================="
+        user:SendPM(Bot.name,msg)
       else
 	SendTxt(user,env,Bot.name,nick.." is an unknown user!")
       end
@@ -149,13 +149,13 @@ function UserInfo.ScanMyINFO(myinfo)
     local _,_,clienttype,version
     if string.find(myinfo,"<DCGUI") then 
       clienttype="DCGUI"
-      _,_, version = string.find(myinfo,"V:0.(%d+.%d+)")
+      version = string.match(myinfo,"V:0.(%d+.%d+)")
       return clienttype, version
     elseif string.find(myinfo,"<%S+%s+V:%d+.%d+,M:") then
-      for a,b in dcpp do
-        if string.find(myinfo,a) then
+      for a,b in pairs(dcpp) do
+        if string.match(myinfo,a) then
           clienttype=b[1]
-          _,_,version=string.find(myinfo,b[2])
+          version=string.match(myinfo,b[2])
           break
         else
           clienttype = "DC++" 
@@ -165,11 +165,11 @@ function UserInfo.ScanMyINFO(myinfo)
     end; return clienttype, version
   end 
   local scanmyinfo=function(myinfo)
-    local _,_,Hubs,Slots,speed = string.find(myinfo, "H:([^,]+),S:(%d+).*>$ $([^$]+)[^$]%$")
+    local Hubs,Slots,speed = string.match(myinfo, "H:([^,]+),S:(%d+).*>$ $([^$]+)[^$]%$")
     local Guest,Reg,OP,slots,hubs,ratio
-    local _,_,limit1=string.find(myinfo,"[BLU]:(%d+)")
-    local _,_,limit2 = string.find(myinfo,"F:%d+/(%d+)")
-    local _,_,temp = string.find(myinfo, "$(%d+)%$")
+    local limit1=string.match(myinfo,"[BLU]:(%d+)")
+    local limit2 = string.match(myinfo,"F:%d+/(%d+)")
+    local temp = string.match(myinfo, "$(%d+)%$")
     if tonumber (Hubs) then
       if Hubs=="0" then
         Guest,Reg,OP= "0", "1" , "0"
@@ -177,7 +177,7 @@ function UserInfo.ScanMyINFO(myinfo)
         Guest,Reg,OP=  Hubs, "0", "0"
       end
     else
-      _,_, Guest,Reg,OP = string.find(Hubs,"(%d+)/(%d+)/(%d+)")
+      Guest,Reg,OP = string.match(Hubs,"(%d+)/(%d+)/(%d+)")
     end
     if ophubscount==1 then
       hubs = tonumber(Guest)+tonumber(Reg)+tonumber(OP)
@@ -197,7 +197,7 @@ function UserInfo.ScanMyINFO(myinfo)
   local gm=function(myinfo)
     local tofind={["M:A"]="Active",["M:P"]="Passive",["M:[S5]"]="Socks5"}
     local val
-    for a,b in tofind do
+    for a,b in pairs(tofind) do
       if string.find(myinfo,a) then
         val=b
         break
@@ -206,7 +206,7 @@ function UserInfo.ScanMyINFO(myinfo)
     val=val or "unknown"
     return val
   end
-  local _,_,mail=string.find(myinfo,"%$%s+%$.+%$(.-)%$.+%$|$")
+  local mail=string.match(myinfo,"%$%s+%$.+%$(.-)%$.+%$|$")
   if mail=="" then mail="N/A" end
   local client,version=det(myinfo)
   if client then
@@ -228,7 +228,7 @@ function UserInfo.ScanMyINFO(myinfo)
     else
       msg=msg.."Bandwidth limiting: N/A.\r\n"
     end
-    local _,_,tag=string.find(myinfo,"(%b<>)%$ %$")
+    local tag=string.match(myinfo,"(%b<>)%$ %$")
     msg=msg.."Client type: "..client.."\r\n"..
     "Client version: "..version.."\r\n"..
     "Tag: "..tag.."\r\n"
@@ -289,7 +289,7 @@ function UserInfo.Load()
       {
 	["lastseen.dat"]=coroutine.create(function(f)
                             for line in f:lines() do
-                              local _,_,nick,info=string.find(line,"(%S+)%|(.+)")
+                              local nick,info=string.match(line,"(%S+)%|(.+)")
                               if nick then
                                 UserInfo.Data[nick]=UserInfo.Data[nick] or {}
                                 UserInfo.Data[nick].seen=info
@@ -299,7 +299,7 @@ function UserInfo.Load()
                           end),
 	["ips.dat"]=coroutine.create(function(f)
                       for line in f:lines() do
-                        local _,_,nick,info=string.find(line,"(%S+)%|(.+)")
+                        local nick,info=string.match(line,"(%S+)%|(.+)")
                         if nick then
                           UserInfo.Data[nick].ip=info
                           local decip=UserInfo.CalcIP(info)
@@ -315,7 +315,7 @@ function UserInfo.Load()
                     end),
 	["myinfo.dat"]=	coroutine.create(function(f)
                           for line in f:lines() do
-                            local _,_,nick,info=string.find(line,"(%S+)%|(.+)")
+                            local nick,info=string.match(line,"(%S+)%|(.+)")
                             if nick then
                               UserInfo.Data[nick].myinfo=info
                             end
@@ -324,7 +324,7 @@ function UserInfo.Load()
                         end),
 	["uptime.dat"]=	coroutine.create(function(f)
                           for line in f:lines() do
-                            local _,_,nick,info=string.find(line,"(%S+)%|(.+)")
+                            local nick,info=string.match(line,"(%S+)%|(.+)")
                             if nick then
                               UserInfo.Data[nick].uptime=tonumber(info)
                             end
@@ -333,13 +333,13 @@ function UserInfo.Load()
 			end),
       }
   local nick
-  for k=1,table.getn(cont) do
-    local f=io.open("lawmaker/userinfo/"..cont[k],"r")
+  for _,k in ipairs(cont) do
+    local f=io.open("lawmaker/userinfo/"..k,"r")
     if f then
-      nick=coroutine.resume(cnt[cont[k]],f)--(nick,info)
+      nick=coroutine.resume(cnt[k],f)--(nick,info)
     end
   end
-  for a,b in UserInfo.Data do 
+  for a,b in pairs(UserInfo.Data) do 
     -- remove users with incomplete data, need a better method for this.
     -- probably getting rid of coroutines or constant checking
     if not (b.ip or b.myinfo or b.seen or b.uptime) then
@@ -403,17 +403,17 @@ function UserInfo.Clean()
 end
 
 function UserInfo.SeenUser(user, data,env)
-  local _,_,args = string.find(data, "%b<>%s%S+%s(.+)")
+  local args = string.match(data, "%b<>%s%S+%s(.+)")
   if not args then
     SendTxt(user,env,Bot.name, "Syntax error, can't read your mind, please tell me wich user you wanna check! :-D")
   else
-    string.gsub(args,"(%S+)",function(who)
+    for who in string.gmatch(args,"(%S+)") do
       if UserInfo.Data[who] then
         SendTxt(user,env,Bot.name,who.." was last seen on: "..UserInfo.Data[who].seen)
       else
         SendTxt(user,env,Bot.name,who.." is an unknown user.")
       end
-    end)
+    end
   end
 end
 
@@ -456,7 +456,7 @@ end
 
 function UserInfo.NoCleanUser(user,data,env)
   local UsersTable=UserInfo.LoadRegisteredUsers()
-  local s,e,addrem, who = string.find(data, "%b<>%s+%S+%s+(%S+)%s+(%S+)")
+  local addrem, who = string.match(data, "%b<>%s+%S+%s+(%S+)%s+(%S+)")
   if (who or addrem) == nil then
     SendTxt(user,env,Bot.name,"RTFM ;). it's !noclean <add/remove> <nick>")
   elseif UsersTable[who] then
@@ -471,10 +471,10 @@ function UserInfo.NoCleanUser(user,data,env)
     elseif addrem == "remove" then
       if NoClean[who] then
         NoClean[who] = nil
-	SendTxt(user,env,Bot.name,who.." is removed from the noclean list.")
-	savefile(NoClean,"lawmaker/components/metafiles/noclean.lst")
+        SendTxt(user,env,Bot.name,who.." is removed from the noclean list.")
+        savefile(NoClean,"lawmaker/components/metafiles/noclean.lst")
       else
-	SendTxt(user,env,Bot.name,who.." was not on the noclean list.")
+	      SendTxt(user,env,Bot.name,who.." was not on the noclean list.")
       end
     else
       SendTxt(user,env,Bot.name,"RTFM ;). Ut's !noclean <add/remove> <nick>")
@@ -490,15 +490,15 @@ function UserInfo.ShowNoClean(user,data,env)
   local info = "\r\n\r\n"
   info = info.." Here are the users who won't be cleaned\r\n"
   info = info.."=====================================\r\n"
-  for a,b in NoClean do
+  for a,b in pairs(NoClean) do
     table.insert(lines, a)
   end
   table.sort(lines)
-  if table.getn(lines)==0 then
+  if #lines==0 then
     info=info.."No users.\r\n"
   else
-    for i=1,table.getn(lines) do
-      info = info.."  "..lines[i].."\r\n"
+    for _,i in ipairs(lines) do
+      info = info.."  "..i.."\r\n"
     end
   end
   info = info.."=====================================\r\n"
@@ -508,7 +508,7 @@ end
 
 function UserInfo.LoadRegisteredUsers()
   local UsersTable = {}
-    for _,obj in frmHub:GetRegisteredUsers() do
+    for _,obj in ipairs(frmHub:GetRegisteredUsers()) do
       if userlevels[obj.iProfile]<=UserInfo.Levels.Clean and obj.iProfile ~=0 then
         UsersTable[obj.sNick]=1 -- adds the folks to the table who will get cleaned
       end
@@ -576,14 +576,14 @@ function UserInfo.Size(user,data)
   }
   local msg="\r\nUserinfo database consists of "..UserInfo.Elements.." items."..
   "\r\n=============================================================\r\nFile sizes are:\r\n"..string.rep("-",80).."\r\n"
-   for a,b in tmp do
+   for a,b in pairs(tmp) do
     local f=io.open(a,"r")
     if f then
       b[2]=f:seek("end")
     end
   end
   local totalsize=0
-  for a,b in tmp do
+  for a,b in pairs(tmp) do
     local v,u=bytestoh(b[2])
     msg=msg..b[1]..v.." "..u.."\r\n"
     totalsize=totalsize+b[2]
@@ -597,7 +597,7 @@ function UserInfo.CalcIP(ip)
   local err
   local c=256*256*256
 	local decip=0
-  for bit in string.gfind(ip,"(%d+)") do
+  for bit in string.gmatch(ip,"(%d+)") do
     if not tonumber(bit) or tonumber(bit) > 255 then
       err=true
       break
@@ -614,20 +614,20 @@ end
 function UserInfo.ReCalcIP(ip)
   local tmp
   pt1=math.floor((ip)/16777216)
-  tmp=math.mod((ip),16777216)
+  tmp=math.fmod((ip),16777216)
   pt2=math.floor((tmp)/65536)
-  tmp=math.mod(tmp,65536)
+  tmp=math.fmod(tmp,65536)
   pt3=math.floor((tmp)/256)
-  pt4=math.mod(tmp,256)
+  pt4=math.fmod(tmp,256)
   return (pt1.."."..pt2.."."..pt3.."."..pt4)
 end
 
 function UserInfo.IPInfo(user,data,env,bool)
   local ip1,ip2
   if bool then
-    _,_,ip1=string.find(data,"%b<>%s+%S+%s+(%d+%.%d+%.%d+%.%d+)")
+    ip1=string.match(data,"%b<>%s+%S+%s+(%d+%.%d+%.%d+%.%d+)")
   else
-    _,_,ip1,ip2=string.find(data,"%b<>%s+%S+%s+(%d+%.%d+%.%d+%.%d+)%-(%d+%.%d+%.%d+%.%d+)")
+    ip1,ip2=string.match(data,"%b<>%s+%S+%s+(%d+%.%d+%.%d+%.%d+)%-(%d+%.%d+%.%d+%.%d+)")
   end
   if ip1 then
     if ip2 then
@@ -643,7 +643,7 @@ function UserInfo.IPInfo(user,data,env,bool)
 					if UserInfo.IPTable[i] then
 						cnt=cnt+1
 						msg=msg..UserInfo.ReCalcIP(i).."\r\n"
-						for a,b in UserInfo.IPTable[i] do
+						for a,b in pairs(UserInfo.IPTable[i]) do
 							msg=msg.."\t"..a.."\r\n"
 						end
 						msg=msg.."\t"..string.rep("-",45).."\r\n"
@@ -668,7 +668,7 @@ function UserInfo.IPInfo(user,data,env,bool)
       local decip=UserInfo.CalcIP(ip1)
       if decip then
 				if UserInfo.IPTable[decip] then
-					for a,b in UserInfo.IPTable[decip] do
+					for a,b in pairs(UserInfo.IPTable[decip]) do
 						msg=msg..a.."\r\n"
 					end
 					if GetBannedItemName(ip1) then

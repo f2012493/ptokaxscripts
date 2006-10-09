@@ -7,7 +7,7 @@ Run(path.."cfg/mute.ini")
 Mute.MUTE={}
 
 function Mute.DoMute(user, data,env)
-  local _,_,vic = string.find(data,"%b<>%s+%S+%s+(%S+)")
+  local vic = string.match(data,"%b<>%s+%S+%s+(%S+)")
   if vic then
     if vic==Bot.name then
       SendTxt(user,env,Bot.name,"You are muting me? He-he-he, good joke! Really funny! Now tell me, "..user.sName..", How good is a phonecall if you're unable to speak? ;) // "..Bot.name)
@@ -36,7 +36,7 @@ function Mute.DoMute(user, data,env)
 end
 
 function Mute.DoUnMute(user, data,env)
-  local _,_,vic = string.find(data,"%b<>%s+%S+%s+(%S+)")
+  local vic = string.match(data,"%b<>%s+%S+%s+(%S+)")
   if vic then
     local victim = GetItemByName(vic)
     if victim == nil then
@@ -56,8 +56,8 @@ end
 
 function Mute.ShowMuted(user,env)
   local disp = ""
-  if table.getn(Mute.MUTE)~=0 then
-    for a, b in Mute.MUTE do
+  if #Mute.MUTE~=0 then
+    for a, b in pairs(Mute.MUTE) do
       disp = disp.."\t\t\t\t\t • "..a.."\r\n"
     end
   else
@@ -67,7 +67,7 @@ function Mute.ShowMuted(user,env)
 end
 
 function Mute.OnTimer()
-  for a,b in Mute.MUTE do
+  for a,b in pairs(Mute.MUTE) do
     Mute.MUTE[a]=Mute.MUTE[a]+1
     if Mute.MUTE[a]==Mute.Time*60 then
       Mute.MUTE[a]=nil -- every muted user has a unique timer
@@ -80,7 +80,7 @@ end
 
 function Mute.ChatArrival(user,data)
   if Mute.MUTE[user.sName] then
-    local _,_,cmd=string.find(data,"%b<>%s+[%!%+%#](%S+)")
+    local cmd=string.match(data,"%b<>%s+[%!%+%#](%S+)")
     local ptxcmd=
       {
 				["op"]=5,

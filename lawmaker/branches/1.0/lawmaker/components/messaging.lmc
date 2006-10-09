@@ -7,7 +7,7 @@ bastya_elvtars
 Run(path.."cfg/messaging.ini")
 
 function Messaging.Topic(user,data,env)
-  local _,_,tp = string.find(data,"%b<>%s+%S+%s+(.+)")
+  local tp = string.match(data,"%b<>%s+%S+%s+(.+)")
   if tp then
     if frmHub:GetHubTopic() then
       SendToAll(Bot.name, "Topic has been changed by "..user.sName.." to: \""..tp.."\".")
@@ -23,7 +23,7 @@ function Messaging.Topic(user,data,env)
 end
 
 function Messaging.Banner(user, data,env)
-  local _,_,bannertext=string.find(data,"%b<>%s+%S+(.+)")
+  local bannertext=string.match(data,"%b<>%s+%S+(.+)")
   if bannertext then
     SendToAll("***","******************************************************** <***>")
     SendToAll("***",bannertext)
@@ -34,9 +34,9 @@ function Messaging.Banner(user, data,env)
 end
 
 function Messaging.MassMsg(user,data,env)
-  local _,_,message=string.find(data,"%b<>%s+%S+%s+(.+)")
+  local message=string.match(data,"%b<>%s+%S+%s+(.+)")
   if message then
-    for _,obj in frmHub:GetOnlineUsers() do
+    for _,obj in ipairs(frmHub:GetOnlineUsers()) do
       obj:SendData("$To: "..obj.sName.." From: "..Bot.name.." $<"..user.sName.."> "..message)
     end
   else
@@ -45,7 +45,7 @@ function Messaging.MassMsg(user,data,env)
 end
 
 function Messaging.Say(user,data,env)
-  local _,_,message=string.find(data,"%b<>%s+%S+%s+(.+)")
+  local message=string.match(data,"%b<>%s+%S+%s+(.+)")
   if message then
     SendToAll(Bot.name,message)
   else
@@ -54,9 +54,9 @@ function Messaging.Say(user,data,env)
 end
 
 function Messaging.OPM(user,data,env)
-  local _,_,message=string.find(data,"%b<>%s+%S+%s+(.+)")
+  local message=string.match(data,"%b<>%s+%S+%s+(.+)")
   if message then
-    for _,obj in frmHub:GetOnlineOperators() do
+    for _,obj in ipairs(frmHub:GetOnlineOperators()) do
       obj:SendData("$To: "..obj.sName.." From: "..Bot.name.." $<"..user.sName.."> Message to operators: "..message)
     end
   else
@@ -65,7 +65,7 @@ function Messaging.OPM(user,data,env)
 end
 
 function Messaging.BotPM(user,data,env)
-  local _,_,nick,message=string.find(data,"%b<>%s+%S+%s+(%S+)%s+(.+)")
+  local nick,message=string.match(data,"%b<>%s+%S+%s+(%S+)%s+(.+)")
   if nick then
     local usr=GetItemByName(nick)
     if usr then
@@ -83,12 +83,12 @@ function Messaging.BotPM(user,data,env)
 end
 
 function Messaging.ProfMess(user,data,env)
-  local _,_,prof,message=string.find(data,"%b<>%s+%S+%s+(%S+)%s+(.+)")
+  local prof,message=string.match(data,"%b<>%s+%S+%s+(%S+)%s+(.+)")
   if prof then
     local tmp={["superop"]=0,["op"]=1,["vip"]=2,["reg"]=3,["unreg"]=-1}
     local tempy={} for k,_ in pairs(tmp) do table.insert(tempy,k) end
     if tmp[prof] then
-      for _,obj in frmHub:GetOnlineUsers(tmp[prof]) do
+      for _,obj in ipairs(frmHub:GetOnlineUsers(tmp[prof])) do
         obj:SendData("$To: "..obj.sName.." From: "..Bot.name.." $<"..user.sName.."> "..message)
       end
     else
@@ -100,7 +100,7 @@ function Messaging.ProfMess(user,data,env)
 end
   
 function Messaging.Report(user,data,env)
-  local _,_,nick,problem=string.find(data,"%b<>%s+%S+%s+(%S+)%s+(.+)")
+  local nick,problem=string.match(data,"%b<>%s+%S+%s+(%S+)%s+(.+)")
   if nick then
     if nick~=user.sName then
       local usr=GetItemByName(nick)

@@ -35,7 +35,7 @@ rightclick_menuname="-LawMaker-" -- Name of the parent menu for rightclick comma
 -------------------------------------------------------------------------------------
 -- END OF BASIC SETTINGS, NO EDITING NEEDED BELOW THIS POINT UNLESS YOU FIND A BUG --
 -------------------------------------------------------------------------------------
-Bot.version="LawMaker 1.0 RC1"
+Bot.version="LawMaker 1.0.1"
 -- If there is an error with a plugin, the error will be sent to ops, script won't crash.
 
 -- Functions related to Ptokax events
@@ -78,7 +78,7 @@ function Main()
 --   local f=io.popen("dir \""..frmHub: GetPtokaXLocation().."scripts/lawmaker/components\" /b /o:n > \""..frmHub: GetPtokaXLocation().."scripts/lawmaker/components.lst\"","r")
   local count=0
   for line in f:lines() do
-    if string.find(line,"%.lmc$") and string.sub(line,1,1)~="_" then
+    if string.match(line,"%.lmc$") and string.sub(line,1,1)~="_" then
       local _,err=loadfile("lawmaker/components/"..line)
       if not err then
 	count=count+1
@@ -97,7 +97,7 @@ function Main()
   frmHub:SetHubBot(1)
   frmHub:SetAutoRegister(autoreg)
   frmHub:SetPrefixes("!+#?-")
-  if not string.find(frmHub:GetHubDescr()," - powered by LawMaker",1,true) then
+  if not string.match(frmHub:GetHubDescr()," - powered by LawMaker",1,true) then
     frmHub:SetHubDescr(frmHub:GetHubDescr().." - powered by LawMaker")
     -- I know many will remove this, but I still won't compile the bot. :)
   end
@@ -144,7 +144,7 @@ function NewUserConnected(user)
     if  user.bUserCommand then -- if login is successful, and usercommands can be sent
 			local tbl=rctosend[userlevels[user.iProfile]]
       user:SendData(table.concat(tbl,"|"))
-      user:SendData(Bot.name,"You just got "..table.getn(tbl).." rightclick commands, come on, unleash my full power! :)")
+      user:SendData(Bot.name,"You just got "..#tbl.." rightclick commands, come on, unleash my full power! :)")
     end
     user:SendData(Bot.name,"\r\n"..Bot.version.." by bastya_elvtars (the rock n' roll doctor) - http://lawmaker.no-ip.org\r\nLicensed under the GNU GPL, type +license for details.")
   end
@@ -152,7 +152,7 @@ end
 
 function ToArrival(user,data)
   data=string.sub(data,1,string.len(data)-1)
-  local _,_,whoto,cmd = string.find(data,"$To:%s+(%S+)%s+From:%s+%S+%s+$%b<>%s+[%!%+%#%?%-](%S+)")
+  local whoto,cmd = string.match(data,"$To:%s+(%S+)%s+From:%s+%S+%s+$%b<>%s+[%!%+%#%?%-](%S+)")
   if commandtable[cmd] then
     local x=os.clock()
     parsecmds(user,data,"PM",string.lower(cmd),whoto)
@@ -167,7 +167,7 @@ end
 
 function ChatArrival(user,data)
   data=string.sub(data,1,string.len(data)-1)
-  local _,_,cmd=string.find(data,"%b<>%s+[%!%+%#%?%-](%S+)")
+  local cmd=string.match(data,"%b<>%s+[%!%+%#%?%-](%S+)")
   if commandtable[cmd] then
     local x=os.clock()
     parsecmds(user,data,"MAIN",string.lower(cmd))
@@ -214,8 +214,8 @@ end
 
 function OnError( err ) -- traceback is unnecessary
   if debug_send==1 then
-    for i = 1, table.getn(debug_sendto) do
-      SendPmToNick( debug_sendto[i], Bot.name, err)
+    for _,nick in ipairs(debug_sendto) do
+      SendPmToNick( nick, Bot.name, err)
     end
   end
   if (debug_log==1 and Logging) then Logging.Write( "lawmaker/debug.log", os.date("%Y. %m. %d. %X").."\r\n"..err.."\n-------------------------------");end;
@@ -315,7 +315,7 @@ function maketable(file,separator) -- opens a file and adds its contents to a ta
       if not separator then
 	tbl[line] = 1
       else
-	local _,_,x,y=string.find(line,"(.+)%"..separator.."(.+)") -- note the %
+	local x,y=string.match(line,"(.+)%"..separator.."(.+)") -- note the %
 	tbl[x]=tonumber(y) or y
       end
     end
@@ -327,7 +327,7 @@ function savefile(tbl,file,separator) -- saves a table into a file
 --   SendToAll(file)
   local tmp={}
   local f=io.open(file,"w+")
-  for a,b in tbl do
+  for a,b in pairs(tbl) do
     if not separator then
       table.insert(tmp,a.."\n")
     else
@@ -342,7 +342,7 @@ end
 function getmode(myinfo) -- returns mode name from M: string
   local tofind={["M:A,H:"]="Active",["M:P,H:"]="Passive",["M:[S5],H:"]="Socks5"}
   local mode
-  for a,b in tofind do
+  for a,b in pairs(tofind) do
     if string.find(myinfo,a) then
       mode=b
       break
@@ -378,9 +378,9 @@ function SplitTimeString(TimeString)
 -- Supports 2 time formats: MM/DD/YYYY HH:MM and YYYY. MM. DD. HH:MM
   local D,M,Y,HR,MN,SC
   if string.find(TimeString,"/") then
-    _,_,M,D,Y,HR,MN,SC=string.find(TimeString,"(%d+)/(%d+)/(%d+)%s+(%d+):(%d+):(%d+)")
+    M,D,Y,HR,MN,SC=string.match(TimeString,"(%d+)/(%d+)/(%d+)%s+(%d+):(%d+):(%d+)")
   else
-    _,_,Y,M,D,HR,MN,SC = string.find(TimeString, "([^.]+).([^.]+).([^.]+). ([^:]+).([^:]+).(%S+)")
+    Y,M,D,HR,MN,SC = string.match(TimeString, "([^.]+).([^.]+).([^.]+). ([^:]+).([^:]+).(%S+)")
   end
   D = tonumber(D)
   M = tonumber(M)
@@ -440,11 +440,11 @@ function minutestoh(minutes) -- gets minutes as arguments, returns a string with
 if frac(minutes) > 0.5 then minutes=math.ceil(minutes) else minutes=math.floor(minutes) end
 local weeks,days,hours,mins
 local msg=""
-  local a1,a2,a3=math.mod(minutes,10080),math.mod(minutes,1440),math.mod(minutes,60)
+  local a1,a2,a3=math.fmod(minutes,10080),math.fmod(minutes,1440),math.fmod(minutes,60)
   if a1==minutes then weeks=0 else weeks=math.floor(minutes/10080) end
   if a2==minutes then days=0 else days=math.floor(a1/1440) end
   if a3==minutes then hours=0 else hours=math.floor(a2/60) end
-  mins=math.mod(minutes,60)
+  mins=math.fmod(minutes,60)
   local tmp=
       {
 	[" weeks "]=weeks,
@@ -466,8 +466,8 @@ end
 function bytestoh(bytes) -- Returns unformatted value, do a string.format if you would like to.
   local tUnits={"kB","MB","GB","TB","PB"} -- MUST be enough. :D
   local v,u
-  for k=table.getn(tUnits),1,-1 do
-    if math.mod(bytes,1024^k)~=bytes then v=bytes/(1024^k); u=tUnits[k] break end
+  for k=#tUnits,1,-1 do
+    if math.fmod(bytes,1024^k)~=bytes then v=bytes/(1024^k); u=tUnits[k] break end
   end
   return v or bytes,u or "B"
 end
@@ -487,7 +487,7 @@ function help(user,data,env)
 	["!stat\t\t\t\t\tShows some hub statistics."]=1
       }
   local hlp="\r\nCommands available to you are:\r\n=================================================================================================================================\r\n"
-  for a,b in commandtable do
+  for a,b in pairs(commandtable) do
     if b["level"]~=0 then
 --       SendToAll(a)
       if userlevels[user.iProfile] >= b["level"] then
@@ -496,7 +496,7 @@ function help(user,data,env)
       end
     end
   end
-  for a,b in hellp do
+  for a,b in pairs(hellp) do
     if b <= userlevels[user.iProfile] then
       count=count+1
       table.insert(hlptbl,a)
@@ -508,7 +508,7 @@ function help(user,data,env)
 end
 
 function lagtestonoff (user,data,env)
-  local _,_,onoff=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  local onoff=string.match(data,"%b<>%s+%S+%s+(%S+)")
   if onoff=="on" then
     if not lagtest[user.sName] then
       lagtest[user.sName]=1

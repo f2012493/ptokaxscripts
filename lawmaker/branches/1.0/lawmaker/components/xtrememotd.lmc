@@ -27,23 +27,23 @@ function XtremeMotd.Show(user) -- show the motd on connection
 end
 
 function XtremeMotd.OnOff(user,data,env)
-  local _,_,switch = string.find(data, "%b<>%s+%S+%s+(%S+)")
+  local switch = string.match(data, "%b<>%s+%S+%s+(%S+)")
   if switch then
     if switch == "off" then
       if XtremeMotd.NoMotd[user.sName] then
         SendTxt(user,env,Bot.name,"My dear friend, "..user.sName.."! You have already disabled the MOTD...")
       else
         XtremeMotd.NoMotd[user.sName] = 1
-	SendTxt(user,env,Bot.name,"MOTD disabled. Use \"!motd on\" to re-enable.")
-	savefile(XtremeMotd.NoMotd,"lawmaker/components/metafiles/nomotd.lst")
+        SendTxt(user,env,Bot.name,"MOTD disabled. Use \"!motd on\" to re-enable.")
+        savefile(XtremeMotd.NoMotd,"lawmaker/components/metafiles/nomotd.lst")
       end
     elseif switch == "on" then
       if XtremeMotd.NoMotd[user.sName] then
         XtremeMotd.NoMotd[user.sName]=nil
-	SendTxt(user,env,Bot.name,"MOTD enabled again. Use \"!motd off\" to disable.")
-	savefile(XtremeMotd.NoMotd,"lawmaker/components/metafiles/nomotd.lst")
+        SendTxt(user,env,Bot.name,"MOTD enabled again. Use \"!motd off\" to disable.")
+        savefile(XtremeMotd.NoMotd,"lawmaker/components/metafiles/nomotd.lst")
       else
-	SendTxt(user,env,Bot.name,user.sName..", my love! You have already re-enabled the MOTD or forgot to disable... :P")
+	      SendTxt(user,env,Bot.name,user.sName..", my love! You have already re-enabled the MOTD or forgot to disable... :P")
       end
     else
       SendTxt(user,env,Bot.name,"The value can only be on or off. It cannot be "..switch)
@@ -63,7 +63,7 @@ function XtremeMotd.ShowInPm(user,data,env) -- show the motd in PM
 end
 
 function XtremeMotd.Change(user,data,env)
-  local _,_,motd=string.find(data,"%b<>%s+%S+%s+(.+)")
+  local motd=string.match(data,"%b<>%s+%S+%s+(.+)")
   local f,err=io.open("lawmaker/motd.txt","w+")
   if err then user:SendPM(bot,err) end
     if motd then

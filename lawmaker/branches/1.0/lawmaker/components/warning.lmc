@@ -8,8 +8,8 @@ TODO: this script is hungry for metatables. :-P
 Run(path.."cfg/warning.ini")
 
 function Warning.Warn(user,data,env)
-  local _,_,arg=string.find(data, "%b<>%s+%S+%s+(%S+)")
-  local _,_,arg2=string.find(data, "%b<>%s+%S+%s+%S+%s+(.+)")
+  local arg=string.match(data, "%b<>%s+%S+%s+(%S+)")
+  local arg2=string.match(data, "%b<>%s+%S+%s+%S+%s+(.+)")
   if arg then 
     if arg==Bot.name	then
       SendTxt(user,env,Bot.name,"You cannot warn me! Everything I do is right, agree? This was your warning #"..Warning.Max)
@@ -49,7 +49,7 @@ function Warning.Warn(user,data,env)
 end
 
 function Warning.Resetwarn(user,data,env)
-  local _,_,arg = string.find(data, "%b<>%s+%S+%s+(%S+)")
+  local arg = string.match(data, "%b<>%s+%S+%s+(%S+)")
   if arg then 
     if Warning.Warns[arg] then
       Warning.Warns[arg]=nil 

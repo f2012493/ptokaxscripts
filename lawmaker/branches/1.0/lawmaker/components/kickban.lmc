@@ -9,8 +9,8 @@ Run(path.."cfg/kickban.ini")
 KickBanTBan.KickNumbers={}
 
 function KickBanTBan.Kick(user,data,env,bool)
-  local _,_,nick = string.find(data,"%b<>%s+%S+%s+(%S+)")
-  local _,_,reason=string.find(data,"%b<>%s+%S+%s+%S+%s+(.+)")
+  local nick = string.match(data,"%b<>%s+%S+%s+(%S+)")
+  local reason=string.match(data,"%b<>%s+%S+%s+%S+%s+(.+)")
   local tail
   if nick then
     if nick==Bot.name then
@@ -27,7 +27,7 @@ function KickBanTBan.Kick(user,data,env,bool)
 					kicktouser="You are being kicked"
 					kicktoops=usr.sName.." with IP "..usr.sIP.." has been kicked by "..user.sName.."."
 					if RandomKicks and RandomKicks.OnOff==1 then
-						kicktoall=kicktoall.." "..RandomKicks.List[math.random(1,table.getn(RandomKicks.List))].." "..usr.sName
+						kicktoall=kicktoall.." "..RandomKicks.List[math.random(#RandomKicks.List)].." "..usr.sName
 					else
 						kicktoall=kicktoall.." has kicked "..usr.sName
 					end
@@ -81,11 +81,11 @@ end
 function KickBanTBan.Ban(user,data,env,meth,bFull)
   local nick,days,hours,mins,reason
   if meth=="perm" then
-    _,_,nick=string.find(data,"%b<>%s+%S+%s+(%S+)")
-    _,_,reason=string.find(data,"%b<>%s+%S+%s+%S+%s+(.+)")
+    nick=string.match(data,"%b<>%s+%S+%s+(%S+)")
+    reason=string.match(data,"%b<>%s+%S+%s+%S+%s+(.+)")
   else
-    _,_,nick,amount,unit=string.find(data,"%b<>%s+%S+%s+(%S+)%s+(%d+)([mMhHdDwW])")
-    _,_,reason=string.find(data,"%b<>%s+%S+%s+%S+%s+%d+[mhDW]%s+(.+)")
+    nick,amount,unit=string.match(data,"%b<>%s+%S+%s+(%S+)%s+(%d+)([mMhHdDwW])")
+    reason=string.match(data,"%b<>%s+%S+%s+%S+%s+%d+[mhDW]%s+(.+)")
   end
   local mult=
     {
@@ -137,7 +137,7 @@ function KickBanTBan.Ban(user,data,env,meth,bFull)
 				local bad
 				if string.find(nick,"%d+%.%d+%.%d+%.%d+") then
 					local tIP = {}
-					_,_,tIP.a,tIP.b,tIP.c,tIP.d= string.find(nick, "(%d+)%.(%d+)%.(%d+)%.(%d+)")
+					tIP.a,tIP.b,tIP.c,tIP.d= string.match(nick, "(%d+)%.(%d+)%.(%d+)%.(%d+)")
 					for a,b in pairs(tIP) do 
 						if tonumber(b)<0 or tonumber(b)> 255 then
 							SendTxt(user,env,Bot.name,"Invalid IP!")
@@ -177,9 +177,9 @@ end
 
 function KickBanTBan.UnBan(user,data,env,bTemp)
   local yep
-  local _,_,arg=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  local arg=string.match(data,"%b<>%s+%S+%s+(%S+)")
   if arg then
-    for _,obj in frmHub:GetPermBanList() do
+    for _,obj in ipairs(frmHub:GetPermBanList()) do
       if obj.sNick==arg or obj.sIP==arg then
 	Unban(arg); Unban(obj.sIP)
 	SendTxt(user,env,Bot.name,arg.." unbanned.")
@@ -189,7 +189,7 @@ function KickBanTBan.UnBan(user,data,env,bTemp)
     end
     if not yep then
       if bTemp then
-	for _,obj in frmHub:GetTempBanList() do
+	for _,obj in ipairs(frmHub:GetTempBanList()) do
 	  if obj.sNick==arg or obj.sIP==arg then
 	    TempUnban(arg);TempUnban(obj.sIP)
 	    SendTxt(user,env,Bot.name,arg.." untempbanned.")
@@ -207,20 +207,20 @@ end
 
 function KickBanTBan.ToArrival(user,data)
   if string.find(data,"You are being kicked because:") then
-    _,_,KickBanTBan.Reason=string.find(data,"You are being kicked because:%s+(.+)")
+    KickBanTBan.Reason=string.match(data,"You are being kicked because:%s+(.+)")
   return "shit"
   end
 end
 
 function KickBanTBan.ChatArrival(user,data)
   if string.find(data,"%b<>%s+.-is%s+kicking.+because:") then
-    local _,_,why=string.find(data,"because:%s+(.+)")
+    local why=string.match(data,"because:%s+(.+)")
     if why==KickBanTBan.Reason then KickBanTBan.OKToKick=true return "shit" end
   end
 end
 
 function KickBanTBan.KickArrival(user,data)
-  local _,_,nick=string.find(data,"%$Kick%s+(%S+)")
+  local nick=string.match(data,"%$Kick%s+(%S+)")
   local r,b=nick,false
   if KickBanTBan.BuiltInKickSilent==1 then b=true end
   if KickBanTBan.Reason then r=r.." "..KickBanTBan.Reason end

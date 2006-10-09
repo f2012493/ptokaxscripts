@@ -10,14 +10,14 @@ Run(path.."cfg/randomkicks.ini")
 RandomKicks.List={}
 
 function RandomKicks.Delete(user,data,env)
-  local _,_,args=string.find(data,"%b<>%s+%S+%s+(.+)")
+  local args=string.match(data,"%b<>%s+%S+%s+(.+)")
   if args then
     local tmp={}
-    for n in string.gfind(args,"(%d+)") do
+    for n in string.gmatch(args,"(%d+)") do
       table.insert(tmp,tonumber(n))
     end
     table.sort(tmp,n)
-    for k=table.getn(tmp),1,-1 do
+    for k=#tmp,1,-1 do
       if RandomKicks.List[tmp[k]] then
 	if RandomKicks.Table[RandomKicks.List[tmp[k]]] then
 	  SendTxt(user,env,Bot.name,"The random kick message #"..tmp[k].." has been deleted successfully.")
@@ -36,7 +36,7 @@ function RandomKicks.Delete(user,data,env)
 end
 
 function RandomKicks.Add(user,data,env)
-  local _,_,kickmsg=string.find(data,"%b<>%s+%S+%s+(.+)")
+  local kickmsg=string.match(data,"%b<>%s+%S+%s+(.+)")
   if kickmsg then
     if not RandomKicks.Table[kickmsg] then
       RandomKicks.Table[kickmsg]=1
@@ -53,7 +53,7 @@ function RandomKicks.Add(user,data,env)
 end
 
 function RandomKicks.OnOff(user,data,env) -- ugly, but not important to optimize.
-  local _,_,switch=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  local switch=string.match(data,"%b<>%s+%S+%s+(%S+)")
   if switch=="on" then
     if RandomKicks.OnOff== 1 then 
       SendTxt(user,env,Bot.name,"Random kick msgs are already enabled.")
@@ -81,8 +81,8 @@ end
 
 function RandomKicks.Show(user,data,env)
   local msg="\r\nRandom kick messages (they are autocompleted to look human :-D):\r\n=============================\r\n\r\n"
-  for u=1,table.getn(RandomKicks.List) do
-    msg=msg..u.." ---> ["..user.sName.."] "..RandomKicks.List[u].." <user> because: this is a test message\r\n" --"..user.sName.."
+  for u,val in ipairs(RandomKicks.List) do
+    msg=msg..u.." ---> ["..user.sName.."] "..val.." <user> because: this is a test message\r\n" --"..user.sName.."
   end
   msg=msg.."\r\n============================="
   user:SendPM(Bot.name,msg)
@@ -90,7 +90,7 @@ end
 
 function RandomKicks.Main()
   RandomKicks.Table=maketable("lawmaker/components/metafiles/randomkicks.dat")
-  for a,b in RandomKicks.Table do
+  for a,b in pairs(RandomKicks.Table) do
     table.insert(RandomKicks.List,a)
   end
   table.sort(RandomKicks.List)

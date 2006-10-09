@@ -39,7 +39,7 @@ Run(path.."cfg/banlist.ini")
 
 function BanList.Search(user,data,env,bTemp)
   local list=frmHub:GetPermBanList() if bTemp then list=frmHub:GetTempBanList() end
-  local _,_,srchstring=string.find(data,"%b<>%s+%S+%s+(.+)")
+  local srchstring=string.match(data,"%b<>%s+%S+%s+(.+)")
   local msg=""
   if srchstring then
     for _,obj in ipairs(list) do

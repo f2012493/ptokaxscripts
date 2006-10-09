@@ -8,7 +8,7 @@ Run(path.."cfg/add_del_show.ini")
 function AddDelShow.AddShit(user,data,env,wtf,file)
   local container=AddDelShow.LoadShit(file)
   number=number+1
-  local _,_,entry=string.find(data,"%b<>%s+%S+%s+(.*)")
+  local entry=string.match(data,"%b<>%s+%S+%s+(.*)")
   if entry then
     if string.len(entry) <= AddDelShow.MaxEntryLen then
       container[number]=os.date("%x").."|"..user.sName.."|"..entry
@@ -54,7 +54,7 @@ function AddDelShow.ShowShit(user,data,env,wtf,file)
   local msg="\r\nHere you go, the "..wtf..":\r\n\r\n"
   if number>0 then
     for i=1,number do
-      local _,_,who,when,entry=string.find(container[i], "(.+)|(.+)|(.+)")
+      local who,when,entry=string.match(container[i], "(.+)|(.+)|(.+)")
       msg=msg..i..".\t"..who.." - "..when.." ---> "..entry.."\r\n"
     end
   else
@@ -67,23 +67,22 @@ end
 
 function AddDelShow.DelShit(user,data,env,wtf,file)
   local container=AddDelShow.LoadShit(file)
-  local _,_,args=string.find(data,"%b<>%s+%S+%s+(.+)")
+  local args=string.match(data,"%b<>%s+%S+%s+(.+)")
   if args then
-    string.gsub(args,"(%d+)",
-      function (what)
-        what = tonumber(what)
-	if what then 
-          if container[what] then
-           SendTxt(user,env,Bot.name,"Entry #"..what.." is deleted from the "..wtf..".")
-           container[what]=nil
-           AddDelShow.SaveShit(container,file)
-          else
-           SendTxt(user,env,Bot.name,"Entry #"..what.." wasn't found in the "..wtf..".")
-          end
-	else
-         SendTxt(user,env,Bot.name, "I need the ID number to delete an entry.")
-	end
-      end)
+    for what in string.gmatch(args,"(%d+)") do
+      what = tonumber(what)
+      if what then 
+        if container[what] then
+          SendTxt(user,env,Bot.name,"Entry #"..what.." is deleted from the "..wtf..".")
+          container[what]=nil
+          AddDelShow.SaveShit(container,file)
+        else
+          SendTxt(user,env,Bot.name,"Entry #"..what.." wasn't found in the "..wtf..".")
+        end
+      else
+        SendTxt(user,env,Bot.name, "I need the ID number to delete an entry.")
+      end
+    end
   else
     SendTxt(user,env,Bot.name, "I need at least one ID number to work! ;).")
   end
