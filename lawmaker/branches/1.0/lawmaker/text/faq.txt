@@ -1,0 +1,180 @@
+
+@@@ DC++ HUB FAQ by bastya_elvtars @@@
+
+I. {{{ DC++ PROBLEMS, TIPS & TRICKS }}}
+
+1. >>>I cannot download from anyone! Why? <<<
+
+  a) Disable WINXP firewall!
+StartMenü -> My Network Places
+Left side -> Show network and dialup conections
+
+- < Having DSL >
+Rightclick the DSL connection starting icon  -> Properties -> Advanced tab -> 
+UNCHECK the firewall -> OK
+Now disconnect from internet (after closing DC), then reconnect.
+
+- < Having Cable >
+Rightclick icon of network card -> Properties -> Advanced tab -> 
+UNCHECK the firewall -> OK.
+YOU WILL HAVE TO REBOOT!
+
+   b) XP firewall disabled / no XP-m, still cannot dl (Firewall)
+
+You may be running DC++ thru a proxy on a LAN or on a firewalled modem/router. On Settings --> General --> Connection check Passive and restart DC++.
+Having a firewall open potrs 411,412,1412-es or disable the firewall, also check if you entered a right IP and port in DC++ settings.
+
+2. >>> My upload slows down my download What 2 do? <<<
+
+a) Settings ---> Advanced ---> Enable small send buffer
+
+b) Use cfos or cfosspeed! No place for info here, please google it! =)
+
+c) If this does not help: Settings ---> General ---> Passive
+
+d) If still persists: use a proper client with a limiter, after asking an operator.
+
+3) My machine is slowed down by DC++
+
+a) Always disable safe & compressed transfers: Settings ---> Advanced ---> Enable safe and compressed transfers (UNCHECK!!!)
+
+b) Try slowing hash down! Settings ---> Advanced ---> Max hash speed
+
+3. >>> Other DC++ stuff <<<
+
+www.dslreports.com/faq/dc
+
+II. {{{WINDOWS PROBLEMS, TIPS & TRICKS }}}
+
+1. >>> Disabling auto update <<<
+
+a) WINXP: Right click My Computer - Properties - Automatic updates - Keep my computer...  - unchek it!
+
+b) WIN2000 : Control panel - Automatic updates - Keep my computer...  - unchek it!
+
+2. >>> Disabling CDROM/DVDROM autoplay <<<
+
+Start - Run Regedit
+
+Find the
+
+HKEY_LOCAL_MACHINE \ System \ Controlset001 \ Services \ Cdrom
+
+key and set AutoRun value to 0. 
+
+Reboot the computer!
+
+3) >>> Optimizing IExplorer <<<
+
+First, don't use it, use Mozilla firefox or Opera, they rock. if you still wanna use it, then optimizer the DNS cache.
+Optimizing the DNS cache is easl.
+Save the text BETWEEN the two separating lines into a file with .reg extension:
+
+======================================================================================7
+
+Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE \ SYSTEM \ CurrentControlSet Services \ Dnscache \ Parameters]
+"CacheHashTableBucketSize"=dword:00000001
+"CacheHashTableSize"=dword:00000180
+"MaxCacheEntryTtlLimit"=dword:0000fa00
+"MaxSOACacheEntryTtlLimit"=dword:0000012d
+
+======================================================================================7
+
+Double click the saved file, and click yes on the confirmation dialog.
+
+4) >>> Other <<<
+
+
+5) >>> Drivers for under WIN <<<
+
+http://pc-drivers.net
+
+http://www.driverguide.com
+
+
+III. {{{ MULTIMEDIA PROBLEMS }}}
+
+1) >>> Video players <<<
+
+VLC (no codec needed, partially downloaded dc++ files can also be looked at with it): http://www.videolan.org/vlc/download-windows.html
+
+Media Player Classic (nice little wmp-like tool): http://sourceforge.net/project/showfiles.php?group_id=82303&package_id=84358
+
+BSPlayer: http://www.bsplayer.org/index.php?p=download&PHPSESSID=61c3cae437ede6c03b4928565633ef70 (need 2 reg on the page)
+
+Koala Player: http://www.koala.pl/Index2.php?page=Download&lang=en (Shareware!)
+
+MPlayer (commandline, but owns): www.mplayerhq.hu
+
+2) >>> Audio players <<<
+
+Foobar2000: www.foobar2000.org
+
+Winamp: www.winamp.com
+
+SnackAmp: http://snackamp.sourceforge.net/
+
+3) >>> Subtitles <<<
+
+http://www.divxsubtitles.net/
+http://www.subtitles.cz/en/
+http://www.divxsweden.net/
+http://divxstation.com/
+http://dvd.box.sk/
+http://www.divxsubs.com/
+http://www.dvd-subtitles.com/
+http://www.videx.no-ip.com/
+http://www.divx-digest.com/subtitles/
+http://subtitles.servehttp.com/
+
+4) >>> Video codecs <<<
+
+DivX: http://download.com.com/3000-2194-10062728.html?
+
+XviD: http://files.divx-digest.com/software/codec/XviD-1.0.1-05062004.exe
+
+Mpeg2 codec (SVCD): http://www.softpedia.com/public/scripts/downloadhero/11-2-2-40/
+
+DVD (VOB) codec: http://www.digital-digest.com/dvd/downloads/encoding_vobutils.html
+
+VOBSuB: http://www.divx-digest.com/software/vobsub.html
+
+5) >>> Audio codecs <<<
+
+AC3: http://ac3filter.sourceforge.net
+
+OGG: http://tobias.everwicked.com/oggds.htm - not needed in general
+
+6) >>> CD-burning <<<
+
+www.ahead.de - Nero
+
+www.copystar.com - DVD Mate
+
+www.feurio.de - Feurio (Audio burner)
+
+IV. {{{ Other }}}
+
+a) Crack/patch/serial
+
+www.gamecopyworld.com
+
+http://astalavista.box.sk
+
+www.serials.ws
+
+www.cracks.am
+
+etc.
+
+
+c)What do i use to open the file with extension... ?
+
+Look here: 
+
+www.filext.com
+
+
+=== Start reading from the top of the page please! :P

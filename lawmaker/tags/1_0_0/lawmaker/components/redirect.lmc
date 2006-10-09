@@ -1,0 +1,414 @@
+Redirect={Levels={}}
+--[[
+Redirect set/show/do module for LawMaker
+This one killed me, this part of the API is far from perfect.
+bastya_elvtars, 2005. 06. 28.
+2005. 07. 11.: added detection whether redirect is scripted.
+2005. 07. 18.: I hacked the s***t out of the API, so now there is:
+frmHub:GetRedAddy(arg) - returns redirect address, returns nil if no address set, returns -1 on failure
+frmHub:SetRedAddy(arg,address) - sets redirect address, returns nil on failure
+frmHub:GetRed(arg) - gets redirect option, returns 1 if on, nil if off, -1 on failure 
+frmHub:SetRed(arg,opt) - stes redirect option, returns nil on failure
+failure = the arg cannot be set with that method
+args can be: 
+    *"share"=low share
+    *"maxhubs"=too many hubs
+    *"ratio"=bad ratio
+    *"slots"=bad slot count
+    *"nickrule"=bad/no nick prefix
+    *"notag"="no/bad tag" -- ONLY ADDRESS CAN BE SET/RETRIEVED
+    "full"=hub full -- CAN ONLY BE SET ON/OFF
+    "allnew"=all new users -- CAN ONLY BE SET ON/OFF
+    "ban"="permanent ban
+    "default"=default -- ONLY ADDRESS CAN BE SET/RETRIEVED
+    "regonly"=registered users only
+    "tempban"=temporary ban
+  NOTE: some are overriden by script if checking is enabled (marked with *)
+	In this case, only address can be set/get.
+]]
+
+Run(path.."cfg/redirect.ini")
+
+frmHub.SetRedAddy=function(self,what,addy)
+  local FuncTable=
+  {
+    ["share"]=function (addy)
+		  self:SetShareRedirAddr(addy)
+		end,
+    ["slots"]=function (addy)
+		  self:SetSlotsRedirAddr(addy)
+		end,
+    ["ratio"]=function (addy)
+		  self:SetRatioRedirAddr(addy)
+		end,
+    ["maxhubs"]=function (addy)
+		    self:SetMaxHubsRedirAddr(addy)
+		  end,
+    ["nickrule"]= function (addy)
+			self:SetNickRuleRedirAddr(addy)
+		      end,
+    ["tempban"]=function (addy)
+		    self:SetTempBanRedirAddr(addy)
+		  end,
+    ["regonly"]=function (addy)
+		    self:SetRegOnlyRedirAddr(addy)
+		  end,
+    ["ban"]=function (addy)
+		self:SetBanRedirAddr(addy)
+	      end,
+    ["default"]=function (addy)
+		    self:SetRedirectAddress(addy)
+		  end,
+    ["nicklen"]= function (addy)
+                    self:SetNickLenRedirAddr(addy)
+                  end,
+    ["notag"]=function (addy)
+		self:SetNoTagRedirAddr(addy)
+		end,
+  }
+  if FuncTable[what] then
+    FuncTable[what](addy)
+    return true
+  end
+end
+
+frmHub.GetRedAddy=function(self,what)
+  local FuncTable=
+  {
+    ["share"]=function ()
+		  return self:GetShareRedirAddr()
+		end,
+    ["slots"]=function ()
+		  return self:GetSlotsRedirAddr()
+		end,
+    ["ratio"]=function ()
+		  return self:GetRatioRedirAddr()
+		end,
+    ["maxhubs"]=function ()
+		    return self:GetMaxHubsRedirAddr()
+		  end,
+    ["nickrule"]=function ()
+			return self:GetNickRuleRedirAddr()
+		      end,
+    ["tempban"]=function ()
+		    return self:GetTempBanRedirAddr()
+		  end,
+    ["regonly"]=function ()
+		    return self:GetRegOnlyRedirAddr()
+		  end,
+    ["ban"]=function ()
+		return self:GetBanRedirAddr()
+	      end,
+    ["nicklen"]= function ()
+                  return self:GetNickLenRedirAddr()
+                end,
+    ["default"]=function ()
+		    return self:GetRedirectAddress()
+		  end,
+    ["notag"]=function ()
+		      return self:GetNoTagRedirAddr()
+		    end
+  }
+  if not FuncTable[what] then return -1
+  else return FuncTable[what]() end
+end
+
+frmHub.SetRed=function(self,what,p)
+  local FuncTable=
+  {
+    ["share"]=function (p)
+		  self:SetShareRedirect(p)
+		end,
+    ["slots"]=function (p)
+		  self:SetSlotsRedirect(p)
+		end,
+    ["ratio"]=function (p)
+		  self:SetRatioRedirect(p)
+		end,
+    ["maxhubs"]=function (p)
+		    self:SetMaxHubsRedirect(p)
+		  end,
+    ["nickrule"]=function (p)
+			self:SetNickRuleRedirect(p)
+		      end,
+    ["nicklen"]=function (p)
+                  self:SetNickLenRedir(p)
+                end,
+    ["tempban"]=function (p)
+		    self:SetTempBanRedirect(p)
+		  end,
+    ["regonly"]=function (p)
+		    self:SetRegOnlyRedirect(p)
+		  end,
+    ["ban"]=function (p)
+		self:SetBanRedirect(p)
+	      end,
+    ["allnew"]=function (p)
+		    if p then self:SetRedirectFull(math.abs(p-1)) end -- lol
+		    self:SetRedirectAll(p)
+		  end,
+    ["full"]=function (p)
+		      self:SetRedirectFull(p)
+		    end,
+  }
+  if FuncTable[what] then
+    FuncTable[what](p)
+    return true
+  end
+end
+
+frmHub.GetRed=function(self,what)
+  local FuncTable=
+  {
+    ["share"]=function ()
+		  if Checks then return 2 end
+		  return self:GetShareRedirect()
+		end,
+    ["slots"]=function ()
+		  if Checks then return 2 end
+		  return self:GetSlotsRedirect()
+		end,
+    ["ratio"]=function ()
+		  if Checks then return 2 end
+		  return self:GetRatioRedirect()
+		end,
+    ["maxhubs"]=function ()
+		    if Checks then return 2 end
+		    return self:GetMaxHubsRedirect()
+		  end,
+    ["nickrule"]=function ()
+			if Checks then return 2 end
+			return self:GetNickRuleRedirect()
+		      end,
+    ["tempban"]=function ()
+		    return self:GetTempBanRedirect()
+		  end,
+    ["regonly"]=function ()
+		    return self:GetRegOnlyRedirect()
+		   end,
+    ["ban"]=function ()
+		return self:GetBanRedirect()
+	      end,
+    ["allnew"]=function ()
+		    return self:GetRedirectAll()
+		  end,
+    ["nicklen"]= function()
+                  return self:GetNickLenRedirAddr()
+                end,
+    ["full"]=function ()
+		      return self:GetRedirectFull()
+		    end,
+  }
+  if not FuncTable[what] then return -1
+  else return FuncTable[what]() end
+end
+
+Redirect.WTFItIs=
+  {
+    ["share"]="low share",
+    ["maxhubs"]="too many hubs",
+    ["ratio"]="bad ratio",
+    ["slots"]="bad slot count",
+    ["full"]="hub full",
+    ["allnew"]="all new users",
+    ["ban"]="permanent ban",
+    ["default"]="default",
+    ["regonly"]="registered users only",
+    ["tempban"]="temporary ban",
+    ["nickrule"]="bad/no nick prefix",
+    ["notag"]="no/bad tag",
+    ["nicklen"]="nick length",
+  }
+
+function Redirect.CheckIfControlledByScript(arg)
+  if Checks then
+    local tControlledByChecking=
+      {
+	["share"]=Checks.Share.BadShareTodo,
+	["maxhubs"]=Checks.SlotHubLimit.BadHubToDo,
+	["ratio"]=Checks.SlotHubLimit.BadRatioToDo,
+	["slots"]=Checks.SlotHubLimit.BadSlotsToDo,
+	["notag"]=Checks.Client.BadClientToDo,
+	["nickrule"]=Checks.Nick.BadPrefixToDo,
+      }
+    return tControlledByChecking[arg]
+  end
+end
+  
+
+function Redirect.RedirectAllNow(user,data,env)
+  local _,_,addy=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  local _,_,reason=string.find(data,"%b<>%s+%S+%s+%S+%s+(.+)")
+  reason=reason or "No reason specified."
+  if not addy then
+    SendToOps(Bot, user.sName.." is redirecting all users to: "..frmHub:GetRedirectAddress()..".")
+    SendTxt(user,env,Bot.name,"You are redirecting all users to: "..frmHub:GetRedirectAddress()..".")
+      for _,obj in frmHub:GetOnlineNonOperators() do
+        obj:Redirect(frmHub:GetRedirectAddress(),reason)
+      end
+  else
+    SendToOps(Bot, user.sName.." is redirecting all users to: "..addy..".")
+    SendTxt(user,env,Bot.name,"You are redirecting all users to: "..addy..".")
+    for _,obj in frmHub:GetOnlineNonOperators() do
+      obj:Redirect(addy,reason)
+    end
+  end
+end
+
+function Redirect.SetRedirectAddressAndOnOff(user,data,env)
+  local _,_,what,onoffadd=string.find(data,"%b<>%s+%S+%s+(%S+)%s+(.+)")
+  if what then
+    if Redirect.WTFItIs[what] then
+      if onoffadd=="on" or onoffadd=="off" then
+	if Redirect.CheckIfControlledByScript(what) then
+-- 	if Redirect.FuncTable[what].SetOnOff(1)==2 then
+	  SendTxt(user,env,Bot.name,"This option is controlled by script, please refer to checking plugin.")
+	  return 1
+	end
+	if onoffadd=="on" then
+	  if frmHub:SetRed(what,1) then
+	    SendToOps(Bot.name,user.sName.." has set the redirect option for "..Redirect.WTFItIs[what].." to ON.")
+	    SendTxt(user,env,Bot.name,"Redirect option for "..Redirect.WTFItIs[what].." is now ON.")
+	  else
+	    SendTxt(user,env,Bot.name,"The argument "..what.." is not valid for this command.")
+	  end
+        else
+	  if frmHub:SetRed(what,0) then
+	    SendToOps(Bot.name,user.sName.." has set the redirect option for "..Redirect.WTFItIs[what].." to OFF.")
+	    SendTxt(user,env,Bot.name,"redirect option for "..Redirect.WTFItIs[what].." is now OFF.")
+	    frmHub:SetRed(what,0)
+	  else
+	    SendTxt(user,env,Bot.name,"The argument "..what.." is not valid for this command.")
+	  end
+	end
+      else
+	SendToOps(Bot.name,user.sName.." has set the redirect address for "..Redirect.WTFItIs[what].." to "..onoffadd..".")
+	SendTxt(user,env,Bot.name,"Redirect address for "..Redirect.WTFItIs[what].." is now set to "..onoffadd..".")
+	frmHub:SetRedAddy(what,onoffadd)
+      end
+    elseif what=="all" then
+      if onoffadd ~="on" and onoffadd~="off" then
+	SendToOps(Bot.name,user.sName.." has set ALL redirect addresses to "..onoffadd..".")
+	SendTxt(user,env,Bot.name,"Every redirect address is now set to "..onoffadd..".")
+	for a,b in Redirect.WTFItIs do
+	  frmHub:SetRedAddy(a,onoffadd)
+	end
+      else
+	SendTxt(user,env,Bot.name,[[The "all" option works for setting addresses only, not on/off bits.]])
+      end
+    else
+      SendTxt(user,env,Bot.name,"Redirect address for "..what.." is unsupported or does not exist.")
+    end
+  else
+    SendTxt(user,env,Bot.name,"Syntax error, correct usage is: !setredirect<share/maxhubs/ratio/slots/full/allnew/ban/regonly/tempban> <on/off/address>")
+  end
+end
+
+function Redirect.RedirectUser(user,data,env)
+  local _,_,nick=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  local _,_,raddy=string.find(data,"%b<>%s+%S+%s+%S+%s+(%S+)")
+  if nick then
+    local usr=GetItemByName(nick)
+    if usr then
+      if raddy then
+        usr:SendPM(Bot,"You are being redirected to "..raddy.." by "..user.sName..".")
+      else
+        usr:SendPM(Bot,"You are being redirected to "..frmHub:GetRedirectAddress().." by "..user.sName..".")
+      end
+      usr:Redirect(raddy or frmHub:GetRedirectAddress())
+    else
+      SendTxt(user,env,Bot.name,nick.." not online.")
+    end
+  else
+    SendTxt(user,env,Bot.name,"Well, you aren't easing my job... Please enter the user name!")
+  end
+end
+
+function Redirect.KillBuiltinRed(user,data)
+  SendToOps(Bot.name,user.sName.." just tried to use the dc++ built-in redirect function ... naughty naughty!")
+  return "shit"
+end
+
+function Redirect.ShowRedirect(user,data,env)
+  local _,_,what=string.find(data,"%b<>%s+%S+%s+(%S+)")
+  if what then
+    if Redirect.WTFItIs[what] then
+      local msg
+      if frmHub:GetRedAddy(what)~=-1 then
+	if frmHub:GetRedAddy(what) and frmHub:GetRedAddy(what)~="<Redirect address>" then
+	  msg="The redirect address for "..Redirect.WTFItIs[what].." is "..frmHub:GetRedAddy(what).."."
+	else
+	  msg="The redirect address for "..Redirect.WTFItIs[what].." is unspecified."
+	end
+      else
+	msg="There can not be separate redirect address for "..Redirect.WTFItIs[what]..", most likely it's the default one: "..frmHub:GetRedirectAddress()
+      end
+      if Redirect.CheckIfControlledByScript(what) then
+	msg=msg.." It is currently SCRIPTED. Please refer to the checking plugin."
+      else
+	if frmHub:GetRed(what)~=-1 then
+	  if frmHub:GetRed(what)==1 then
+	    msg=msg.." It is currently ENABLED."
+	  else
+	    msg=msg.." It is currently DISABLED."
+	  end
+	else
+	  msg=msg.." It has no ON/OFF option."
+	end
+      end
+      SendTxt(user,env,Bot.name,msg)
+    else
+      SendTxt(user,env,Bot.name,"Redirect option for "..what.." is unsupported or does not exist.")
+    end
+  else
+    local msg="\r\nThe redirect addresses are:\r\n==============================\r\n"
+    for a,b in Redirect.WTFItIs do
+      if frmHub:GetRedAddy(a)~=-1 then
+	if frmHub:GetRedAddy(a) and frmHub:GetRedAddy(a)~="<Redirect address>" then
+	  msg=msg.."\r\n"..Redirect.WTFItIs[a].." ---> "..frmHub:GetRedAddy(a)
+	else
+	  msg=msg.."\r\n"..Redirect.WTFItIs[a].." - no address set."
+	end
+      else
+	local reddy=frmHub:GetRedirectAddress() or "<N/A>" msg=msg.."\r\n"..Redirect.WTFItIs[a].." - no separate address can be set, the default is used: "..reddy
+      end
+      if frmHub:GetRed(a)~=-1 then
+	if Redirect.CheckIfControlledByScript(a) then
+	  msg=msg.."\r\nIt is currently SCRIPTED. Please refer to the checking plugin.\r\n"
+	else
+	  if frmHub:GetRed(a)==1 then
+	    msg=msg.."\r\nIt is currently ENABLED.\r\n"
+	  else
+	    msg=msg.."\r\nIt is currently DISABLED.\r\n"
+	  end
+	end
+      else
+	msg=msg.."\r\nThere is NO ON/OFF setting for it.\r\n"
+      end
+    end
+    user:SendPM(Bot.name,msg)
+  end
+end
+
+
+RegCmd("setredirect",Redirect.SetRedirectAddressAndOnOff,{},Redirect.Levels.SetRedirect,"<share/maxhubs/ratio/slots/full/allnew/ban/regonly/tempban> <on/off/address>\tSets the appropriate redirects on/off or changes the address.")
+RegCmd("redirectallnow",Redirect.RedirectAllNow,{},Redirect.Levels.RedirectAllNow,"\t\t\t\t\tRedirects all users to the desired (or the currently set) redirect address.")
+RegCmd("redirectuser",Redirect.RedirectUser,{},Redirect.Levels.RedirectUser,"<nick> <address>\t\t\tRedirects a user to the given address. If no address is specified, the default address will be used.")
+RegCmd("showredirect",Redirect.ShowRedirect,{},Redirect.Levels.ShowRedirect,"<share/maxhubs/ratio/slots/full/allnew/ban/regonly/tempban>\t\tShows the appropriate redirect addresses, with no option, shows all.")
+RegFunc("forcemovearr","disabling builtin redirect",Redirect.KillBuiltinRed,{})
+
+-- Now registering rightclick commands. 
+for a,b in Redirect.WTFItIs do
+  if frmHub:SetRedAddy(a) and a~="default" then
+    RegRC(Redirect.Levels.SetRedirect,"1 3","Redirect\\Set redirect address for\\"..b,"!setredirect "..a.." %[line:Address:]")
+  end
+  if frmHub:SetRed(a) and not Redirect.CheckIfControlledByScript(a) then
+    RegRC(Redirect.Levels.SetRedirect,"1 3","Redirect\\Enable redirect for\\"..b,"!setredirect "..a.." on")
+    RegRC(Redirect.Levels.SetRedirect,"1 3","Redirect\\Disable redirect for\\"..b,"!setredirect "..a.." off")
+  end
+  RegRC(Redirect.Levels.SetRedirect,"1 3","Redirect\\Get redirect address & status for\\"..b,"!showredirect "..a)
+end
+  RegRC(Redirect.Levels.SetRedirect,"1 3","Redirect\\Set the default redirect address","!setredirect default %[line:Address:]")
+RegRC(Redirect.Levels.RedirectAllNow,"1 2","Redirect\\Redirect USER to...","!redirectuser %[nick] %[line:Address (Enter for default):]")
+RegRC(Redirect.Levels.RedirectUser,"1 3","Redirect\\Redirect all users to...","!redirectallnow %[line:Address (Enter for default):] %[line:Reason:]")
+RegRC(Redirect.Levels.SetRedirect,"1 3","Redirect\\Set redirect address for\\Same address for EVERYTHING","!setredirect all %[line:Address:]")

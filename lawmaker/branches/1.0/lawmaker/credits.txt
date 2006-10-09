@@ -1,0 +1,44 @@
+CREDITS
+Some ideas in LMCA (LawMaker Componenta Architecture) by plop & NightLitch (however it was totally written from scratch).
+Please see the online help on cofiguring the bot.
+Thanks to:
+----------
+  First of all:  my beautiful girlfriend.
+
+  For PtokaX: Ptaczek/PPK/aMutex/frontline3k
+
+  LUA 5 (and later) Copyright 1994-2005 Lua.org, PUC-Rio
+
+  For inspiration:
+
+  plop (Artificial Insanety)
+  Nathanos (Channelbot)
+  tezlo (RetroBot)
+  OpiumVolage (ModBot)
+	[NL]Pur (ConsoleMoon)
+
+  For help/code chunks:
+
+  plop, PPK, NightLitch, RabidWombat, Herodes, tezlo, jiten, Dessamator, BottledHate, Hawk, Optimus, GeceBekcisi,
+  TTB, Mutor, kepp, chilla, Nathanos, Skrollster, Sedulus, nErBoS, [NL]Pur, Skippy84, psf8500, Typhoon, yepyepyep4711
+
+	And yes, thanks to others in LUA Hub, LUA Board(s) and DCDev (not a mistake) that I forgot now.
+  There are detailed credits in plugins.
+
+  For testing (roughly chronological order):
+
+  TiMeTrAVelleR, Psycho_Chihuahua
+  Nidaros, Libbe, Darkstar and other Golden Angel ops,
+  zinden, kaotkbliss and all the ops of PC Gamers,
+  Mickey, Makavelli-2Pac, 6Marilyn6Manson6, LiqUiD~TrolL,
+  Bumbi, GrinSlaw, gander, Stormbringer, Zen
+
+  Special thanks to:
+
+  Neil Hodgson, creator of SciTE, a GREAT & FREE editor - http://www.scintilla.org
+  OpiumVolage, the primary LUA board hoster - http://board.univ-angers.fr ---> this site is down, maybe permanently. :(
+	The LUA Board is @ http://luaboard.sytes.net
+	Corayzon, author of LUASlave - http://www.luaslave.pc-sanity.com.au/
+  Matt/kbeh273300, the secondary LUA board admins - http://lua.uknnet.com
+  Psycho_Chihuahua, host of PtokaX Wiki - http://ptxwiki.psycho-chihuahua.net - and PtokaX Resources' Site - http://ptxscriptdb.psycho-chihuahua.net
+  [NL]Pur, who established the Moon5 project at Sourceforge.
