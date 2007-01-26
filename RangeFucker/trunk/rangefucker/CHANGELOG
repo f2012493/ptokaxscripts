@@ -1,0 +1,23 @@
+v1.0: released
+v1.1: fixed some shit ;)
+v1.2: converted to lua5
+v 1.3RC: small fixes and optimizations
+-------------------
+-- v 2.0: the big return
+-------------------
+rewritten cmpletely for use with PtokaX 0.3.4.0 range management
+added CIDR support (RFC 1518)
+removed listing of range bans, added searching instead
+separate temp. and perm. ban management
+configurable with LuaSlave
+ull rightclick support
+-------------------
+-- v 3.0: the bit return :)
+-------------------
+fixed: rightclick not being sent to ops
+changed: script is lua 5.1.1-only (so is ptokax)
+fixed: CIDR support is now fully compliant with RFC1518
+added: dotted (x.x.x.x) netmask support
+changed: using bitwise operations powered by luabit
+changed: relicensed under the GPL
+added: rightclick for netmask and CIDR, not only single IPs
