@@ -1,6 +1,14 @@
--- Core module for FreshStuff3 v5 by bastya_elvtars
--- License: GNU GPL v2
--- This module contains functions that generate the required messages, save/load releases etc.
+--[[
+Core module for FreshStuff3 v5 by bastya_elvtars
+License: GNU GPL v2
+This module contains functions that generate the required messages, save/load releases etc.
+Command functions return a number after the required parameters and the string to be sent:
+        1: sendtxt (on env/PM only in BCDC),
+        2: PM only (same in BCDC),
+        3: to ops (N/A in BCDC, maybe DC():PrintDebug, or hub:injectChat?)
+        4: to all (BCDC: hub:sendChat)
+That way, we have hostapp-independent code.
+]]
 
 do
   setmetatable (Engine,_Engine)
@@ -23,7 +31,6 @@ do
             end
           else
             return "No such type.",1 
-            -- ret. vals: 1: sendtxt (on env/PM only in BCDC), 2: PM only (same in BCDC), 3: to ops (N/A in BCDC, maybe DC():PrintDebug, or hub:injectChat?), 4: to all (BCDC: hub:sendChat)
           end
         end
       end,
@@ -37,20 +44,26 @@ do
         local cat,tune= string.match(data, "%b<>%s+%S+%s+(%S+)%s+(.+)")
         if cat then
           if Types[cat] then
-            if string.find(tune,"$",1,true) then return "The release name must NOT contain any dollar signs ($)!" end
+            if string.find(tune,"$",1,true) then
+              return "The release name must NOT contain any dollar signs ($)!",1
+            else
+              for _word in Bot.ForbiddenWords do
+                if string.find(tune,word,1,true) then
+                  return "The release name contains the following forbidden word (thus not added): "..word,1
+                end
+              end
+            end
             if Count > 0 then
-              for i=1, Count do
-                local ct,who,when,title=unpack(AllStuff[i])
-                if title==tune then
+              for i,v in ipairs(AllStuff) do
+                if v[3]==tune then
                   return "The release is already added under category "..Types[ct].."."
                 end
               end
             end
-            Count = Count + 1
-            AllStuff[Count]={cat,nick,os.date("%m/%d/%Y"),tune}
+            table.insert(AllStuff,{cat,nick,os.date("%m/%d/%Y"),tune})
             SaveRel()
             ReloadRel()
-            OnRelAdded(user,data,cat,tune)
+            if OnRelAdded then OnRelAdded(user,data,cat,tune) end
           else
             return "Unknown category: "..cat,1
           end
@@ -63,7 +76,8 @@ do
   Engine[Commands.Delete]=
     {
       function (user,data)
-        local _,_,what=string.find(data,"%b<>%s+%S+%s+(.+)")
+        local nick; if hostprg==1 then nick=user.sName end
+        local what=string.match(data,"%b<>%s+%S+%s+(.+)")
         if what then
           local cnt,x=0,os.clock()
           local tmp={}
@@ -75,11 +89,13 @@ do
           for k=#tmp,1,-1 do
             local n=tmp[k]
             if AllStuff[n] then
-              msg=msg.."\r\n"..AllStuff[n][4].." is deleted from the releases."
-              AllStuff[n]=nil
-              cnt=cnt+1
+              if Allowed(user,Levels.Delete) or AllStuff[n][2]==nick then
+                msg=msg.."\r\n"..AllStuff[n][4].." is deleted from the releases."
+                AllStuff[n]=nil
+                cnt=cnt+1
+              end
             else
-              msg=msg.."\r\nRelease numbered "..n.." wasn't found in the releases."
+              msg=msg.."\r\nRelease numbered "..n.." wasn't found in the database."
             end
           end
           if cnt>0 then
@@ -92,7 +108,7 @@ do
           return "yea right, like i know what i got 2 delete when you don't tell me!.",1
         end
       end,
-      {},Levels.Delete,"<ID>\t\t\t\t\tDeletes the releases of the given ID, or deletes multiple ones if given like: 1,5,33,6789"
+      {},1,"<ID>\t\t\t\t\tDeletes the releases of the given ID, or deletes multiple ones if given like: 1,5,33,6789"
     }
   Engine[Commands.AddCatgry]=
     {
@@ -140,7 +156,7 @@ do
   Engine[Commands.ShowCtgrs]=
     {
       function (user,data)
-        local msg="\r\n======================\r\nAvilable categories:\r\n======================\r\n"
+        local msg="\r\n======================\r\nAvaillable categories:\r\n======================\r\n"
         for a,b in pairs(Types) do
           msg=msg.."\r\n"..a
         end
@@ -181,12 +197,10 @@ do
     {
       function(user)
         local x=os.clock()
-        OpenRel()
-        ShowRel(NewestStuff)
-        ShowRel(AllStuff)
+        ReloadRel()
         return "Releases reloaded, took "..os.clock()-x.." seconds.",1
       end,
-      {},Levels.ReLoad,"\t\t\t\t\t\tReloads the releases database."
+      {},Levels.ReLoad,"\t\t\t\t\t\tReloads the releases database, only needed if you modified the file by hand."
     }
   Engine[Commands.Help]=
     {
@@ -196,7 +210,7 @@ do
         local hlp="\r\nCommands available to you are:\r\n=================================================================================================================================\r\n"
         for a,b in pairs(commandtable) do
           if b["level"]~=0 then
-            if userlevels[user.iProfile] >= b["level"] then
+            if Allowed (user, b["level"]) then
               count=count+1
               table.insert(hlptbl,"!"..a.." "..b["help"])
             end
@@ -215,25 +229,33 @@ function OpenRel()
 	AllStuff,NewestStuff,TopAdders = nil,nil,nil
 	collectgarbage(); io.flush()
 	AllStuff,NewestStuff,TopAdders = {},{},{}
-	Count,Count2 = 0,0
-	local f=io.open("freshstuff/data/releases.dat","r")
-	if f then
-  for line in f:lines() do
-    local cat,who,when,title=string.match(line, "(.+)$(.+)$(.+)$(.+)")
-    if cat then
-			if TopAdders[who] then TopAdders[who] = TopAdders[who]+1 else TopAdders[who]=1 end
-			 if string.find(when,"%d+/%d+/0%d") then -- compatibility with old file format
-					local m,d,y=string.match(when,"(%d+)/(%d+)/(0%d)")
-					when=m.."/"..d.."/".."20"..y
-			 end
-				Count = Count +1
-				AllStuff[Count]={cat,who,when,title}
-			else
-				return "Releases file is corrupt, failed to load all items."
-			end
-		end
-  	f:close()
-	end
+	Count2 = 0
+  if not loadfile("freshstuff/data/releases.dat") then
+    local f=io.open("freshstuff/data/releases.dat","r")
+    if f then
+      for line in f:lines() do
+        local cat,who,when,title=string.match(line, "(.+)$(.+)$(.+)$(.+)")
+        if cat then
+          if TopAdders[who] then TopAdders[who] = TopAdders[who]+1 else TopAdders[who]=1 end
+          if string.find(when,"%d+/%d+/0%d") then -- compatibility with old file format
+            local m,d,y=string.match(when,"(%d+)/(%d+)/(0%d)")
+            when=m.."/"..d.."/".."20"..y
+          end
+          table.insert(AllStuff,{cat,who,when,title})
+        else
+          return "Releases file is corrupt, failed to load all items."
+        end
+      end
+      f:close()
+    end
+  else
+    AllStuff=table.load("freshstuff/data/releases.dat")
+    for _,w in ipairs(AllStuff) do
+      local cat,who,when,title=unpack(w)
+      if TopAdders[who] then TopAdders[who] = TopAdders[who]+1 else TopAdders[who]=1 end
+    end
+  end
+  Count=#AllStuff
 	if Count > MaxNew then
 		local tmp = Count - MaxNew
 		Count2=(Count - MaxNew)
@@ -299,7 +321,7 @@ function ShowRel(tab)
 	end
       end
       for a,b in pairs (tmptbl) do
-	Msg=Msg.."\r\n"..a.."\r\n"..string.rep("-",33).."\r\n"..table.concat(b).."\r\n"
+        Msg=Msg.."\r\n"..a.."\r\n"..string.rep("-",33).."\r\n"..table.concat(b).."\r\n"
       end
       MsgAll = "\r\n\r\r\n".." --------- All The Releases -------- "..Msg.."\r\n --------- All The Releases -------- \r\n"..MsgHelp .."\r\n"
     end
@@ -351,17 +373,10 @@ function ShowRelNum(what,num) -- to show numbers of categories
 end
 
 function SaveRel()
-  local f= io.open("freshstuff/data/releases.dat","w+")
-  for i=1,Count do
-    if AllStuff[i] then
-      f:write(table.concat(AllStuff[i],"$").."\n")
-    end
-  end
-  f:flush()
-  f:close()
+  table.save(AllStuff,"freshstuff/data/releases.dat")
 end
 
-function ReloadRel(user,data,env)
+function ReloadRel()
   OpenRel()
   ShowRel(NewestStuff)
   ShowRel(AllStuff)
@@ -378,66 +393,40 @@ function SaveCt()
 end
 
 function SplitTimeString(TimeString)
--- Splits a time format to components, originally written by RabidWombat.
--- Supports 2 time formats: MM/DD/YYYY HH:MM and YYYY. MM. DD. HH:MM
+  -- Splits a time format to components, originally written by RabidWombat.
+  -- Supported formats: MM/DD/YYYY HH:MM, YYYY. MM. DD. HH:MM, MM/DD/YY HH:MM and YY. MM. DD. HH:MM
   local D,M,Y,HR,MN,SC
   if string.find(TimeString,"/") then
     _,_,M,D,Y,HR,MN,SC=string.find(TimeString,"(%d+)/(%d+)/(%d+)%s+(%d+):(%d+):(%d+)")
   else
     _,_,Y,M,D,HR,MN,SC = string.find(TimeString, "([^.]+).([^.]+).([^.]+). ([^:]+).([^:]+).(%S+)")
   end
+  assert(Y:len()==2 or Y:len()==4,"Year must be 4 or 2 digits!")
+  if Y:len()==2 then if Y:sub(1,1)=="0" then Y="20"..Y else Y="19"..Y end end
   D = tonumber(D)
   M = tonumber(M)
   Y = tonumber(Y)
   HR = tonumber(HR)
-  assert(HR < 24)
   MN = tonumber(MN)
-  assert(MN < 60)
   SC = tonumber(SC)
-  assert(SC < 60)
-  return D,M,Y,HR,MN,SC
+  return {year=Y,month=M,day=D,hour=HR,min=MN,sec=SC}
 end
 
-function JulianDate(DAY, MONTH, YEAR, HOUR, MINUTE, SECOND) -- Written by RabidWombat.
--- HOUR is 24hr format.
-  local jy, ja, jm;
-  assert(YEAR ~= 0);
-  assert(YEAR ~= 1582 or MONTH ~= 10 or DAY < 4 or DAY > 15);
-  --The dates 5 through 14 October, 1582, do not exist in the Gregorian system!
-  if(YEAR < 0 ) then
-    YEAR = YEAR + 1;
+--code snipe from a.i. v2 by plop
+JulianDate = function(tTime)
+  if not tTime then
+    local tTime = os.date("*t")
+    return os.time({year = tTime.year, month = tTime.month, day = tTime.day, 
+    hour = tTime.hour, min = tTime.min, sec = tTime.sec}
+  )
   end
-  if( MONTH > 2) then
-    jy = YEAR;
-    jm = MONTH + 1;
-  else
-    jy = YEAR - 1;
-    jm = MONTH + 13;
-  end
-  local intgr = math.floor( math.floor(365.25*jy) + math.floor(30.6001*jm) + DAY + 1720995 );
-  --check for switch to Gregorian calendar
-  local gregcal = 15 + 31*( 10 + 12*1582 );
-  if(DAY + 31*(MONTH + 12*YEAR) >= gregcal ) then
-    ja = math.floor(0.01*jy);
-    intgr = intgr + 2 - ja + math.floor(0.25*ja);
-  end
-  --correct for half-day offset
-  local dayfrac = HOUR / 24 - 0.5;
-  if( dayfrac < 0.0 ) then
-    dayfrac = dayfrac + 1.0;
-    intgr = intgr - 1;
-  end
-  --now set the fraction of a day
-  local frac = dayfrac + (MINUTE + SECOND/60.0)/60.0/24.0;
-  --round to nearest second
-  local jd0 = (intgr + frac)*100000;
-  local  jd  = math.floor(jd0);
-  if( jd0 - jd > 0.5 ) then jd = jd + 1 end
-  return jd/100000;
+  return os.time({year = tTime.year, month = tTime.month, day = tTime.day, 
+    hour = tTime.hour, min = tTime.min, sec = tTime.sec}
+  )
 end
 
-function frac(num) -- returns fraction of a number (RabidWombat)
-  return num - math.floor(num);
+JulianDiff = function(iThen, iNow)
+  return os.difftime( (iNow or JulianDate()) , iThen)
 end
 
-SendToAll("*** "..botver.." kernel loaded.")
+SendOut("*** "..botver.." kernel loaded.")

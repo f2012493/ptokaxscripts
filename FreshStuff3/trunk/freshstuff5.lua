@@ -1,34 +1,33 @@
--- FreshStuff3 v5
--- Embryonic pre-alpha version
+-- FreshStuff3 v5 alpha
 -- License: GNU GPL v2
 -- This is the common script that gets loaded by host apps, then takes care of everything else :-D
--- Characteristics (well, proposed): modular and portable among host programs
+-- Characteristics (well, proposed - no, they are almost real as of end-feb 2007): modular and portable among host programs
 
 --------
 -- TODO:
 --------
-  -- make command registration & rightclick registration use metatables,
-                -- thus functions & commands belonging to them can be fusioned
-                -- the whole thingy becomes more reliable
-                -- loads of code can be removed
-                -- faster startup is also expectable (I will not benchmark)
+  -- make rightclick registration use metatables,
   -- make script decide whether to register rightclicks or not (BCDC++ issue mainly) - this is easy, just need to (not) register this on host-spec. mods
   -- make the script fully portable, i. e. it can use all stuff from the host program, while it interoperates with it smoothly (especially data sending)
-                -- this involves calling freshstuff-related events in script-specific modules as well wherever appropriate
-                -- OR return in a way that can easily be parsed and data can be sent appropriately (looks better) // and has been chosen
   -- make the script automatically detect the environment
-                -- (not hard, just need to look for global variables that are specific to each host program, like VH, frmHub or DC, it is unlikely that users will declare it themselves :-D)
+  -- Incorporate a word filter. DONE
+  -- Showing category descriptions on listing
+  -- Sorting the displayed category listing
+  -- Showing latest n releases... (?)
+  -- Split this config below into module-specific parts.
+  -- Add a prune function for completed requests (low priority, since they get autodeleted upon the requester's joining.)
+  -- Establish a new file format that is suitable for storing multiline releases.
+  -- Merge Rodeo73's patches
 
 hostprg=1
 
---<SettingsStart>
 Bot = {
         name="post-it_memo",
         email="bastyaelvtars@gmail.com",
         desc="Release bot",
         version="5.0 pre-alpha",
-      } -- Set the bot's data.
-    ProfilesUsed= 0 -- 0 for lawmaker/terminator (standard), 1 for robocop, 2 for psyguard
+      } -- Set the bot's data. (Relevant only for hubsofts, so hubsoftmodule-specific)
+    ProfilesUsed= 0 -- 0 for lawmaker/terminator (standard), 1 for robocop, 2 for psyguard (ptokax-only)
     Commands={
       Add="addrel", -- Add a new release
       Show="releases", -- This command shows the stuff, syntax : +albums with options new/game/warez/music/movie
@@ -42,12 +41,13 @@ Bot = {
       TopAdders="topadders", -- Showing top adders
       Help="relhelp", -- Guess what! :P
       AddReq="addreq",
-      ShowReqs="showreqs",
+      ShowReqs="requests",
+      DelReq="delreq",
     } -- No prefix for commands! It is automatically added. (<--- multiple prefixes)
     Levels={
-      Add=4, -- adding
+      Add=1, -- adding
       Show=1, -- showing all
-      Delete=4,   -- deleting
+      Delete=4,   -- Delete releases. Note that everyone is allowed to delete the releases they added.
       ReLoad=4,   -- reload
       Search=1, -- search
       AddCatgry=4, -- add category
@@ -58,6 +58,7 @@ Bot = {
       Help=1, -- Guess what! :P
       AddReq=1,
       ShowReqs=1,
+      DelReq=4, -- Delete requests. Note that everyone is allowed to delete the requests they added.
     } -- You set the userlevels according to... you know what :P
     MaxItemAge=30 --IN DAYS
     TopAddersCount=5 -- shows top-adders on command, this is the number how many it should show
@@ -70,16 +71,20 @@ Bot = {
       ["20:50"]="all",
       ["23:44"]="new",
     }-- Timed release announcing. You can specify a category name, or "all" or "new"
---<SettingsEnd>
+    ForbiddenWords={ -- Releases and requests containing such words cannot be added.
+    "rape",
+    "incest",
+    }
 
 Host={"ptokax","bcdc","verli","aquila"}
 AllStuff,NewestStuff,rightclick,commandtable,rctosend,Engine={},{},{},{},{},{}
 botver="FreshStuff3 v 5.0 alpha1"
 package.path="freshstuff/?.lua"
+require "table"
 require(Host[hostprg])
-require("kernel")
-package.path="freshstuff/components/?.lua"
-require("extras")
-require("requester")
+require "kernel"
+package.path="freshstuff/?.lua"
+require "components.extras"
+require "components.requester"
 
 Functions={}

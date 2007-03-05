@@ -5,6 +5,8 @@
 -- Warning: the "module" declaration only goes before the OnRelAdded function, since we only need to add that to the "px" table
 -- Not so elegant, but works.
 
+SendOut=SendToOps
+
 function Main()
 	local tbl={[0]={ [-1] = 1, [0] = 5, [1] = 4, [2] = 3, [3] = 2 },[1]={[5]=7, [0]=6, [4]=5, [1]=4, [2]=3, [3]=2, [-1]=1},[2]={ [-1] = 1, [0] = 5, [1] = 4, [2] = 3, [3] = 2 ,[4] = 6, [5] = 7}}
 	userlevels=tbl[ProfilesUsed] or { [-1] = 1, [0] = 5, [1] = 4, [2] = 3, [3] = 2 }
@@ -28,14 +30,15 @@ function Main()
   ["music"]="Music",
   ["movie"]="Movies",
   }]])
-    f:close()
+  f:close()
   end
   CreateRightClicks()
   ReloadRel()
   SetTimer(60000)
   StartTimer()
   for modname in pairs(package.loaded) do
-    if modname~="_G" then -- omit the global environment!!!
+    local t={["_G"]=1,["pickle"]=1}
+    if not t[modname] then -- omit the global environment!!!
       local ret1,ret2
       if _G[modname] and _G[modname].Main then ret1,ret2=_G[modname].Main() end
       if ret1 and ret2 then
@@ -50,7 +53,6 @@ function ChatArrival(user,data)
   data=string.sub(data,1,string.len(data)-1)
   local _,_,cmd=string.find(data,"%b<>%s+[%!%+%#%?%-](%S+)")
   if commandtable[cmd] then
-    SendToAll("!!!!")
     parsecmds(user,data,"MAIN",string.lower(cmd))
     return 1
   end
@@ -168,6 +170,10 @@ function CreateRightClicks()
   end
 end
 
+function Allowed (user, level)
+  if userlevels[user.iProfile] >= level then return true end
+end
+
 -- RegCmd(Commands.Add,AddCrap,{},Levels.Add,"<type> <name>\t\t\t\tAdd release of given type.")
 -- RegCmd(Commands.Show,ShowCrap,{},Levels.Show,"<type>\t\t\t\t\tShows the releases of the given type, with no type specified, shows all.")
 -- RegCmd(Commands.Delete,DelCrap,{},Levels.Delete,"<ID>\t\t\t\t\tDeletes the releases of the given ID, or deletes multiple ones if given like: 1,5,33,6789")
@@ -221,8 +227,8 @@ function OnRelAdded(user,data,cat,tune)
 end
 
 function OnReqFulfilled(user,data,cat,tune,nick,reqcomp,username,reqdetails)
-  local usr=GetItemByName(nick); if usr then
-    usr:SendPM(Bot.name,"Your request (\""..reqcomp.."\" has been completed! It is named "..tune.." under category "..cat..". Has been completed by "..user.sName..".")
+  local usr=GetItemByName(username); if usr then
+    usr:SendPM(Bot.name,"\""..reqdetails.."\" has been added by "..user.sName.." on your request. It is named \""..tune.."\" under category "..cat..".")
     Requests.Completed[usr.sName]=nil
     local f=io.open("freshstuff/data/requests_comp.dat","w+")
     for k,v in pairs(Requests.Completed) do
@@ -233,4 +239,4 @@ function OnReqFulfilled(user,data,cat,tune,nick,reqcomp,username,reqdetails)
 end
 
 local x,y=getHubVersion()
-SendToOps("*** "..botver.."  running on "..x.." "..y.." loaded.")
+SendOut("*** "..botver.." running on "..x.." "..y.." loading.")

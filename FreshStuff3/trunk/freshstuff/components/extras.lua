@@ -7,18 +7,15 @@ do
   Engine[Commands.Prune]=
     {
       function (user,data,env)
-        local _,_,days=string.find(data,"%b<>%s+%S+%s+(%d+)")
+        local days=string.match(data,"%b<>%s+%S+%s+(%d+)")
         days=days or MaxItemAge
         local cnt=0
         local x=os.clock()
-        local now=JulianDate(SplitTimeString(os.date("%m/%d/%Y".." 00:00:00")))
         local oldest=days*1440
         for i=Count,1,-1 do
-          local old=JulianDate(SplitTimeString(AllStuff[i][3].." 00:00:00"))
-          local diff=now-old
-          local hours, mins= math.floor(diff) * 24 + math.floor(frac(diff) * 24), math.floor(frac(frac(diff)*24)*60)
-          local tempus=hours*60+mins
-          if tempus > oldest then
+          local diff=JulianDiff(JulianDate(SplitTimeString(AllStuff[i][3].." 00:00:00")))
+          local mins = math.floor(diff/60)
+          if mins > oldest then
             AllStuff[i]=nil
             cnt=cnt+1
           end
@@ -55,4 +52,4 @@ do
     }
 end
 
-SendToAll("*** "..botver.." 'extras' module loaded.")
+SendOut("*** "..botver.." 'extras' module loaded.")
