@@ -18,8 +18,7 @@ bastya_elvtars
 module("netmask",package.seeall)
 
 
-package.path="I:/luabit/?.lua"
-require "bit"
+-- require "bit"
 
 function iptodecbin(ip)
   local err

@@ -63,7 +63,6 @@ _rightclick=
   }
 
 -- Loading the required modules.
--- package.path="./scripts"
 require "scripts.rangefucker.bit"
 require "scripts.rangefucker.netmask"
 
@@ -206,6 +205,7 @@ function BanRange(user,data,env,bTemp)
       SendTxt(user,env,Bot.name,"Incorrect usage! Use !banrange <range/CIDRnotation/masknotation> and you have to specify valid IPs or CIDRs or masks (and the time if tempban)!")
     end
   elseif cidr then
+    local decip=netmask.iptodecbin(ip)
     cidr=tonumber(cidr)
     if cidr < 1 or cidr > 32 then
       SendTxt(user,env,Bot.name,"Invalid CIDR notation, can only be 1-32!"); return
@@ -219,13 +219,13 @@ function BanRange(user,data,env,bTemp)
       if not Btemp then
         local tail; if reason then tail=reason else tail="unspecified"; reason="" end
         RangeBan(res_start,res_end, reason, user.sName, FullBanRanges)
-        SendTxt(user,env,Bot.name,"Range "..ip.."/"..cidr.." ("..res_start.."-"..res_end.." banned. Reason: "..tail)
+        SendTxt(user,env,Bot.name,"Range "..ip.."/"..cidr.." ("..res_start.."-"..res_end..") banned. Reason: "..tail)
       else
         local u,minz=unpack(mult[unit])
         minz=minz*amount
         local tail; if reason then tail=reason else tail="unspecified"; reason="" end
         RangeTempBan(res_start,res_end, minz, reason, user.sName, FullBanRanges)
-        SendTxt(user,env,Bot.name,"Range "..ip.."/"..cidr.." ("..res_start.."-"..res_end.." banned for "..amount.." "..u..". Reason: "..tail)
+        SendTxt(user,env,Bot.name,"Range "..ip.."/"..cidr.." ("..res_start.."-"..res_end..") banned for "..amount.." "..u..". Reason: "..tail)
       end
     end
   elseif mask then
