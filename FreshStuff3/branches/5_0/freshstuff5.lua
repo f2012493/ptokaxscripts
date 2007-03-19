@@ -80,7 +80,7 @@ local c
   for k,v in pairs(Host) do
     if _G[k] then require(v); c=true; break; end
   end
-  --assert(c,"FATAL: This script does not support your host application. :-(")
+  assert(c,"FATAL: This script does not support your host application. :-(")
 end
 require "tables"
 require "kernel"

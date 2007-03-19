@@ -47,10 +47,11 @@ do
                 end
               end
             end
+            setmetatable (AllStuff,_AllStuff)
             table.insert(AllStuff,{cat,nick,os.date("%m/%d/%Y"),tune})
-            table.save(AllStuff,"freshstuff/data/releases.dat")
-            ReloadRel()
-            if OnRelAdded then OnRelAdded(nick,data,cat,tune) end
+--             table.save(AllStuff,"freshstuff/data/releases.dat")
+--             ReloadRel()
+--             if OnRelAdded then OnRelAdded(nick,data,cat,tune) end
           else
             return "Unknown category: "..cat,1
           end
@@ -77,13 +78,14 @@ do
               if Allowed(nick,Levels.Delete) or AllStuff[n][2]==nick then
                 msg=msg.."\r\n"..AllStuff[n][4].." is deleted from the releases."
                 AllStuff[n]=nil
+                NewestStuff[n]=nil
                 cnt=cnt+1
               end
             else
               msg=msg.."\r\nRelease numbered "..n.." wasn't found in the database."
             end
           end
-          if cnt>0 then
+          if cnt > 0 then
             table.save(AllStuff,"freshstuff/data/releases.dat")
             ReloadRel()
             msg=msg.."\r\n\r\nDeletion of "..cnt.." item(s) took "..os.clock()-x.." seconds."
@@ -142,11 +144,11 @@ do
   Engine[Commands.ShowCtgrs]=
     {
       function (nick,data)
-        local msg="\r\n======================\r\nAvaillable categories:\r\n======================\r\n"
+        local msg="\r\n======================\r\nAvailable categories:\r\n======================\r\n"
         for a,b in pairs(Types) do
           msg=msg.."\r\n"..a.."\t\t"..b
         end
-        return msg,1
+        return msg,2
       end,
       {},Levels.ShowCtgrs,"\t\t\t\t\tShows the available release categories."
     }
@@ -210,10 +212,24 @@ do
     }
 end
 
+_AllStuff=
+  {
+    __newindex=function (tbl, key, value)
+      table.remove (NewestStuff,1)
+      table.insert (NewestStuff,value)
+      rawset(AllStuff,key,value)
+      table.save(AllStuff,"freshstuff/data/releases.dat")
+      ShowRel(NewestStuff); ShowRel()
+      if OnRelAdded then OnRelAdded(nick,data,cat,tune) end
+    end
+  }
+
+
 function OpenRel()
 	AllStuff,NewestStuff,TopAdders = nil,nil,nil
-	collectgarbage("collect"); io.flush()
+	collectgarbage ("collect"); io.flush()
 	AllStuff,NewestStuff,TopAdders = {},{},{}
+  setmetatable (AllStuff, nil)
 	Count2 = 0
   if not loadfile("freshstuff/data/releases.dat") then
     local f=io.open("freshstuff/data/releases.dat","r")
@@ -256,11 +272,11 @@ function OpenRel()
 		end
 	else
 		for i=1, Count do
-			Count2 = Count2
-				if AllStuff[i] then
-					NewestStuff[Count2]=AllStuff[i]
-				end
-			end
+			Count2 = Count2 + 1
+      if AllStuff[i] then
+        NewestStuff[Count2]=AllStuff[i]
+      end
+    end
 	end
 end
 
@@ -349,17 +365,17 @@ function ShowRelNum(what,num) -- to show numbers of categories
   num=tonumber(num)
   local Msg="\r\n"
   local cunt=0
-  local target=Count+1
+  local target=#AllStuff+1
   local cat,who,when,title
-  if num > Count then num=Count end
-  for t=1,num do
+  if num > #AllStuff then num=#AllStuff end
+  for t=1,#AllStuff do
 		target=target-1
-    if AllStuff[target] then
-      cat,who,when,title=unpack(AllStuff[target])
-      Msg = Msg.."ID: "..target.."\t"..title.." // (Added by "..who.." at "..when..")\r\n"
-      cunt=cunt+1
-    else
-      break
+    cat,who,when,title=unpack(AllStuff[target])
+    if num ~= cunt then
+      if cat == what then
+        Msg = Msg.."ID: "..target.."\t"..title.." // (Added by "..who.." at "..when..")\r\n"
+        cunt=cunt+1
+      end
     end
   end
   if cunt < num then num=cunt end
