@@ -215,15 +215,16 @@ end
 _AllStuff=
   {
     __newindex=function (tbl, key, value)
-      table.remove (NewestStuff,1)
+      if #tbl >= #NewestStuff then
+        table.remove (NewestStuff,1)
+      end
       table.insert (NewestStuff,value)
-      rawset(AllStuff,key,value)
-      table.save(AllStuff,"freshstuff/data/releases.dat")
+      rawset(tbl,key,value)
+      table.save(tbl,"freshstuff/data/releases.dat")
       ShowRel(NewestStuff); ShowRel()
       if OnRelAdded then OnRelAdded(nick,data,cat,tune) end
     end
   }
-
 
 function OpenRel()
 	AllStuff,NewestStuff,TopAdders = nil,nil,nil
@@ -394,9 +395,9 @@ function SplitTimeString(TimeString)
   -- Supported formats: MM/DD/YYYY HH:MM, YYYY. MM. DD. HH:MM, MM/DD/YY HH:MM and YY. MM. DD. HH:MM
   local D,M,Y,HR,MN,SC
   if string.find(TimeString,"/") then
-    _,_,M,D,Y,HR,MN,SC=string.find(TimeString,"(%d+)/(%d+)/(%d+)%s+(%d+):(%d+):(%d+)")
+    M,D,Y,HR,MN,SC=string.match(TimeString,"(%d+)/(%d+)/(%d+)%s+(%d+):(%d+):(%d+)")
   else
-    _,_,Y,M,D,HR,MN,SC = string.find(TimeString, "([^.]+).([^.]+).([^.]+). ([^:]+).([^:]+).(%S+)")
+    Y,M,D,HR,MN,SC = string.match(TimeString, "([^.]+).([^.]+).([^.]+). ([^:]+).([^:]+).(%S+)")
   end
   assert(Y:len()==2 or Y:len()==4,"Year must be 4 or 2 digits!")
   if Y:len()==2 then if Y:sub(1,1)=="0" then Y="20"..Y else Y="19"..Y end end
@@ -411,12 +412,7 @@ end
 
 --code snipe from a.i. v2 by plop
 JulianDate = function(tTime)
-  if not tTime then
-    local tTime = os.date("*t")
-    return os.time({year = tTime.year, month = tTime.month, day = tTime.day, 
-    hour = tTime.hour, min = tTime.min, sec = tTime.sec}
-  )
-  end
+  tTime = tTime or os.date("*t")
   return os.time({year = tTime.year, month = tTime.month, day = tTime.day, 
     hour = tTime.hour, min = tTime.min, sec = tTime.sec}
   )

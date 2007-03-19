@@ -10,7 +10,6 @@
   -- Showing latest n releases... (?)
   -- Split this config below into module-specific parts.
   -- Add a prune function for completed requests (low priority, since they get autodeleted upon the requester's joining.) -- WON'T BE DONE UNTIL EXPLICITLY REQUESTED
-  -- Merge Rodeo73's patches
   -- Document stuff for module developers
 
 Bot = {
@@ -73,7 +72,7 @@ Bot = {
 AllStuff,NewestStuff,Engine={},{},{}
 botver="FreshStuff3 v 5.0 alpha2"
 package.path="freshstuff/?.lua"
-
+package.cpath="freshstuff/libs/?.dll"
 do -- detect the host app
 local Host={["frmHub"]="ptokax",["DC"]="bcdc",["VH"]="verli"}
 local c
@@ -82,9 +81,16 @@ local c
   end
   assert(c,"FATAL: This script does not support your host application. :-(")
 end
+require "pxlfs"
 require "tables"
 require "kernel"
-require "components.extras"
-require "components.requester"
+do
+  for entry in lfs.dir( lfs.currentdir().."\\freshstuff\\components" ) do
+    local filename,ext=entry:match("([^%.]+)%.(%w%w%w)")
+    if ext == "lua" then
+      require ("components."..filename)
+    end
+  end
+end
 
 Functions={}
