@@ -46,6 +46,13 @@ fixed: corrected some rightclick typos, lingos and made message sending through 
 changed: created a separate postman folder, not to pollute the scripts dir with washere.lst and offline.dat
 added: option for new message alert (PM or main)
 ]]
+------- 0.8:
+--[[
+added: mass offline message. Usage: !masspost nick1 nick2 nick3 $message // The trailing dollar sign is important!!!
+added: case insensivity for nicks
+changed: using chill's extremely handy table.save and table.load routines
+changed: checknsend is a separate function for checking and sending
+]]
 --------------------------------SETTINGS----------------------------------------
 
 Bot = {
@@ -55,12 +62,13 @@ desc = "Post messages to other users here..", -- bot's desc
 }
 inboxsize=10 -- the maximum amount of messages users can have in their inbox
 
-language="en" -- needs the appropriate language file. if it fails to load, falls back to english
+mass_max_users=5 -- When sending a mass offline mail, how many recipients may be specified at once?
 
 -- Where should the 'new message' alert appear? If true then PM, if false then main.
 newalertPM=false
 
 cmdpost = "postmsg" -- Post
+cmdmass = "masspost" -- Mass post, i. e. post the same message to more recipients
 cmdread = "readmsg" -- Read
 cmdibox = "inbox" -- Inbox
 cmddbox = "delmsg" -- Delete
@@ -69,7 +77,7 @@ cmddbox = "delmsg" -- Delete
 
 -- Load the base64 library (argh I keep wondering why package.cpath is the Px folder, but I live with it)
 require "scripts.postman.base64"
-
+require "scripts.postman.tables"
 -------------------------------------- Utility Functions
 
 function cls()
@@ -86,13 +94,9 @@ function Main()
   washere = load()
   message = {}
 	if loadfile("postman/offline.dat") then
-		dofile("postman/offline.dat")
+		message=table.load("postman/offline.dat")
 	else -- replace corrupted offline.dat
-		local f=io.open("postman/offline.dat","w+")
-    f:setvbuf("full")
-		f:write("")
-		f:close()
-    SendToOps(Bot.name,"Malformed offline.dat emptied.")
+		table.save(message,"postman/offline.dat")
 	end
   frmHub:RegBot(Bot.name, 1, Bot.desc, Bot.email )
   Bot = Bot.name
@@ -101,29 +105,48 @@ end
   -------------------------------------- Command Functions
   --- post msg
 function postmsg( user, data, how )
-  local nick,msg = data:match("%b<>%s+%S+%s+(%S+)%s+(.*)")
+  local nick,msg = data:match("%b<>%s+%S+%s+(%S+)%s+(.+)")
   if nick then
-    if not GetItemByName(nick) then
-      if washere[nick] then
-        local function checksize(n) local cnt = 0; for a,b in pairs(message[n]) do cnt = cnt + 1; end return cnt; end
-        if not message[nick] then message[nick] = {}; end
-        if (checksize(nick) < inboxsize) then
-          table.insert( message[nick], { ["message"] = encode(msg), ["who"] = encode(user.sName), ["when"] = os.date("%Y. %m. %d. %X"), ["read"] = 0, } )
-          SendBack( user, "Successfully sent the message!", Bot, how )
-          savemsg()
-        else
-          SendBack( user, "Sorry, but "..nick.." has a full inbox. Try again later.", Bot, how )
-        end
-      else
-        SendBack( user, "User "..nick.." has never been in the hub.", Bot, how )
-      end
-    else
-      SendBack( user, nick.." is online! PM would be simpler in this case...", Bot, how )
-    end
+    checknsend (user,nick,msg)
   else
     SendBack( user, "Bad syntax! Usage: !"..cmdpost.." <nick> <message>", Bot, how )
   end
   cls(); return 1;
+end
+
+function checknsend (user,nick,msg)
+  nick=string.lower(nick)
+  if not GetItemByName(nick) then
+    if washere[nick] then
+      local function checksize(n) local cnt = 0; for a,b in pairs(message[n]) do cnt = cnt + 1; end return cnt; end
+      message[nick] = message[nick] or {}
+      if (checksize(nick) < inboxsize) then
+        table.insert( message[nick], { ["message"] = encode(msg), ["who"] = encode(user.sName), ["when"] = os.date("%Y. %m. %d. %X"), ["read"] = 0, } )
+        SendBack( user, "Successfully sent the message!", Bot, how )
+        table.save(message,"postman/offline.dat")
+      else
+        SendBack( user, "Sorry, but "..nick.." has a full inbox. Try again later.", Bot, how )
+      end
+    else
+      SendBack( user, "User "..nick.." has never been in the hub.", Bot, how )
+    end
+  else
+    SendBack( user, nick.." is online! PM would be simpler in this case...", Bot, how )
+  end
+end
+
+function masspost ( user, data, how)
+  local nicks,msg=data:match("%b<>%s+%S+%s+([^%$]+)%$(.+)")
+  if nicks then
+    local _,no_args = string.gsub(nicks,"(%S+)","")
+    if no_args > mass_max_users then
+      SendBack( user, "Too many nicks specified, maximum number of nicks you can specify is "..mass_max_users.." and you specified "..no_args..".", Bot, how )
+      return
+    end
+    for nick in string.gmatch(nicks,"(%S+)") do
+      checknsend (user,nick,msg)
+    end
+  end
 end
 
 function delmsg( user, data, how )
@@ -145,7 +168,7 @@ function delmsg( user, data, how )
       end
       message[user.sName] = resort(message[user.sName]);
       if checksize(user.sName) == 0 then message[user.sName] = nil; end
-      if bDeleted then savemsg() end
+      if bDeleted then table.save(message,"postman/offline.dat") end
     else
       SendBack( user, "Bad syntax! Usage: !"..cmddbox.." <msgnumber>. Multiple numbers can be added separated by spaces.", Bot, how )
     end
@@ -188,7 +211,7 @@ function readmsg( user, data, how )
           local msg, sep,set = "\r\n\r\n\t\t\t\t\t\t\tMessage #"..num.."\r\n", ("="):rep( 100 ), ("- "):rep(85)
           msg = msg..sep.."\r\n\r\nFrom: "..decode(t.who).."\tTime: "..t.when.."\t\tMessage follows\r\n"..set.."[Message start]\r\n"..decode(t.message).."\r\n"..set.."[Message end]\r\n"..sep
           SendBack( user, msg, Bot, true )
-          if t.read == 0 then t.read = 1; savemsg(); end
+          if t.read == 0 then t.read = 1; table.save(message,"postman/offline.dat"); end
         else
           SendBack( user, "Message #"..num.." does not exist!", Bot, how )
         end
@@ -202,27 +225,6 @@ function readmsg( user, data, how )
   cls(); return 1;
 end
 
-function savemsg()
-  local function parse(tbl)
-    local str, tab ="", ("\t"):rep(9)
-    local fquot = function (s) return string.format( "%q", s) end
-    for a, t in pairs(tbl) do
-      str = str.."\t\t{ ["..fquot("read").."] = "..t.read..", ["..fquot("who").."] = "
-      ..fquot(t.who)..", ["..fquot("when").."] = "..fquot(t.when)..
-      ",\n\t\t["..fquot("message").."] = "..fquot(t.message).." },\n"
-    end
-    return str
-  end
-  local f = io.open ( "postman/offline.dat", "w+" )
-  f:setvbuf("full")
-  local s = "message = {"
-  for name, t in pairs(message) do
-    s = s.."\n\t["..string.format( "%q", (name:gsub ("\"", "\""))).."] = {\n"..parse(t).."\t},"
-  end;
-  f:write(s.."\n}")
-  f:close()
-end
-
 function SendBack( user, msg, who, pm )
   if pm then user:SendPM ( who, msg ); else user:SendData( who, msg ); end
 end
@@ -233,10 +235,10 @@ function NewUserConnected(user)
   "$UserCommand 1 3 :PostMan:\\Delete a Message$<%[mynick]> !delmsg %[line:Enter Nr(s) of Post(s) you would like to delete:]&#124;"}
   user:SendData(table.concat(RC,"|"))
   user:SendData(":PostMan:", "New Right-Click for Postman is Available..")
-  if not washere[user.sName] then washere[user.sName] = 1 end
-  if message[user.sName] then
+  if not washere[user.sName:lower()] then washere[user.sName:lower()] = 1 end
+  if message[user.sName:lower()] then
     local cnt=0
-    for a,b in pairs(message[user.sName]) do if (b.read == 0) then cnt = cnt+1; end end
+    for a,b in pairs(message[user.sName:lower()]) do if (b.read == 0) then cnt = cnt+1; end end
     if (cnt > 0) then SendBack( user, "You have "..cnt.." new messages. Type !"..cmdibox.." to see your inbox!", Bot, newalertPM ); end
   end
 end
@@ -262,18 +264,21 @@ function parsecmds( user, data, cmd, how )
     [cmdread] = { readmsg, { user, data, how } },
     [cmdibox] = { inbox, { user, how } },
     [cmddbox] = { delmsg, { user, data, how } },
+    [cmdmass] = { masspost, { user, data, how } },
     }
-  if t[cmd] then
-    return t[cmd][1]( unpack(t[cmd][2]) )
+  local c=t[cmd]
+  if c then
+    c[1]( unpack(c[2]))
+    return 1
   end
 end
 
 function UserDisconnected(user)
-  if not washere[user.sName] and user.bConnected then washere[user.sName] = 1; end
+  if not washere[user.sName:lower()] and user.bConnected then washere[user.sName:lower()] = 1; end
 end
 
 function OnExit()
-    savemsg()
+    table.save(message,"postman/offline.dat")
     cls()
     local f = io.open( "postman/washere.lst", "w+")
     f:setvbuf("line")
