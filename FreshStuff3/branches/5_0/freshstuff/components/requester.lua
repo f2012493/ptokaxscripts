@@ -90,26 +90,26 @@ do
       function(nick,data)
         if data~="" then
           if string.find(data,"$",1,true) then
-            return "The release name must NOT contain any dollar signs ($)!",1
+            return "The request name must NOT contain any dollar signs ($)!",1
           else
-            for _word in pairs(ForbiddenWords) do
+            for _,word in pairs(ForbiddenWords) do
               if string.find(data,word,1,true) then
-                return "The release name contains the following forbidden word (thus not added): "..word,1
+                return "The request name contains the following forbidden word (thus not added): "..word,1
               end
             end
           end
           for nick,tbl in pairs(Requests.Completed) do
-            if data==request then
-              return req.." has already been requested by "..nick.." and has been fulfilled under category "..tbl[2].. " with name "..tbl[3].." by "..tbl[4],1
+            if data==tbl[1] then
+              return data.." has already been requested by "..nick.." and has been fulfilled under category "..tbl[3].. " with name "..tbl[2].." by "..tbl[4],1
             else
               for _,tbl in ipairs(Requests.NonCompleted) do
-                if tbl[2]==req then
-                  return req.." has already been requested by "..tbl[1]..".",1
+                if tbl[2]==data then
+                  return data.." has already been requested by "..tbl[1]..".",1
                 end
               end
             end
           end
-          Requests.NonCompleted[#Requests.NonCompleted+1]={nick,req}
+          table.insert(Requests.NonCompleted,{nick,data})
           SaveReq()
           return "Your request has been saved, you will have to wait until it gets fulfilled. Thanks for your patience!",1
         end
@@ -162,7 +162,7 @@ function SaveReq()
       f:write(k.."$"..table.concat(v,"$").."\n")
     end
     f:close()
-    local f=io.open("freshstuff/data/requests_incomp.dat","w+")
+    f=io.open("freshstuff/data/requests_incomp.dat","w+")
     for _,v in ipairs(Requests.NonCompleted) do
       f:write(table.concat(v,"$").."\n")
     end

@@ -11,6 +11,12 @@
   -- Split this config below into module-specific parts.
   -- Add a prune function for completed requests (low priority, since they get autodeleted upon the requester's joining.) -- WON'T BE DONE UNTIL EXPLICITLY REQUESTED
   -- Document stuff for module developers
+  -- Category deletion: delete releases belonging to the given category
+  -- Category deletion: same for requests
+  -- Add a release recycle bin in case a category is deleted accidentally (VERY nice idea, Shamu)
+  -- Request recycle bin?
+  -- Requests should be split into categories
+  -- Add package.loaded check for host modules, and put hostmodule-specific loade4rs into a big global table
 
 Bot = {
         name="post-it_memo",
@@ -56,7 +62,7 @@ Bot = {
     ShowOnEntry = 2 -- Show latest stuff on entry 1=PM, 2=mainchat, 0=no
     MaxNew = 20 -- Max stuff shown on newalbums/entry
     WhenAndWhatToShow={
-      ["20:47"]="music",
+      ["20:31"]="new",
       ["20:48"]="warez",
       ["20:49"]="new",
       ["20:50"]="all",
@@ -72,7 +78,7 @@ Bot = {
 AllStuff,NewestStuff,Engine={},{},{}
 botver="FreshStuff3 v 5.0 alpha2"
 package.path="freshstuff/?.lua"
-package.cpath="freshstuff/libs/?.dll"
+package.cpath="freshstuff/?.dll"
 do -- detect the host app
 local Host={["frmHub"]="ptokax",["DC"]="bcdc",["VH"]="verli"}
 local c
@@ -81,16 +87,18 @@ local c
   end
   assert(c,"FATAL: This script does not support your host application. :-(")
 end
-require "pxlfs"
-require "tables"
-require "kernel"
-do
-  for entry in lfs.dir( lfs.currentdir().."\\freshstuff\\components" ) do
-    local filename,ext=entry:match("([^%.]+)%.(%w%w%w)")
-    if ext == "lua" then
-      require ("components."..filename)
+if package.loaded["ptokax"] then
+  require "pxlfs"
+  do
+    for entry in lfs.dir( lfs.currentdir().."\\freshstuff\\components" ) do
+      local filename,ext=entry:match("([^%.]+)%.(%w%w%w)")
+      if ext == "lua" then
+        require ("components."..filename)
+      end
     end
   end
 end
+require "tables"
+require "kernel"
 
 Functions={}
