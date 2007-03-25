@@ -230,9 +230,10 @@ function SendBack( user, msg, who, pm )
 end
 
 function NewUserConnected(user)
-  local RC={"$UserCommand 1 3 :PostMan:\\INBOX$<%[mynick]> !inbox&#124;","$UserCommand 1 3 :PostMan:\\Post a Message$<%[mynick]> !postmsg %[line:Target user:] %[line:Message:]&#124;",
-  "$UserCommand 1 3 :PostMan:\\Read a Message$<%[mynick]> !readmsg %[line:Enter Nr(s) of Post(s) you would like to read:]&#124;",
-  "$UserCommand 1 3 :PostMan:\\Delete a Message$<%[mynick]> !delmsg %[line:Enter Nr(s) of Post(s) you would like to delete:]&#124;"}
+  local RC={"$UserCommand 1 3 :PostMan:\\INBOX$<%[mynick]> !"..cmdibox.."&#124;","$UserCommand 1 3 :PostMan:\\Post a Message$<%[mynick]> "..cmdpost.." %[line:Target user:] %[line:Message:]&#124;",
+  "$UserCommand 1 3 :PostMan:\\Read a Message$<%[mynick]> !"..cmdread.." %[line:Enter Nr(s) of Post(s) you would like to read:]&#124;",
+  "$UserCommand 1 3 :PostMan:\\Delete a Message$<%[mynick]> !"..cmddbox.." %[line:Enter Nr(s) of Post(s) you would like to delete:]&#124;",
+  "$UserCommand 1 3 :PostMan:\\Post the same message to more users$<%[mynick]> !"..cmdmass.." %[line:Enter usernames separated by spaces:] $%[line:Enter the message:]&#124;"}
   user:SendData(table.concat(RC,"|"))
   user:SendData(":PostMan:", "New Right-Click for Postman is Available..")
   if not washere[user.sName:lower()] then washere[user.sName:lower()] = 1 end
