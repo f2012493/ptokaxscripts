@@ -52,6 +52,9 @@ added: mass offline message. Usage: !masspost nick1 nick2 nick3 $message // The 
 added: case insensivity for nicks
 changed: using chill's extremely handy table.save and table.load routines
 changed: checknsend is a separate function for checking and sending
+changed: rightclick actually supports custom commands
+changed: no washere list saving OnExit(), rather it appends on every connect/disconnect and cleans up in Main()
+Thanks to 7P-Darkman and speedX for testing.
 ]]
 --------------------------------SETTINGS----------------------------------------
 
@@ -86,15 +89,20 @@ function cls()
 end
 
 function Main()
-  local function load()
+  local function load() -- Load the list of guys that have visited the hub
     local t = {}; local f = io.open("postman/washere.lst", "r")
     if f then for l in f:lines() do t[l] = 1; end; f:close(); end
     return t;
   end
   washere = load()
+  local f = io.open("postman/washere.lst", "w+") -- Because the file grew huge with appends, shrink it.
+  for k in pairs( washere ) do
+    f:write(k)
+  end
+  f:close()
   message = {}
-	if loadfile("postman/offline.dat") then
-		message=table.load("postman/offline.dat")
+	if loadfile("postman/offline.dat") then -- Is the offline.dat proper lua?
+		message=table.load("postman/offline.dat") -- Ok, then chill loads 
 	else -- replace corrupted offline.dat
 		table.save(message,"postman/offline.dat")
 	end
@@ -115,7 +123,7 @@ function postmsg( user, data, how )
 end
 
 function checknsend (user,nick,msg)
-  nick=string.lower(nick)
+  nick=nick:lower()
   if not GetItemByName(nick) then
     if washere[nick] then
       local function checksize(n) local cnt = 0; for a,b in pairs(message[n]) do cnt = cnt + 1; end return cnt; end
@@ -144,13 +152,14 @@ function masspost ( user, data, how)
       return
     end
     for nick in string.gmatch(nicks,"(%S+)") do
-      checknsend (user,nick,msg)
+      checknsend (user,nick:lower(),msg)
     end
   end
 end
 
 function delmsg( user, data, how )
-  if message[user.sName] then
+  local nick=user.sName:lower()
+  if message[nick] then
     local args = data:match("%b<>%s+%S+%s+(.+)")
     if args then
       local function checksize(n) local cnt = 0; for a,b in pairs(message[n]) do cnt = cnt + 1; end return cnt; end
@@ -158,16 +167,16 @@ function delmsg( user, data, how )
       local bDeleted=false
       for num in args:gmatch( "(%d+)" ) do
         num = tonumber(num);
-        if message[user.sName][num] then
-          message[user.sName][num] = nil
+        if message[nick][num] then
+          message[nick][num] = nil
           SendBack( user, "Message #"..num.." has been successfully deleted!", Bot, how )
           bDeleted=true
         else
           SendBack( user, "Message #"..num.." does not exist!", Bot, how )
         end
       end
-      message[user.sName] = resort(message[user.sName]);
-      if checksize(user.sName) == 0 then message[user.sName] = nil; end
+      message[nick] = resort(message[nick]);
+      if checksize(nick) == 0 then message[nick] = nil; end
       if bDeleted then table.save(message,"postman/offline.dat") end
     else
       SendBack( user, "Bad syntax! Usage: !"..cmddbox.." <msgnumber>. Multiple numbers can be added separated by spaces.", Bot, how )
@@ -182,17 +191,18 @@ end
     ---------------------------------------------------------------------------------
     ---------------------------------------------------------------------------------- show inbox
 function inbox( user, how )
+  local nick=user.sName:lower()
   local sep, msg = ( "="):rep( 75 ), "\r\n\r\n\t\t\t\t\t\t\tHere is your inbox:\r\n"
   msg = msg..sep.."\r\n Msg#\tSender\tTime of sending\t\tRead\r\n"..sep
-  if message[user.sName] then
+  if message[nick] then
     local function numess ( r ) if r == 0 then return "no"; end return "yes"; end
     local function checksize ( n ) local cnt = 0; for a,b in pairs(message[n]) do cnt = cnt + 1; end return cnt; end
-    for num, t in pairs(message[user.sName]) do
+    for num, t in pairs(message[nick]) do
       msg=msg.."\r\n "..num.."\t"..decode(t.who).."\t"..t.when.."\t"..numess(t.read).."\r\n"..sep
     end
     SendBack( user, msg, Bot, true )
     SendBack( user, "Type !"..cmdread.." <number> too see an individual message. Multiple numbers can be added separated by spaces.", Bot, true )
-    if checksize(user.sName) >= inboxsize then SendBack( user, "Alert: Your inbox is full!", Bot, true ); end
+    if checksize(nick) >= inboxsize then SendBack( user, "Alert: Your inbox is full!", Bot, true ); end
   else
     SendBack( user, "You have no messages.", Bot, how )
   end
@@ -201,13 +211,14 @@ end
 
     --- read msg(s)
 function readmsg( user, data, how )
-  if message[user.sName] then
+  local nick=user.sName:lower()
+  if message[nick] then
     local args=data:match("%b<>%s+%S+%s+(.+)")
     if args then
       for num in args:gmatch(  "(%d+)" ) do
         if num then num = tonumber(num) end
-        if num and message[user.sName][num] then
-          local t = message[user.sName][num]
+        if num and message[nick][num] then
+          local t = message[nick][num]
           local msg, sep,set = "\r\n\r\n\t\t\t\t\t\t\tMessage #"..num.."\r\n", ("="):rep( 100 ), ("- "):rep(85)
           msg = msg..sep.."\r\n\r\nFrom: "..decode(t.who).."\tTime: "..t.when.."\t\tMessage follows\r\n"..set.."[Message start]\r\n"..decode(t.message).."\r\n"..set.."[Message end]\r\n"..sep
           SendBack( user, msg, Bot, true )
@@ -229,17 +240,27 @@ function SendBack( user, msg, who, pm )
   if pm then user:SendPM ( who, msg ); else user:SendData( who, msg ); end
 end
 
+_washere=
+  {
+    __newindex=function(tbl, key, val)
+      local f = io.open( "postman/washere.lst", "a+")
+      f:write(key)
+      f:close()
+    end
+  }
+
 function NewUserConnected(user)
-  local RC={"$UserCommand 1 3 :PostMan:\\INBOX$<%[mynick]> !"..cmdibox.."&#124;","$UserCommand 1 3 :PostMan:\\Post a Message$<%[mynick]> "..cmdpost.." %[line:Target user:] %[line:Message:]&#124;",
+  local nick=user.sName:lower()
+  local RC={"$UserCommand 1 3 :PostMan:\\INBOX$<%[mynick]> !"..cmdibox.."&#124;","$UserCommand 1 3 :PostMan:\\Post a Message$<%[mynick]> !"..cmdpost.." %[line:Target user:] %[line:Message:]&#124;",
   "$UserCommand 1 3 :PostMan:\\Read a Message$<%[mynick]> !"..cmdread.." %[line:Enter Nr(s) of Post(s) you would like to read:]&#124;",
   "$UserCommand 1 3 :PostMan:\\Delete a Message$<%[mynick]> !"..cmddbox.." %[line:Enter Nr(s) of Post(s) you would like to delete:]&#124;",
   "$UserCommand 1 3 :PostMan:\\Post the same message to more users$<%[mynick]> !"..cmdmass.." %[line:Enter usernames separated by spaces:] $%[line:Enter the message:]&#124;"}
   user:SendData(table.concat(RC,"|"))
   user:SendData(":PostMan:", "New Right-Click for Postman is Available..")
-  if not washere[user.sName:lower()] then washere[user.sName:lower()] = 1 end
-  if message[user.sName:lower()] then
+  if not washere[nick] and user.bConnected then setmetatable(washere,_washere); washere[nick] = 1 end
+  if message[nick] then
     local cnt=0
-    for a,b in pairs(message[user.sName:lower()]) do if (b.read == 0) then cnt = cnt+1; end end
+    for a,b in pairs(message[nick]) do if (b.read == 0) then cnt = cnt+1; end end
     if (cnt > 0) then SendBack( user, "You have "..cnt.." new messages. Type !"..cmdibox.." to see your inbox!", Bot, newalertPM ); end
   end
 end
@@ -275,16 +296,13 @@ function parsecmds( user, data, cmd, how )
 end
 
 function UserDisconnected(user)
-  if not washere[user.sName:lower()] and user.bConnected then washere[user.sName:lower()] = 1; end
+  local nick=user.sName:lower()
+  if not washere[nick] and user.bConnected then setmetatable(washere,_washere); washere[nick] = 1; end
 end
 
 function OnExit()
-    table.save(message,"postman/offline.dat")
-    cls()
-    local f = io.open( "postman/washere.lst", "w+")
-    f:setvbuf("line")
-    for a,b in pairs(washere) do f:write(a.."\n"); end
-    f:close()
+  table.save(message,"postman/offline.dat")
+  cls()
 end
 
 OpDisconnected=UserDisconnected
