@@ -11,9 +11,13 @@
 -- now it's 1.6, after bastya_elvtars did some more optimization to the detector. :P
 
 -- 1.7: 
-  -- canged: rewrote the clone checking routine, so it no longer loops on every user connecion
+  -- changed: rewrote the clone checking routine, so it no longer loops on every user connecion
   -- added: it also ckecks clones on startup, that makes the hub 100% immune to clones
   -- changed: removed opchatbot detection, using SendToOpChat() instead
+  -- added: Socks checking (requested by achiever)
+
+-- 1.7.5:
+  -- changed: rewrote the socks routine to a more effective one, thanks achiever
 
 Bot = frmHub:GetHubBotName() -- Rename to you main Px bot
 kick = 0 -- 0 to only disconnect, otherwise enter a number, and user will be kicked for that amount of minutes.
@@ -38,6 +42,14 @@ _mtIPStorage=
         -- you may ask, why we have this since there can be more than 1 clones of a user, but there cannot, cause
         -- they get checked on startup and only 1 can remain, like in Highlander. :-P
         if User then -- yes, the clone is online
+          local GetProxyState=function (user,user2)
+            -- only 1 user proxied:
+            if string.find(user.sMyInfoString,"M:[S5]") and not string.find(user2.sMyInfoString,"M:[S5]") then return 1
+            -- both users proxied:
+            elseif protect_socks == 1 and string.find(user.sMyInfoString,"M:[S5]") and string.find(user2.sMyInfoString,"M:[S5]") then return 2
+            -- none of the 2 are proxied:
+            else return 1 end
+          end
           local det=function (user,user2)
             user:SendPM(Bot,"Double Login is not allowed. You are already connected to this hub with this nick: "..user2)
             local done
@@ -56,7 +68,10 @@ _mtIPStorage=
           end
           if not(tImmune[curUser.sName] or tImmune[User.sName]) and not User.bOperator  then
             -- we don't check curUser for being an op, because we do NewUserConnected() and GetOnlineNonOperators()
-            if curUser.iShareSize==User.iShareSize then
+            -- Users have to meet one of the following criteria:
+            --    * SAME SHARE
+            --    * ONE OR BOTH OF THEM NON-PROXIED
+            if curUser.iShareSize==User.iShareSize and GetProxyState (User,curUser) == 1 then
               local nick1,nick2=curUser.sName,User.sName
               clonedout[curUser.sName]=User.sName -- clonedout[connectedguy]=existantguy - see OnExit()
               det(curUser,nick1)
@@ -67,8 +82,10 @@ _mtIPStorage=
             else
               tIPStorage[curUser.sIP]=curUser.sName
               if PmOps == 1 then
-                SendToOpChat("*** A user "..curUser.sName.." hass been found to have the same IP as "..User.sName.." but share sizes are different, please check.")
-                clonedout[User.sName]=curUser.sName
+                if GetProxyState (User,curUser) == 1 then -- at least one of them is not proxied, else they're considered non-suspicious
+                  SendToOpChat("*** A user "..curUser.sName.." hass been found to have the same IP as "..User.sName.." but share sizes are different, please check.")
+                  clonedout[User.sName]=curUser.sName
+                end
               end
             end
           end
@@ -83,7 +100,9 @@ _mtIPStorage=
 
 function Main()
   setmetatable(_tIPStorage,_mtIPStorage)
-  for _,user in ipairs(frmHub:GetOnlineNonOperators()) do _tIPStorage[user.sIP]=user.sName end
+  for _,user in ipairs(frmHub:GetOnlineNonOperators()) do
+    _tIPStorage[user.sIP]=user.sName
+  end
   if loadfile("logs/cloneimmune.txt") then dofile("logs/cloneimmune.txt"); end
 end
 
@@ -96,13 +115,7 @@ function OnExit()
 end
 
 function NewUserConnected(curUser,sdata)
-  if protect_socks == 1 then
-    if not string.find(curUser.sMyInfoString,"M:[S5]") then
-      _tIPStorage[curUser.sIP]=curUser.sName
-    end
-  else
-    _tIPStorage[curUser.sIP]=curUser.sName
-  end
+  _tIPStorage[curUser.sIP]=curUser.sName
 end
 
 function ChatArrival (user,data)
