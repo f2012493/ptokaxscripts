@@ -5,8 +5,12 @@ Gets loaded only if the script detects PtokaX as host app
 Distributed under the terms of the Common Development and Distribution License (CDDL) Version 1.0. See docs/license.txt for details.
 ]]
 
-
 SendOut = SendToOps
+
+ScriptsPath = frmHub:GetPtokaXLocation().."scripts/freshstuff/"
+local conf = ScriptsPath.."config/main.lua"
+local _,err = loadfile (conf)
+if not err then dofile (conf) else error(err) end
 
 -- We need the application path
 GetPath=frmHub:GetPtokaXLocation()
@@ -184,6 +188,7 @@ rightclick[{Levels.AddCatgry,"1 3","Releases\\Add a category","!"..Commands.AddC
 rightclick[{Levels.DelCatgry,"1 3","Releases\\Delete a category","!"..Commands.DelCatgry.." %[line:Category name:]"}]=0
 rightclick[{Levels.Help,"1 3","Releases\\Help","!"..Commands.Help}]=0
 rightclick[{Levels.Show,"1 3","Releases\\Show all items","!"..Commands.Show}]=0
+rightclick[{Levels.Show,"1 3","Releases\\Show last "..MaxNew.." items","!"..Commands.Show}]=0
 rightclick[{Levels.Show,"1 3","Releases\\Show items in a certain range","!"..Commands.Show.." %[line:Start ID:]-%[line:End ID:]"}]=0
 
 -- We're finished. Now let's do something with FreshStuff's own events. :-D
@@ -239,10 +244,10 @@ end
 function Timer()
   if os.date("%m/%d/%Y") ~= BotStart then
     frmHub:UnregBot(Bot.name)
-    frmHub:RegBot(Bot.name,"["..GetNewRelNumForToday().." new releases today] "..Bot.desc,Bot.email, true)
+    frmHub:RegBot(Bot.name, 1, "["..GetNewRelNumForToday().." new releases today] "..Bot.desc, Bot.email)
   end
   if #AllStuff > 0 then
-     -- to avoid sync errors and unnecessary function calls/tanle lookups
+     -- to avoid sync errors and unnecessary function calls/table lookups
      -- declare the local variable
     local stuff = WhenAndWhatToShow[os.date("%H:%M")]
     if stuff then
