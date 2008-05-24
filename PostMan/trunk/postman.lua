@@ -56,6 +56,11 @@ changed: rightclick actually supports custom commands
 changed: no washere list saving OnExit(), rather it appends on every connect/disconnect and cleans up in Main()
 Thanks to 7P-Darkman and speedX for testing.
 ]]
+------- 0.9:
+--[[
+changed: adapted to the new PtokaX
+changed: small optimizations here and there
+]]
 --------------------------------SETTINGS----------------------------------------
 
 Bot = {
@@ -88,67 +93,75 @@ function cls()
     io.flush()
 end
 
-function Main()
+function OnStartup()
   local function load() -- Load the list of guys that have visited the hub
-    local t = {}; local f = io.open("postman/washere.lst", "r")
+    local t = {}; local f = io.open(Core.GetPtokaXPath().."scripts/postman/washere.lst", "r")
     if f then for l in f:lines() do t[l] = 1; end; f:close(); end
     return t;
   end
   washere = load()
-  local f = io.open("postman/washere.lst", "w+") -- Because the file grew huge with appends, shrink it.
+  setmetatable(washere,
+  {
+    __newindex=function(tbl, key, val)
+      local f = io.open( Core.GetPtokaXPath().."scripts/postman/washere.lst", "a+")
+      f:write(key)
+      f:close()
+      rawset (tbl, key, val)
+    end
+  })
+  local f = io.open(Core.GetPtokaXPath().."scripts/postman/washere.lst", "w+") -- Because the file grew huge with appends, shrink it.
   for k in pairs( washere ) do
     f:write(k)
   end
   f:close()
   message = {}
-	if loadfile("postman/offline.dat") then -- Is the offline.dat proper lua?
-		message=table.load("postman/offline.dat") -- Ok, then chill loads 
+	if loadfile(Core.GetPtokaXPath().."scripts/postman/offline.dat") then -- Is the offline.dat proper lua?
+		message=table.load(Core.GetPtokaXPath().."scripts/postman/offline.dat") -- Ok, then chill loads 
 	else -- replace corrupted offline.dat
-		table.save(message,"postman/offline.dat")
+		table.save(message,Core.GetPtokaXPath().."scripts/postman/offline.dat")
 	end
-  frmHub:RegBot(Bot.name, 1, Bot.desc, Bot.email )
-  Bot = Bot.name
+  Core.RegBot(Bot.name, Bot.desc, Bot.email, true)
 end
 
   -------------------------------------- Command Functions
   --- post msg
 function postmsg( user, data, how )
-  local nick,msg = data:match("%b<>%s+%S+%s+(%S+)%s+(.+)")
+  local nick,msg = data:match("(%S+)%s+(.+)")
   if nick then
     checknsend (user,nick,msg)
   else
-    SendBack( user, "Bad syntax! Usage: !"..cmdpost.." <nick> <message>", Bot, how )
+    SendBack( user, "Bad syntax! Usage: !"..cmdpost.." <nick> <message>", Bot.name, how )
   end
-  cls(); return 1;
+  cls(); return true;
 end
 
 function checknsend (user,nick,msg)
   nick=nick:lower()
-  if not GetItemByName(nick) then
+  if not Core.GetUser(nick) then
     if washere[nick] then
       local function checksize(n) local cnt = 0; for a,b in pairs(message[n]) do cnt = cnt + 1; end return cnt; end
       message[nick] = message[nick] or {}
       if (checksize(nick) < inboxsize) then
-        table.insert( message[nick], { ["message"] = encode(msg), ["who"] = encode(user.sName), ["when"] = os.date("%Y. %m. %d. %X"), ["read"] = 0, } )
-        SendBack( user, "Successfully sent the message!", Bot, how )
-        table.save(message,"postman/offline.dat")
+        table.insert( message[nick], { ["message"] = encode(msg), ["who"] = encode(user.sNick), ["when"] = os.date("%Y. %m. %d. %X"), ["read"] = 0, } )
+        SendBack( user, "Successfully sent the message!", Bot.name, how )
+        table.save(message,Core.GetPtokaXPath().."scripts/postman/offline.dat")
       else
-        SendBack( user, "Sorry, but "..nick.." has a full inbox. Try again later.", Bot, how )
+        SendBack( user, "Sorry, but "..nick.." has a full inbox. Try again later.", Bot.name, how )
       end
     else
-      SendBack( user, "User "..nick.." has never been in the hub.", Bot, how )
+      SendBack( user, "User "..nick.." has never been in the hub.", Bot.name, how )
     end
   else
-    SendBack( user, nick.." is online! PM would be simpler in this case...", Bot, how )
+    SendBack( user, nick.." is online! PM would be simpler in this case...", Bot.name, how )
   end
 end
 
 function masspost ( user, data, how)
-  local nicks,msg=data:match("%b<>%s+%S+%s+([^%$]+)%$(.+)")
+  local nicks,msg=data:match("([^%$]+)%$(.+)")
   if nicks then
     local _,no_args = string.gsub(nicks,"(%S+)","")
     if no_args > mass_max_users then
-      SendBack( user, "Too many nicks specified, maximum number of nicks you can specify is "..mass_max_users.." and you specified "..no_args..".", Bot, how )
+      SendBack( user, "Too many nicks specified, maximum number of nicks you can specify is "..mass_max_users.." and you specified "..no_args..".", Bot.name, how )
       return
     end
     for nick in string.gmatch(nicks,"(%S+)") do
@@ -158,40 +171,39 @@ function masspost ( user, data, how)
 end
 
 function delmsg( user, data, how )
-  local nick=user.sName:lower()
+  local nick=user.sNick:lower()
   if message[nick] then
-    local args = data:match("%b<>%s+%S+%s+(.+)")
-    if args then
+    if data then
       local function checksize(n) local cnt = 0; for a,b in pairs(message[n]) do cnt = cnt + 1; end return cnt; end
       local function resort(t) local r ={}; for i,v in pairs(t) do table.insert(r, v); end; return r; end
       local bDeleted=false
-      for num in args:gmatch( "(%d+)" ) do
+      for num in data:gmatch( "(%d+)" ) do
         num = tonumber(num);
         if message[nick][num] then
           message[nick][num] = nil
-          SendBack( user, "Message #"..num.." has been successfully deleted!", Bot, how )
+          SendBack( user, "Message #"..num.." has been successfully deleted!", Bot.name, how )
           bDeleted=true
         else
-          SendBack( user, "Message #"..num.." does not exist!", Bot, how )
+          SendBack( user, "Message #"..num.." does not exist!", Bot.name, how )
         end
       end
       message[nick] = resort(message[nick]);
       if checksize(nick) == 0 then message[nick] = nil; end
-      if bDeleted then table.save(message,"postman/offline.dat") end
+      if bDeleted then table.save(message,Core.GetPtokaXPath().."scripts/postman/offline.dat") end
     else
-      SendBack( user, "Bad syntax! Usage: !"..cmddbox.." <msgnumber>. Multiple numbers can be added separated by spaces.", Bot, how )
+      SendBack( user, "Bad syntax! Usage: !"..cmddbox.." <msgnumber>. Multiple numbers can be added separated by spaces.", Bot.name, how )
     end
   else
-    SendBack( user, "Your inbox is empty.", Bot, how )
+    SendBack( user, "Your inbox is empty.", Bot.name, how )
   end
-  cls(); return 1;
+  cls(); return true;
 end
 
     ----------------------------------------------------------------------------------
     ---------------------------------------------------------------------------------
     ---------------------------------------------------------------------------------- show inbox
 function inbox( user, how )
-  local nick=user.sName:lower()
+  local nick=user.sNick:lower()
   local sep, msg = ( "="):rep( 75 ), "\r\n\r\n\t\t\t\t\t\t\tHere is your inbox:\r\n"
   msg = msg..sep.."\r\n Msg#\tSender\tTime of sending\t\tRead\r\n"..sep
   if message[nick] then
@@ -200,87 +212,75 @@ function inbox( user, how )
     for num, t in pairs(message[nick]) do
       msg=msg.."\r\n "..num.."\t"..decode(t.who).."\t"..t.when.."\t"..numess(t.read).."\r\n"..sep
     end
-    SendBack( user, msg, Bot, true )
-    SendBack( user, "Type !"..cmdread.." <number> too see an individual message. Multiple numbers can be added separated by spaces.", Bot, true )
-    if checksize(nick) >= inboxsize then SendBack( user, "Alert: Your inbox is full!", Bot, true ); end
+    SendBack( user, msg, Bot.name, true )
+    SendBack( user, "Type !"..cmdread.." <number> too see an individual message. Multiple numbers can be added separated by spaces.", Bot.name, true )
+    if checksize(nick) >= inboxsize then SendBack( user, "Alert: Your inbox is full!", Bot.name, true ); end
   else
-    SendBack( user, "You have no messages.", Bot, how )
+    SendBack( user, "You have no messages.", Bot.name, how )
   end
-  cls(); return 1;
+  cls(); return true;
 end
 
     --- read msg(s)
 function readmsg( user, data, how )
-  local nick=user.sName:lower()
+  local nick=user.sNick:lower()
   if message[nick] then
-    local args=data:match("%b<>%s+%S+%s+(.+)")
-    if args then
-      for num in args:gmatch(  "(%d+)" ) do
+    if data then
+      for num in data:gmatch(  "(%d+)" ) do
         if num then num = tonumber(num) end
         if num and message[nick][num] then
           local t = message[nick][num]
-          local msg, sep,set = "\r\n\r\n\t\t\t\t\t\t\tMessage #"..num.."\r\n", ("="):rep( 100 ), ("- "):rep(85)
+          local msg, sep, set = "\r\n\r\n\t\t\t\t\t\t\tMessage #"..num.."\r\n", ("="):rep( 30 ), ("- "):rep(20)
           msg = msg..sep.."\r\n\r\nFrom: "..decode(t.who).."\tTime: "..t.when.."\t\tMessage follows\r\n"..set.."[Message start]\r\n"..decode(t.message).."\r\n"..set.."[Message end]\r\n"..sep
-          SendBack( user, msg, Bot, true )
-          if t.read == 0 then t.read = 1; table.save(message,"postman/offline.dat"); end
+          SendBack( user, msg, Bot.name, true )
+          if t.read == 0 then t.read = 1; table.save(message,Core.GetPtokaXPath().."scripts/postman/offline.dat"); end
         else
-          SendBack( user, "Message #"..num.." does not exist!", Bot, how )
+          SendBack( user, "Message #"..num.." does not exist!", Bot.name, how )
         end
       end
     else
-      SendBack( user, "Bad syntax! Usage: !"..cmdread.." <msgnumber>. Multiple numbers can be added separated by spaces.", Bot, how )
+      SendBack( user, "Bad syntax! Usage: !"..cmdread.." <msgnumber>. Multiple numbers can be added separated by spaces.", Bot.name, how )
     end
   else
-    SendBack( user, "Your inbox is empty.", Bot, how )
+    SendBack( user, "Your inbox is empty.", Bot.name, how )
   end
-  cls(); return 1;
+  cls(); return true;
 end
 
 function SendBack( user, msg, who, pm )
-  if pm then user:SendPM ( who, msg ); else user:SendData( who, msg ); end
+  if pm then Core.SendPmToUser ( user, who, msg ); else Core.SendToUser( user, "<"..who.."> "..msg ); end
 end
 
-_washere=
-  {
-    __newindex=function(tbl, key, val)
-      local f = io.open( "postman/washere.lst", "a+")
-      f:write(key)
-      f:close()
-    end
-  }
-
-function NewUserConnected(user)
-  local nick=user.sName:lower()
+function UserConnected(user)
+  local nick=user.sNick:lower()
   local RC={"$UserCommand 1 3 :PostMan:\\INBOX$<%[mynick]> !"..cmdibox.."&#124;","$UserCommand 1 3 :PostMan:\\Post a Message$<%[mynick]> !"..cmdpost.." %[line:Target user:] %[line:Message:]&#124;",
   "$UserCommand 1 3 :PostMan:\\Read a Message$<%[mynick]> !"..cmdread.." %[line:Enter Nr(s) of Post(s) you would like to read:]&#124;",
   "$UserCommand 1 3 :PostMan:\\Delete a Message$<%[mynick]> !"..cmddbox.." %[line:Enter Nr(s) of Post(s) you would like to delete:]&#124;",
   "$UserCommand 1 3 :PostMan:\\Post the same message to more users$<%[mynick]> !"..cmdmass.." %[line:Enter usernames separated by spaces:] $%[line:Enter the message:]&#124;"}
-  user:SendData(table.concat(RC,"|"))
-  user:SendData(":PostMan:", "New Right-Click for Postman is Available..")
-  if not washere[nick] and user.bConnected then setmetatable(washere,_washere); washere[nick] = 1 end
+  Core.SendToUser(user, table.concat(RC,"|"))
+  Core.SendToUser(user, "<"..Bot.name.."> ".."New Right-Click for Postman is Available..")
+  washere[nick] = 1
   if message[nick] then
     local cnt=0
     for a,b in pairs(message[nick]) do if (b.read == 0) then cnt = cnt+1; end end
-    if (cnt > 0) then SendBack( user, "You have "..cnt.." new messages. Type !"..cmdibox.." to see your inbox!", Bot, newalertPM ); end
+    if (cnt > 0) then SendBack( user, "You have "..cnt.." new messages. Type !"..cmdibox.." to see your inbox!", Bot.name, newalertPM ); end
   end
 end
+RegConnected = UserConnected
+OpConnected = UserConnected
 
 function ChatArrival(user,data)
-  local data = data:sub(1,-2)
-  local cmd = data:match("%b<>%s+[!+.#?](%S+)")
+  local cmd = data:match("^%b<>%s+[%!%+%#%?%-](%S+).*%|$")
   if cmd then return parsecmds( user, data, cmd:lower() ); end
 end
 
 function ToArrival(user,data)
-  if (data:sub( 1, Bot:len()+5) == "$To: "..Bot) then
-    local data = data:sub(1,-2)
-    local cmd = data:match("%$%b<>%s+[!+.#?](%S+)")
-    if cmd then return parsecmds( user, data, cmd:lower(), true ) end
-    return 1
-  end
+  local cmd = data:match("^%b<>%s+[%!%+%#%?%-](%S+).*%|$")
+  if cmd then return parsecmds( user, data, cmd:lower(), true ) end
 end
 
 function parsecmds( user, data, cmd, how )
+  data = data:match("^%b<>%s+[%!%+%#%?%-]%S+(.+)%|$")
   local t = {
     [cmdpost] = { postmsg, { user, data, how } },
     [cmdread] = { readmsg, { user, data, how } },
@@ -291,19 +291,14 @@ function parsecmds( user, data, cmd, how )
   local c=t[cmd]
   if c then
     c[1]( unpack(c[2]))
-    return 1
+    return true
   end
 end
 
 function UserDisconnected(user)
-  local nick=user.sName:lower()
-  if not washere[nick] and user.bConnected then setmetatable(washere,_washere); washere[nick] = 1; end
+  local nick=user.sNick:lower()
+  washere[nick] = 1
 end
 
-function OnExit()
-  table.save(message,"postman/offline.dat")
-  cls()
-end
-
+RegDisconnected = UserDisconnected
 OpDisconnected=UserDisconnected
-OpConnected=NewUserConnected
