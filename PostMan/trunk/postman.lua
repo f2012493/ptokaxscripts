@@ -3,6 +3,7 @@
 -- original code ripped from LawMaker
 -- comands can be PMed or typed in main, the bot responds to them according to the environment (sometimes at least :D)
 -- the commands are case insensitive, the parameters aren't :)
+-- The code is licensed under the Microsoft Reciprocal License (Ms-RL). See postman/LICENSE for details.
 
 ------- 0.2:
 -- added a function so ppl cannot post 2 online users
@@ -94,6 +95,7 @@ function cls()
 end
 
 function OnStartup()
+  SetMan.SetBool(55, true)
   local function load() -- Load the list of guys that have visited the hub
     local t = {}; local f = io.open(Core.GetPtokaXPath().."scripts/postman/washere.lst", "r")
     if f then for l in f:lines() do t[l] = 1; end; f:close(); end
@@ -142,7 +144,7 @@ function checknsend (user,nick,msg)
       local function checksize(n) local cnt = 0; for a,b in pairs(message[n]) do cnt = cnt + 1; end return cnt; end
       message[nick] = message[nick] or {}
       if (checksize(nick) < inboxsize) then
-        table.insert( message[nick], { ["message"] = encode(msg), ["who"] = encode(user.sNick), ["when"] = os.date("%Y. %m. %d. %X"), ["read"] = 0, } )
+        table.insert( message[nick], { ["message"] = base64.enc(msg), ["who"] = base64.enc(user.sNick), ["when"] = os.date("%Y. %m. %d. %X"), ["read"] = 0, } )
         SendBack( user, "Successfully sent the message!", Bot.name, how )
         table.save(message,Core.GetPtokaXPath().."scripts/postman/offline.dat")
       else
@@ -210,7 +212,7 @@ function inbox( user, how )
     local function numess ( r ) if r == 0 then return "no"; end return "yes"; end
     local function checksize ( n ) local cnt = 0; for a,b in pairs(message[n]) do cnt = cnt + 1; end return cnt; end
     for num, t in pairs(message[nick]) do
-      msg=msg.."\r\n "..num.."\t"..decode(t.who).."\t"..t.when.."\t"..numess(t.read).."\r\n"..sep
+      msg=msg.."\r\n "..num.."\t"..base64.dec(t.who).."\t"..t.when.."\t"..numess(t.read).."\r\n"..sep
     end
     SendBack( user, msg, Bot.name, true )
     SendBack( user, "Type !"..cmdread.." <number> too see an individual message. Multiple numbers can be added separated by spaces.", Bot.name, true )
@@ -231,7 +233,7 @@ function readmsg( user, data, how )
         if num and message[nick][num] then
           local t = message[nick][num]
           local msg, sep, set = "\r\n\r\n\t\t\t\t\t\t\tMessage #"..num.."\r\n", ("="):rep( 30 ), ("- "):rep(20)
-          msg = msg..sep.."\r\n\r\nFrom: "..decode(t.who).."\tTime: "..t.when.."\t\tMessage follows\r\n"..set.."[Message start]\r\n"..decode(t.message).."\r\n"..set.."[Message end]\r\n"..sep
+          msg = msg..sep.."\r\n\r\nFrom: "..base64.dec(t.who).."\tTime: "..t.when.."\t\tMessage follows\r\n"..set.."[Message start]\r\n"..base64.dec(t.message).."\r\n"..set.."[Message end]\r\n"..sep
           SendBack( user, msg, Bot.name, true )
           if t.read == 0 then t.read = 1; table.save(message,Core.GetPtokaXPath().."scripts/postman/offline.dat"); end
         else
@@ -275,12 +277,16 @@ function ChatArrival(user,data)
 end
 
 function ToArrival(user,data)
-  local cmd = data:match("^%b<>%s+[%!%+%#%?%-](%S+).*%|$")
+  local cmd = data:match("^$To:%s+%S+%s+From:%s+%S+%s+$%b<>%s+[%!%+%#%?%-](%S+)%s*.*%|$")
   if cmd then return parsecmds( user, data, cmd:lower(), true ) end
 end
 
 function parsecmds( user, data, cmd, how )
-  data = data:match("^%b<>%s+[%!%+%#%?%-]%S+(.+)%|$")
+  if not how then
+    data = data:match("^%b<>%s+[%!%+%#%?%-]%S+(.+)%|$")
+  else
+    data = data:match("^$To:%s+%S+%s+From:%s+%S+%s+$%b<>%s+[%!%+%#%?%-]%S+%s*(.*)%|$")
+  end
   local t = {
     [cmdpost] = { postmsg, { user, data, how } },
     [cmdread] = { readmsg, { user, data, how } },
@@ -293,6 +299,12 @@ function parsecmds( user, data, cmd, how )
     c[1]( unpack(c[2]))
     return true
   end
+end
+
+-- OnError = Core.SendToOps
+
+function OnError (err)
+  Core.SendToOps (err)
 end
 
 function UserDisconnected(user)
