@@ -38,7 +38,9 @@ function cls()
 end
 
 function OnStartup()
-  SetMan.SetBool(55, true)
+  if pcall (SetMan.GetBool, 55) then -- Log script errors.
+    SetMan.SetBool(55, true)
+  end
   local function load() -- Load the list of guys that have visited the hub
     local t = {}; local f = io.open(Core.GetPtokaXPath().."scripts/postman/washere.lst", "r")
     if f then for l in f:lines() do t[l] = 1; end; f:close(); end
